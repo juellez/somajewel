@@ -1,0 +1,80 @@
+# Deploys the app to the live server whenever the "live" branch changes.
+# Setup (server user, SSH key, and GitHub secrets): see docs/deploy.md.
+#
+# The deploy key is locked to rsync inside the app folder on the server with
+# command="/usr/bin/rrsync /var/www/example.com/app" in authorized_keys, so a
+# deploy can never reach anything outside that folder. That's also why there's
+# no path setting here: the server decides where the app goes.
+
+name: Deploy to live
+
+on:
+  push:
+    branches: [live]
+  workflow_dispatch: # lets you re-run a deploy from the Actions tab
+
+# One deploy at a time; a newer push waits for the current one to finish.
+concurrency:
+  group: deploy-live
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: live
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out the live branch
+        uses: actions/checkout@v4
+
+      - name: Check PHP syntax
+        run: find app -name '*.php' -print0 | xargs -0 -n1 php -l > /dev/null
+
+      - name: Set up SSH
+        env:
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+          echo "SSH_CMD=ssh -i $HOME/.ssh/deploy_key -o BatchMode=yes" >> "$GITHUB_ENV"
+
+      # Last check before anything is deleted: the server folder must be empty
+      # or already hold this app (bootstrap.php). Anything else means the key
+      # points at the wrong folder. Server details are secrets, so they stay
+      # hidden in this public repo's logs.
+      - name: Check the server folder
+        env:
+          HOST: ${{ secrets.DEPLOY_HOST }}
+          USER: ${{ secrets.DEPLOY_USER }}
+        run: |
+          if ! listing=$(rsync --list-only -e "$SSH_CMD" "$USER@$HOST:." 2>&1); then
+            echo "::error::Couldn't reach the app folder on the server. Is the deploy key set up? rsync said:" >&2
+            printf '%s\n' "$listing" | sed "s#$HOST#<host>#g" >&2
+            exit 1
+          fi
+          entries=$(printf '%s\n' "$listing" | awk '{print $NF}' | grep -vx '\.' || true)
+          if [ -n "$entries" ] && ! printf '%s\n' "$entries" | grep -qx bootstrap.php; then
+            echo "::error::The server folder isn't empty and doesn't contain bootstrap.php, so it doesn't look like the app folder. Nothing was deployed." >&2
+            exit 1
+          fi
+
+      - name: Deploy app
+        env:
+          HOST: ${{ secrets.DEPLOY_HOST }}
+          USER: ${{ secrets.DEPLOY_USER }}
+        run: |
+          rsync -rlz --delete --delay-updates --chmod=D755,F644 \
+            --exclude /config.php --exclude .DS_Store \
+            -e "$SSH_CMD" \
+            app/ "$USER@$HOST:."
+
+      - name: Clean up the SSH key
+        if: always()
+        run: rm -f ~/.ssh/deploy_key
