@@ -29,7 +29,7 @@ jobs:
 
     steps:
       - name: Check out the live branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Check PHP syntax
         run: find app -name '*.php' -print0 | xargs -0 -n1 php -l > /dev/null
@@ -43,7 +43,7 @@ jobs:
           printf '%s\n' "$SSH_KEY" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
           printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
-          echo "SSH_CMD=ssh -i $HOME/.ssh/deploy_key -o BatchMode=yes" >> "$GITHUB_ENV"
+          echo "SSH_CMD=ssh -i $HOME/.ssh/deploy_key -o BatchMode=yes -o ConnectTimeout=20" >> "$GITHUB_ENV"
 
       # Last check before anything is deleted: the server folder must be empty
       # or already hold this app (bootstrap.php). Anything else means the key
@@ -52,11 +52,30 @@ jobs:
       - name: Check the server folder
         env:
           HOST: ${{ secrets.DEPLOY_HOST }}
-          USER: ${{ secrets.DEPLOY_USER }}
+          USER: ${{ vars.DEPLOY_USER || secrets.DEPLOY_USER }}
         run: |
           if ! listing=$(rsync --list-only -e "$SSH_CMD" "$USER@$HOST:." 2>&1); then
-            echo "::error::Couldn't reach the app folder on the server. Is the deploy key set up? rsync said:" >&2
-            printf '%s\n' "$listing" | sed "s#$HOST#<host>#g" >&2
+            case "$listing" in
+              *"error in libcrypto"*|*"invalid format"*|*"Load key"*)
+                hint="DEPLOY_SSH_KEY isn't a readable private key. Paste the whole file again, including the BEGIN and END lines." ;;
+              *"Host key verification failed"*)
+                hint="DEPLOY_KNOWN_HOSTS doesn't match DEPLOY_HOST. Run ssh-keyscan -t ed25519 against the exact IP or hostname in DEPLOY_HOST (not an SSH shortcut) and paste the output." ;;
+              *"Permission denied"*)
+                hint="The server rejected the key. Check that DEPLOY_SSH_KEY is the whole private key (BEGIN and END lines included) and that its public half is in the deploy user's authorized_keys." ;;
+              *"timed out"*|*"Connection refused"*|*"No route to host"*)
+                hint="GitHub couldn't connect to the server. Check DEPLOY_HOST, and whether a firewall limits SSH to certain IPs." ;;
+              *"Could not resolve hostname"*)
+                hint="DEPLOY_HOST isn't a hostname GitHub can look up. Use the server's IP address." ;;
+              *rrsync*)
+                hint="The server's rrsync refused the request; see rsync's message." ;;
+              *)
+                hint="See rsync's message." ;;
+            esac
+            # The reason goes in the annotation itself, so it shows on the run's
+            # summary page; the host is hidden.
+            reason=$(printf '%s\n' "$listing" | grep -v '^\s*$' | grep -iv 'rsync error: unexplained\|connection unexpectedly closed' | sed "s#$HOST#<host>#g" | head -3)
+            msg="$hint%0A%0Arsync said: $(printf '%s' "$reason" | sed 's/%/%25/g' | awk 'BEGIN{ORS="%0A"} {print}')"
+            echo "::error title=Couldn't reach the server::$msg"
             exit 1
           fi
           entries=$(printf '%s\n' "$listing" | awk '{print $NF}' | grep -vx '\.' || true)
@@ -68,7 +87,7 @@ jobs:
       - name: Deploy app
         env:
           HOST: ${{ secrets.DEPLOY_HOST }}
-          USER: ${{ secrets.DEPLOY_USER }}
+          USER: ${{ vars.DEPLOY_USER || secrets.DEPLOY_USER }}
         run: |
           rsync -rlz --delete --delay-updates --chmod=D755,F644 \
             --exclude /config.php --exclude .DS_Store \
