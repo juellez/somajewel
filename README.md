@@ -4,8 +4,10 @@ somatic practice app
 ## app
 The practice/tracking app which currently uses the WP auth/login and DB connector modules. This will be abstracted so the app can use its own DB and auth modules.
 
-## wordpress
-The WP admin used for monitoring usage stats for testing.
+## app/modules/wordpress
+WordPress pieces that work alongside the app, kept inside `app/` so a deploy only ever touches the app folder:
+
+- `plugins/somajewel-stats`: an admin page showing usage stats for testing. On the server it's symlinked into WordPress's plugins folder (see [docs/deploy.md](docs/deploy.md)), then activated in WP admin like any plugin.
 
 ## Deploying
 Pushing to the `live` branch deploys the app to the server automatically. Setup and everyday use: [docs/deploy.md](docs/deploy.md).
@@ -20,7 +22,7 @@ Each part carries its own license file:
 |---|---|
 | App (`app/`) | [AGPL-3.0-or-later](app/LICENSE) |
 | Practice content (`app/content/`) | [CC BY-SA 4.0](app/content/LICENSE) |
-| WordPress stats plugin (`wordpress/somajewel-stats/`) | [GPL-2.0-or-later](wordpress/somajewel-stats/LICENSE) |
+| WordPress stats plugin (`app/modules/wordpress/plugins/somajewel-stats/`) | [GPL-2.0-or-later](app/modules/wordpress/plugins/somajewel-stats/LICENSE) |
 
 The root [LICENSE](LICENSE) is the AGPL and covers anything else in the repository.
 
