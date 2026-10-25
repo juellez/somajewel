@@ -1,0 +1,8 @@
+# Environment-specific settings
+config.php
+
+# macOS / editors
+.DS_Store
+*.swp
+.vscode/
+.idea/
