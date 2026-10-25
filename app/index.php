@@ -38,7 +38,7 @@ header('Cache-Control: no-store');
     <footer class="footer">
         <a href="<?php echo esc_url(wp_logout_url(home_url('/'))); ?>">Log out</a>
         <span aria-hidden="true">·</span>
-        <a href="<?php echo esc_url($usp_config['source_url']); ?>">Source code</a>
+        <a href="<?php echo esc_url($usp_config['legal_url']); ?>">Terms of Use & Privacy</a>
     </footer>
 
     <script>window.USP = <?php echo wp_json_encode($boot); ?>;</script>
