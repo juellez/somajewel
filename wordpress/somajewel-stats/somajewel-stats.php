@@ -3,7 +3,7 @@
  * Plugin Name: SomaJewel Stats
  * Description: Usage stats for the SomaJewel practice app: streaks, counts, and activity. Never shows journal content, notes, answers, moods, or declaration text.
  * Version:     0.1.0
- * Author:      Unstruck Somatics
+ * Author:      Unstruck Somatics, LLC
  * License:     GPL-2.0-or-later
  * Requires PHP: 8.1
  */

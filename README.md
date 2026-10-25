@@ -24,8 +24,8 @@ The root [LICENSE](LICENSE) is the AGPL and covers anything else in the reposito
 In plain terms:
 
 - **Use it freely**, including for your own practice or your own clients.
-- **Share your changes.** If you modify the app and run it for other people, you must offer them your modified source code under the same license. The footer's "Source code" link is there for this.
-- **Keep the credit.** Keep the [NOTICE](NOTICE) file and the attribution to the original project.
+- **Share your changes.** If you modify the app and run it for other people, you must offer them your modified source code under the same license. The app's Terms & Privacy page links to the source for this; set `source_url` in `config.php` to point at your version.
+- **Keep the credit.** Keep the [NOTICE](NOTICE) file and the attribution: "SomaJewel, by Unstruck Somatics, LLC" for the code, and "Practice content by Jewel Mlnarik" for the content.
 - **Content shares alike.** If you adapt the practices or prompts, share your version under CC BY-SA 4.0 with credit.
 
-Copyright (C) 2026 Jewel Mlnarik. See [NOTICE](NOTICE) for details.
+Code © 2026 Unstruck Somatics, LLC. Practice content © 2026 Jewel Mlnarik. See [NOTICE](NOTICE) for details.

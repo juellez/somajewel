@@ -1,6 +1,11 @@
 SomaJewel
-Copyright (C) 2026 Jewel Mlnarik
 https://github.com/juellez/somajewel
+
+Code (app/ and wordpress/)
+  Copyright (C) 2026 Unstruck Somatics, LLC
+
+Practice content (app/content/)
+  Copyright (C) 2026 Jewel Mlnarik
 
 Each part of this project carries its own LICENSE file:
 
@@ -12,9 +17,14 @@ The LICENSE file at the repository root is the AGPL, and covers anything
 not inside a folder with its own LICENSE.
 
 Attribution
-  Under section 7(b) of the AGPL, anyone who conveys this program or a
-  modified version must keep this NOTICE file and the attribution above
-  ("SomaJewel, by Jewel Mlnarik") with a link to the original repository.
-  Running a modified version for others over a network also means offering
-  them its source code (AGPL section 13); the app's "Source code" link in
-  the page footer is there to make that easy.
+  Code: under section 7(b) of the AGPL, anyone who conveys this program or
+  a modified version must keep this NOTICE file and the attribution
+  "SomaJewel, by Unstruck Somatics, LLC" with a link to the original
+  repository. Running a modified version for others over a network also
+  means offering them its source code (AGPL section 13); the app's Terms &
+  Privacy page links to the source to make that easy.
+
+  Content: anyone sharing or adapting the practice content must credit
+  "Practice content by Jewel Mlnarik," link to the original repository and
+  to the CC BY-SA 4.0 license, indicate if changes were made, and share
+  adaptations under the same license.
