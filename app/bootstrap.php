@@ -27,5 +27,6 @@ require_once __DIR__ . '/lib/streaks.php';
 require_once __DIR__ . '/lib/content.php';
 require_once __DIR__ . '/lib/declarations.php';
 require_once __DIR__ . '/lib/entries.php';
+require_once __DIR__ . '/lib/history.php';
 
 usp_maybe_migrate();

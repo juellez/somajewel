@@ -96,17 +96,18 @@ function sjs_render_page(): void
     $users = $wpdb->get_results("
         SELECT p.*, u.user_login, u.display_name,
             (SELECT COUNT(*) FROM $entries e WHERE e.user_id = p.user_id) AS total,
+            (SELECT COUNT(DISTINCT e.entry_date) FROM $entries e WHERE e.user_id = p.user_id) AS days,
             (SELECT COUNT(*) FROM $entries e WHERE e.user_id = p.user_id AND e.type = 'clearing')  AS clearing,
             (SELECT COUNT(*) FROM $entries e WHERE e.user_id = p.user_id AND e.type = 'practice')  AS practice,
             (SELECT COUNT(*) FROM $entries e WHERE e.user_id = p.user_id AND e.type = 'gratitude') AS gratitude,
             (SELECT COUNT(*) FROM $entries e WHERE e.user_id = p.user_id AND e.type = 'rest')      AS rest,
             (SELECT COUNT(*) FROM $declarations d WHERE d.user_id = p.user_id AND d.status = 'active') AS decls,
             (SELECT COUNT(*) FROM $weekly w WHERE w.user_id = p.user_id AND TRIM(w.response) <> '') AS weekly_answers,
-            GREATEST(
-                COALESCE((SELECT MAX(e.created_at) FROM $entries e WHERE e.user_id = p.user_id), '1970-01-01'),
-                COALESCE((SELECT MAX(w.updated_at) FROM $weekly w WHERE w.user_id = p.user_id), '1970-01-01'),
+            UNIX_TIMESTAMP(GREATEST(
+                COALESCE((SELECT MAX(e.created_at) FROM $entries e WHERE e.user_id = p.user_id), '1970-01-02'),
+                COALESCE((SELECT MAX(w.updated_at) FROM $weekly w WHERE w.user_id = p.user_id), '1970-01-02'),
                 p.created_at
-            ) AS last_active
+            )) AS last_active
         FROM $profiles p
         LEFT JOIN {$wpdb->users} u ON u.ID = p.user_id
         ORDER BY last_active DESC
@@ -164,8 +165,9 @@ function sjs_render_page(): void
         echo '<table class="widefat striped sjs-table"><thead><tr>
             <th>User</th>
             <th>Last ' . SJS_DAYS . ' days</th>
+            <th class="sjs-num">Days</th>
             <th class="sjs-num">Streak</th>
-            <th class="sjs-num">Best</th>
+            <th class="sjs-num">Longest</th>
             <th class="sjs-num">Clearing</th>
             <th class="sjs-num">Practice</th>
             <th class="sjs-num">Gratitude</th>
@@ -196,7 +198,8 @@ function sjs_render_page(): void
                 '<tr>
                     <td><strong>%s</strong><br><span class="sjs-muted">%s · ID %d · %s</span></td>
                     <td><div class="sjs-strip">%s</div></td>
-                    <td class="sjs-num">%d%s</td>
+                    <td class="sjs-num">%d</td>
+                    <td class="sjs-num">%d</td>
                     <td class="sjs-num">%d</td>
                     <td class="sjs-num">%d</td>
                     <td class="sjs-num">%d</td>
@@ -212,8 +215,8 @@ function sjs_render_page(): void
                 $uid,
                 esc_html($u['timezone']),
                 $strip,
+                (int) $u['days'],
                 (int) $u['current_streak'],
-                $u['streak_freezes'] ? ' <span class="sjs-badge" title="Streak freezes">❄ ' . (int) $u['streak_freezes'] . '</span>' : '',
                 (int) $u['longest_streak'],
                 (int) $u['clearing'],
                 (int) $u['practice'],
@@ -221,12 +224,12 @@ function sjs_render_page(): void
                 (int) $u['rest'],
                 (int) $u['decls'],
                 (int) $u['weekly_answers'],
-                esc_html(sjs_ago($u['last_active'])),
+                esc_html(sjs_ago((int) $u['last_active'])),
                 esc_html(mysql2date('M j, Y', $u['created_at']))
             );
         }
         echo '</tbody></table>';
-        echo '<p class="sjs-muted">The streak shows the stored value; a broken streak resets the next time that person logs something.</p>';
+        echo '<p class="sjs-muted">Streak and Longest update whenever that person opens the app.</p>';
     }
 
     // Recent activity: type and skill only.
@@ -270,10 +273,11 @@ function sjs_render_page(): void
     );
 }
 
-function sjs_ago(string $mysql_time): string
+/** "5 minutes ago" from a Unix timestamp. MySQL converts its own times to
+ * Unix time, so this is right whatever timezone the database server uses. */
+function sjs_ago(int $ts): string
 {
-    $ts = strtotime($mysql_time);
-    if (!$ts || $ts < 86400) {
+    if ($ts < 86400 * 2) {
         return '—';
     }
     return human_time_diff($ts, time()) . ' ago';

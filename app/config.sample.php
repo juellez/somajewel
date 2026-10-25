@@ -22,4 +22,8 @@ return [
     // By default, the footer links to the app's own Terms & Privacy page
     // (legal.php, generated from LEGAL.md). Set this to link elsewhere instead.
     #'legal_url' => 'https://yoursite.com/terms',
+
+    // The app icon comes from assets/icon-192.png. Without that file, set a
+    // URL here (e.g. your WordPress site icon); without either, a drawn lotus.
+    #'icon_url' => 'https://yoursite.com/wp-content/uploads/site-icon-192x192.png',
 ];

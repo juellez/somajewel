@@ -12,6 +12,7 @@ $usp_config = [
     'legal_url'        => '', // footer link; empty = the app's own legal.php page
     'source_url'       => 'https://github.com/juellez/somajewel', // shared on legal page
     'contact_email'    => '', // shared on legal page
+    'icon_url'         => '', // app icon if assets/icon-192.png isn't present
 ];
 
 if (is_file(dirname(__DIR__) . '/config.php')) {

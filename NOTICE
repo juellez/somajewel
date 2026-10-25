@@ -16,6 +16,10 @@ Each part of this project carries its own LICENSE file:
 The LICENSE file at the repository root is the AGPL, and covers anything
 not inside a folder with its own LICENSE.
 
+Third-party
+  app/assets/fonts/            Jost, Copyright 2020 The Jost Project Authors,
+                               SIL Open Font License 1.1 (see OFL.txt there)
+
 Attribution
   Code: under section 7(b) of the AGPL, anyone who conveys this program or
   a modified version must keep this NOTICE file and the attribution

@@ -111,9 +111,10 @@ function usp_today_counts(int $user_id, string $today): array
 // ---------- creating entries ----------
 
 /**
- * Validates and saves one entry, advances the streak, and reports any
- * milestones reached. Returns ['error' => code] or
- * ['celebrations' => [...], 'first_today' => bool].
+ * Validates and saves one entry and reports any milestones reached.
+ * $in['for'] = 'yesterday' logs it for yesterday, allowed until noon.
+ * Returns ['error' => code] or
+ * ['celebrations' => [...], 'first_of_day' => bool, 'date' => Y-m-d, 'for_yesterday' => bool].
  */
 function usp_create_entry(int $user_id, array $in): array
 {
@@ -167,15 +168,27 @@ function usp_create_entry(int $user_id, array $in): array
 
     $note    = mb_substr(trim((string) ($in['note'] ?? '')), 0, 5000);
     $profile = usp_get_profile($user_id);
-    $today   = usp_today($profile['timezone'])->format('Y-m-d');
-    $first   = $profile['last_checkin_date'] !== $today;
-    $before  = usp_rep_counts($user_id);
+    $today   = usp_today($profile['timezone']);
+
+    $for_yesterday = ($in['for'] ?? 'today') === 'yesterday';
+    if ($for_yesterday && !usp_can_log_yesterday($profile['timezone'])) {
+        return ['error' => 'grace_closed'];
+    }
+    $date = ($for_yesterday ? $today->modify('-1 day') : $today)->format('Y-m-d');
+
+    $first = !$wpdb->get_var($wpdb->prepare(
+        'SELECT 1 FROM ' . usp_table('entries') . ' WHERE user_id = %d AND entry_date = %s LIMIT 1',
+        $user_id,
+        $date
+    ));
+    $before       = usp_rep_counts($user_id);
+    $days_before  = usp_streak_stats($user_id);
 
     $saved = $wpdb->insert(
         usp_table('entries'),
         [
             'user_id'        => $user_id,
-            'entry_date'     => $today,
+            'entry_date'     => $date,
             'type'           => $type,
             'declaration_id' => $declaration_id,
             'skill_key'      => $skill,
@@ -190,17 +203,19 @@ function usp_create_entry(int $user_id, array $in): array
         return ['error' => 'save_failed'];
     }
 
-    $streak = usp_touch_streak($user_id);
-    $after  = usp_rep_counts($user_id);
+    $after      = usp_rep_counts($user_id);
+    $days_after = usp_streak_stats($user_id);
 
     return [
-        'celebrations' => usp_celebrations($before, $after, $type, $skill, $declaration_id, $streak),
-        'first_today'  => $first,
+        'celebrations'  => usp_celebrations($before, $after, $type, $skill, $declaration_id, $days_before, $days_after),
+        'first_of_day'  => $first,
+        'date'          => $date,
+        'for_yesterday' => $for_yesterday,
     ];
 }
 
 /** Messages for any milestone this entry just reached. */
-function usp_celebrations(array $before, array $after, string $type, ?string $skill, ?int $declaration_id, array $streak): array
+function usp_celebrations(array $before, array $after, string $type, ?string $skill, ?int $declaration_id, array $days_before, array $days_after): array
 {
     $out     = [];
     $crossed = fn (array $b, array $a, $key) =>
@@ -219,8 +234,12 @@ function usp_celebrations(array $before, array $after, string $type, ?string $sk
         $out[] = sprintf('%d %s!', $after['types'][$type], USP_TYPE_LABELS[$type]['many']);
     }
 
-    if (!empty($streak['earned_freeze'])) {
-        $out[] = sprintf('%d-day streak. You earned a streak freeze.', $streak['streak']);
+    if ($days_after['days'] > $days_before['days'] && usp_is_milestone($days_after['days'])) {
+        $out[] = sprintf('%d days of practice!', $days_after['days']);
+    }
+
+    if ($days_after['streak'] > $days_before['streak'] && usp_is_milestone($days_after['streak'])) {
+        $out[] = sprintf('%d-day streak!', $days_after['streak']);
     }
 
     return $out;
