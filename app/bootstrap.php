@@ -8,8 +8,8 @@
 const USP_VERSION    = '0.2.0';
 const USP_DB_VERSION = 2;
 
-// Default config values live in lib/config.php; set or override them in config.php.
-require_once __DIR__ . '/lib/config.php';
+// Default config values live in lib/settings.php; set or override them in config.php.
+require_once __DIR__ . '/lib/settings.php';
 
 switch($usp_config['db_auth_module']){
     case 'wordpress':

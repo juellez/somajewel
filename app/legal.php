@@ -9,7 +9,7 @@
  * Wrap notes you don't want shown in <!-- HTML comments -->.
  */
 
-require __DIR__ . '/lib/config.php';
+require __DIR__ . '/lib/settings.php';
 require __DIR__ . '/lib/markdown.php';
 
 $markdown = (string) @file_get_contents(__DIR__ . '/LEGAL.md');
