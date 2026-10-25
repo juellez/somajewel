@@ -1,5 +1,6 @@
 # Deploys the app to the live server whenever the "live" branch changes.
 # Setup (server user, SSH key, and GitHub secrets): see docs/deploy.md.
+# *_PATH secrets are relative to "/var/www"
 
 name: Deploy to live
 
