@@ -1,0 +1,2 @@
+# Not served over the web. The app and WordPress load these files from disk.
+Require all denied

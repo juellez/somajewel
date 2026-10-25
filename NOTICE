@@ -1,6 +1,6 @@
 SomaJewel
 
-Code (app/ and wordpress/)
+Code (app/)
   Copyright (C) 2026 Unstruck Somatics, LLC
 
 Practice content (app/content/)
@@ -10,7 +10,8 @@ Each part of this project carries its own LICENSE file:
 
   app/                         GNU Affero General Public License v3.0 or later
   app/content/                 Creative Commons Attribution-ShareAlike 4.0
-  wordpress/somajewel-stats/   GNU General Public License v2.0 or later
+  app/modules/wordpress/plugins/somajewel-stats/
+                               GNU General Public License v2.0 or later
 
 The LICENSE file at the repository root is the AGPL, and covers anything
 not inside a folder with its own LICENSE.
