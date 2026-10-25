@@ -1,7 +1,4 @@
 <?php
-// SPDX-License-Identifier: AGPL-3.0-or-later
-// Copyright (C) 2026 Jewel Mlnarik · https://github.com/juellez/somajewel
-
 /**
  * App shell. Sends logged-out visitors to the WordPress login,
  * then hands off to assets/app.js, which talks to api.php.

@@ -1,7 +1,4 @@
 <?php
-// SPDX-License-Identifier: AGPL-3.0-or-later
-// Copyright (C) 2026 Jewel Mlnarik · https://github.com/juellez/somajewel
-
 /**
  * Bootstrap: loads config + WordPress, then the app's own libraries.
  * Must be required at the top level of a file (not inside a function),

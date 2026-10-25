@@ -1,7 +1,4 @@
 <?php
-// SPDX-License-Identifier: AGPL-3.0-or-later
-// Copyright (C) 2026 Jewel Mlnarik · https://github.com/juellez/somajewel
-
 /**
  * Content helpers and the "state" the front end needs on load.
  * Content itself lives in content/prompts.php.

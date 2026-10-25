@@ -1,7 +1,4 @@
 <?php
-// SPDX-License-Identifier: AGPL-3.0-or-later
-// Copyright (C) 2026 Jewel Mlnarik · https://github.com/juellez/somajewel
-
 /**
  * Database helpers. Uses WordPress's $wpdb connection, so no separate
  * credentials are needed. App tables are named {wp_prefix}usp_{name},

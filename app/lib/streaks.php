@@ -1,7 +1,4 @@
 <?php
-// SPDX-License-Identifier: AGPL-3.0-or-later
-// Copyright (C) 2026 Jewel Mlnarik · https://github.com/juellez/somajewel
-
 /**
  * Streak logic. All dates are calculated in each user's own timezone,
  * so "today" flips at their local midnight, not the server's.

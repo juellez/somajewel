@@ -2,18 +2,14 @@ SomaJewel
 Copyright (C) 2026 Jewel Mlnarik
 https://github.com/juellez/somajewel
 
-This project is made of three parts, each under its own license:
+Each part of this project carries its own LICENSE file:
 
-  Code (everything except the folders below)
-    GNU Affero General Public License v3.0 or later. See LICENSE.
+  app/                         GNU Affero General Public License v3.0 or later
+  app/content/                 Creative Commons Attribution-ShareAlike 4.0
+  wordpress/somajewel-stats/   GNU General Public License v2.0 or later
 
-  Practice content (app/content/)
-    Creative Commons Attribution-ShareAlike 4.0 International.
-    See app/content/LICENSE.
-
-  WordPress stats plugin (wordpress/somajewel-stats/)
-    GNU General Public License v2.0 or later, for compatibility with
-    WordPress.
+The LICENSE file at the repository root is the AGPL, and covers anything
+not inside a folder with its own LICENSE.
 
 Attribution
   Under section 7(b) of the AGPL, anyone who conveys this program or a

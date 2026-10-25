@@ -11,11 +11,15 @@ The WP admin used for monitoring usage stats for testing.
 
 SomaJewel is community software: anyone can use it, change it, and build on it, as long as improvements are shared back and the original work is credited.
 
+Each part carries its own license file:
+
 | Part | License |
 |---|---|
-| Code | [AGPL-3.0-or-later](LICENSE) |
+| App (`app/`) | [AGPL-3.0-or-later](app/LICENSE) |
 | Practice content (`app/content/`) | [CC BY-SA 4.0](app/content/LICENSE) |
-| WordPress stats plugin (`wordpress/somajewel-stats/`) | GPL-2.0-or-later |
+| WordPress stats plugin (`wordpress/somajewel-stats/`) | [GPL-2.0-or-later](wordpress/somajewel-stats/LICENSE) |
+
+The root [LICENSE](LICENSE) is the AGPL and covers anything else in the repository.
 
 In plain terms:
 
