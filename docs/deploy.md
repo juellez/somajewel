@@ -52,22 +52,33 @@ A key used only by GitHub, with no passphrase (Actions can't type one).
 ssh-keygen -t ed25519 -N "" -C "github-actions-somajewel" -f ~/.ssh/somajewel_deploy
 ```
 
-Install the public half for the deploy user. `restrict` turns off everything
-rsync doesn't need (port forwarding, terminals, and so on):
+Install the public half for the deploy user, locked to rsync inside
+`/var/www`. `rrsync` (installed with rsync on Ubuntu) refuses any command that
+isn't rsync and keeps every path inside `/var/www`; `restrict` turns off
+everything else (port forwarding, terminals, and so on):
 
 ```bash
 PUB=$(cat ~/.ssh/somajewel_deploy.pub)
 ssh YOUR_ADMIN_LOGIN@YOUR_SERVER "sudo mkdir -p ~deploy/.ssh \
-  && echo 'restrict $PUB' | sudo tee -a ~deploy/.ssh/authorized_keys >/dev/null \
+  && echo 'command=\"/usr/bin/rrsync /var/www\",restrict $PUB' | sudo tee -a ~deploy/.ssh/authorized_keys >/dev/null \
   && sudo chown -R deploy:deploy ~deploy/.ssh && sudo chmod 700 ~deploy/.ssh \
   && sudo chmod 600 ~deploy/.ssh/authorized_keys"
 ```
 
-Test it; this should print the app folder's contents without asking for a password:
+The line in `~deploy/.ssh/authorized_keys` should look like:
+
+```
+command="/usr/bin/rrsync /var/www",restrict ssh-ed25519 AAAA... github-actions-somajewel
+```
+
+Test it; this should list the app folder's contents without asking for a
+password. Note the path is relative to `/var/www`:
 
 ```bash
-ssh -i ~/.ssh/somajewel_deploy deploy@YOUR_SERVER ls /var/www/example.com/app
+rsync --list-only -e "ssh -i ~/.ssh/somajewel_deploy" deploy@YOUR_SERVER:example.com/app/
 ```
+
+A plain `ssh` login with this key is refused ("does not run rsync"). That's expected.
 
 ### 3. On GitHub: the `live` environment and its secrets
 
@@ -78,7 +89,7 @@ In the repository, go to **Settings → Environments → New environment**, name
 |---|---|
 | `DEPLOY_HOST` | The server's IP address or hostname |
 | `DEPLOY_USER` | `deploy` |
-| `DEPLOY_APP_PATH` | The app folder, relative to `/var/www` (e.g. `example.com/app`) or a full path starting with `/` |
+| `DEPLOY_APP_PATH` | The app folder, relative to `/var/www` (e.g. `example.com/app`). A full `/var/www/...` path also works |
 | `DEPLOY_PLUGIN_PATH` | Optional. The plugin folder, same format, ending in `/somajewel-stats` (e.g. `example.com/wp-content/plugins/somajewel-stats`). Leave it out to skip the plugin |
 | `DEPLOY_SSH_KEY` | The **private** key: the full output of `cat ~/.ssh/somajewel_deploy` |
 | `DEPLOY_KNOWN_HOSTS` | The output of `ssh-keyscan -t ed25519 YOUR_SERVER` |

@@ -1,7 +1,10 @@
 # Deploys the app to the live server whenever the "live" branch changes.
 # Setup (server user, SSH key, and GitHub secrets): see docs/deploy.md.
-# *_PATH secrets are relative to "/var/www" (e.g. example.com/app), or absolute
-# if they start with "/".
+#
+# The deploy key is locked to rsync inside /var/www on the server with
+# command="/usr/bin/rrsync /var/www" in authorized_keys, so every *_PATH
+# secret is relative to /var/www (e.g. example.com/app). Everything here
+# talks to the server through rsync only; rrsync refuses anything else.
 
 name: Deploy to live
 
@@ -31,8 +34,9 @@ jobs:
       - name: Check PHP syntax
         run: find app wordpress -name '*.php' -print0 | xargs -0 -n1 php -l > /dev/null
 
-      # Turns each *_PATH secret into a full server path and refuses anything
-      # risky: deploys delete files missing from git, so a wrong folder matters.
+      # Turns each *_PATH secret into a path relative to /var/www and refuses
+      # anything risky: deploys delete files missing from git, so a wrong
+      # folder matters.
       - name: Resolve server paths
         env:
           APP_PATH: ${{ secrets.DEPLOY_APP_PATH }}
@@ -40,22 +44,22 @@ jobs:
         run: |
           resolve() {
             local name="$1" path="$2"
+            path="${path#/var/www/}"   # accept full paths too
+            path="${path#./}"
             path="${path%/}"
+            [ -z "$path" ] && return 0
             case "$path" in
-              "") echo ""; return ;;
-              /*) ;;
-              *)  path="/var/www/$path" ;;
-            esac
-            case "$path" in
-              *..*|/|/var/www|/var/www/*/|/home|/root)
-                echo "::error::$name resolves to an unsafe folder. Use a site's app or plugin folder." >&2
+              /*)
+                echo "::error::$name must be inside /var/www (e.g. example.com/app)." >&2
+                return 1 ;;
+              *..*|*//*)
+                echo "::error::$name can't contain '..' or '//'." >&2
+                return 1 ;;
+              */*) ;;  # at least site/folder
+              *)
+                echo "::error::$name points at a whole site. Point it at the app or plugin folder inside a site." >&2
                 return 1 ;;
             esac
-            # At least /var/www/<site>/<folder>: never a whole site folder.
-            if [ "$(printf '%s' "$path" | tr -cd / | wc -c)" -lt 4 ]; then
-              echo "::error::$name points at a whole site or higher. Point it at the app or plugin folder inside a site." >&2
-              return 1
-            fi
             echo "$path"
           }
           app=$(resolve DEPLOY_APP_PATH "$APP_PATH") || exit 1
@@ -84,6 +88,7 @@ jobs:
           printf '%s\n' "$SSH_KEY" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
           printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+          echo "SSH_CMD=ssh -i $HOME/.ssh/deploy_key -o BatchMode=yes" >> "$GITHUB_ENV"
 
       # Last check before anything is deleted: only deploy into a folder that's
       # new or empty, or that already holds this app (bootstrap.php) or this
@@ -95,13 +100,21 @@ jobs:
           USER: ${{ secrets.DEPLOY_USER }}
         run: |
           check() {
-            local name="$1" dest="$2" marker="$3"
+            local name="$1" dest="$2" marker="$3" listing entries
             [ -z "$dest" ] && return 0
-            if ! ssh -i ~/.ssh/deploy_key -o BatchMode=yes "$USER@$HOST" \
-                "[ ! -d '$dest' ] || [ -z \"\$(ls -A '$dest')\" ] || [ -e '$dest/$marker' ]"; then
-              echo "::error::$name points at a folder that isn't empty and doesn't contain $marker. Nothing was deployed." >&2
+            if ! listing=$(rsync --list-only -e "$SSH_CMD" "$USER@$HOST:$dest/" 2>&1); then
+              if printf '%s' "$listing" | grep -q "No such file or directory"; then
+                return 0  # new folder; the deploy creates it
+              fi
+              echo "::error::Couldn't check $name on the server. Is the deploy key set up? rsync said:" >&2
+              printf '%s\n' "$listing" | sed "s#$HOST#<host>#g; s#$dest#<path>#g" >&2
               return 1
             fi
+            entries=$(printf '%s\n' "$listing" | awk '{print $NF}' | grep -vx '\.' || true)
+            [ -z "$entries" ] && return 0
+            printf '%s\n' "$entries" | grep -qx "$marker" && return 0
+            echo "::error::$name points at a folder that isn't empty and doesn't contain $marker. Nothing was deployed." >&2
+            return 1
           }
           check DEPLOY_APP_PATH "$APP_DEST" bootstrap.php || exit 1
           check DEPLOY_PLUGIN_PATH "$PLUGIN_DEST" somajewel-stats.php || exit 1
@@ -113,7 +126,7 @@ jobs:
         run: |
           rsync -rlz --delete --delay-updates --chmod=D755,F644 \
             --exclude config.php --exclude .DS_Store \
-            -e "ssh -i ~/.ssh/deploy_key -o BatchMode=yes" \
+            -e "$SSH_CMD" \
             app/ "$USER@$HOST:$APP_DEST/"
 
       - name: Deploy WordPress stats plugin
@@ -127,7 +140,7 @@ jobs:
           fi
           rsync -rlz --delete --delay-updates --chmod=D755,F644 \
             --exclude .DS_Store \
-            -e "ssh -i ~/.ssh/deploy_key -o BatchMode=yes" \
+            -e "$SSH_CMD" \
             wordpress/somajewel-stats/ "$USER@$HOST:$PLUGIN_DEST/"
 
       - name: Clean up the SSH key
