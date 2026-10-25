@@ -91,13 +91,26 @@ In the repository, go to **Settings → Environments → New environment**, name
 | Secret | Value |
 |---|---|
 | `DEPLOY_HOST` | The server's IP address or hostname |
-| `DEPLOY_USER` | `deploy` |
 | `DEPLOY_SSH_KEY` | The **private** key: the full output of `cat ~/.ssh/somajewel_deploy` |
-| `DEPLOY_KNOWN_HOSTS` | The output of `ssh-keyscan -t ed25519 YOUR_SERVER` |
+| `DEPLOY_KNOWN_HOSTS` | The output of `ssh-keyscan -t ed25519 YOUR_SERVER`, using exactly the same IP or hostname as `DEPLOY_HOST` (not an SSH shortcut from `~/.ssh/config`, which `ssh-keyscan` ignores) |
 
-There's no path secret: the key itself decides where deploys go. Everything is
-a secret, even the host, because this repository is public and secrets are
-masked in the Actions logs.
+Then, on the same environment page, add one **environment variable** (not a
+secret):
+
+| Variable | Value |
+|---|---|
+| `DEPLOY_USER` | `deploy` |
+
+The username isn't sensitive, and as a secret GitHub would hide the word
+"deploy" everywhere in the logs. (A `DEPLOY_USER` secret still works if you
+already made one.)
+
+There's no path setting: the key itself decides where deploys go. The host is
+a secret because this repository is public and secrets are masked in the
+Actions logs.
+
+If a deploy can't reach the server, the run's summary says why (for example,
+a known-hosts mismatch or a rejected key) and what to check.
 
 Optional but recommended: under the environment's **Deployment branches**,
 choose **Selected branches** and add `live`, so nothing else can deploy.
