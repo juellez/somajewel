@@ -22,7 +22,11 @@ return [
     ],
 
     // Practice menu. What makes it somatic: intention, awareness, repetition.
+    // Optional per skill: 'note_placeholder' (the note box's prompt) and
+    // 'milestone' (how celebrations name its reps, e.g. "10 conscious rests").
     'skills' => [
+        ['key' => 'rest',           'title' => 'Conscious rest', 'description' => 'Choosing rest with intention is a practice too.',
+         'note_placeholder' => 'Optional: what are you resting from, or for?', 'milestone' => 'conscious rests'],
         ['key' => 'one-breath',     'title' => 'One breath',     'description' => 'Take one breath, right now, with your declaration.'],
         ['key' => 'centering',      'title' => 'Centering',      'description' => 'Length, width, depth. Center around your declaration.'],
         ['key' => 'mindful-minute', 'title' => 'Mindful minute', 'description' => 'One minute of full attention.'],
@@ -54,11 +58,6 @@ return [
         'note_placeholder' => 'Optional: what welled up, or anything else from today',
     ],
 
-    'rest' => [
-        'title' => 'Conscious rest',
-        'intro' => 'Choosing rest with intention is a practice too. It keeps your streak.',
-        'note_placeholder' => 'Optional: what are you resting from, or for?',
-    ],
 
     // One set = the same questions every week. Add more sets to rotate.
     'weekly' => [

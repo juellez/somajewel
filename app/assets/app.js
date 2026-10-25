@@ -323,8 +323,7 @@
     return el('div', { class: 'chips', 'aria-label': 'Today' },
       chip('Clearing', t.clearing),
       chip('Practice', t.practice),
-      chip('Gratitude', t.gratitude),
-      t.rest ? chip('Rest', t.rest) : null
+      chip('Gratitude', t.gratitude)
     );
   }
 
@@ -380,7 +379,14 @@
 
     const error = el('p', { class: 'form-error', 'aria-live': 'polite' });
     const save = el('button', { class: 'btn btn--primary', type: 'button', text: 'Log practice' });
-    const update = () => { save.disabled = !(decl.value && skill.value && mood.value); };
+    const hint = el('p', { class: 'skill-hint', 'aria-live': 'polite' });
+    const update = () => {
+      save.disabled = !(decl.value && skill.value && mood.value);
+      // The chosen skill's description, and its own note prompt (e.g. conscious rest).
+      const chosen = state.skills.find((x) => x.key === skill.value);
+      hint.textContent = chosen ? chosen.description : '';
+      note.field.placeholder = (chosen && chosen.note_placeholder) || 'Optional note';
+    };
 
     const decl = declarationChoices({ selected: defaultDeclaration(), onChange: update });
     const skill = choiceGroup(
@@ -405,7 +411,7 @@
       ...meta,
       body: [
         el('p', { class: 'step', text: 'Declaration' }), decl.node,
-        el('p', { class: 'step', text: 'What did you practice?' }), skill.node,
+        el('p', { class: 'step', text: 'What did you practice?' }), skill.node, hint,
         el('p', { class: 'step', text: 'How do you feel now?' }), mood.node,
         note.node,
         when.node, save, error,
@@ -437,33 +443,6 @@
           el('li', {}, el('strong', { text: s.title }), ' ', s.text)
         )),
         el('p', { class: 'step', text: 'How do you feel now? (optional)' }), mood.node,
-        note.node,
-        when.node, save, error,
-      ],
-    });
-  }
-
-  // ---------- conscious rest ----------
-
-  function restCard() {
-    const r = state.rest;
-    const error = el('p', { class: 'form-error', 'aria-live': 'polite' });
-    const decl = state.declarations.length ? declarationChoices() : null;
-    const note = textField({ rows: 2, placeholder: r.note_placeholder, label: 'Rest note' });
-    const when = whenPicker();
-    const save = el('button', { class: 'btn btn--primary', type: 'button', text: 'I\'m choosing rest' });
-
-    save.addEventListener('click', () => withButton(save, error, () => saveEntry('rest', {
-      type: 'rest', declaration_id: decl ? decl.value : null, note: note.field.value, for: when.value,
-    })));
-
-    return card('rest', {
-      eyebrow: 'Anytime',
-      title: r.title,
-      done: state.today_counts.rest ? '✓ Chosen' : '',
-      body: [
-        el('p', { class: 'card__body', text: r.intro }),
-        decl ? [el('p', { class: 'step', text: 'Resting in service of… (optional)' }), decl.node] : null,
         note.node,
         when.node, save, error,
       ],
@@ -505,7 +484,10 @@
         await api('weekly', { method: 'POST', body: { key: q.key, response: field.value } });
         lastSaved = field.value;
         q.response = field.value;
+        hist.weeks = null; // History reloads with this answer
         status.textContent = 'Saved';
+        // Saved as you left the box for the History tab? Refresh what it shows.
+        if (view === 'history' && hist.mode === 'weekly') render();
       } catch (err) {
         status.textContent = 'Not saved. Try again.';
       } finally {
@@ -751,22 +733,37 @@
   async function fillWeekly(body) {
     try {
       if (!hist.weeks) hist.weeks = (await api('history_weekly')).weeks;
-      if (!hist.weeks.length) {
-        body.replaceChildren(el('p', { class: 'daylog__empty', text: 'Your weekly reflections will collect here. Answer this week\'s questions on the Today tab.' }));
+
+      // This week is always first, even before it has answers.
+      const current = state.weekly ? state.weekly.week_start : null;
+      const weeks = hist.weeks.slice();
+      if (current && !weeks.some((w) => w.week_start === current)) {
+        weeks.unshift({ week_start: current, answers: [] });
+      }
+      if (!weeks.length) {
+        body.replaceChildren(el('p', { class: 'daylog__empty', text: 'Your weekly reflections will collect here.' }));
         return;
       }
-      body.replaceChildren(...hist.weeks.map((w, i) => {
+
+      body.replaceChildren(...weeks.map((w) => {
         const [y, m, d] = w.week_start.split('-').map(Number);
-        const details = el('details', { class: 'week', open: i === 0 },
+        const isCurrent = w.week_start === current;
+        const n = w.answers.length;
+        const total = isCurrent ? state.weekly.questions.length : 0;
+        return el('details', { class: `week ${isCurrent ? 'week--current' : ''}`, open: isCurrent || weeks.length === 1 },
           el('summary', {},
-            el('span', { class: 'week__title', text: `Week of ${MONTHS[m - 1]} ${d}, ${y}` }),
-            el('span', { class: 'week__count', text: `${w.answers.length} ${w.answers.length === 1 ? 'answer' : 'answers'}` })
+            el('span', { class: 'week__heading' },
+              isCurrent ? el('span', { class: 'week__badge', text: 'This week' }) : null,
+              el('span', { class: 'week__title', text: `Week of ${MONTHS[m - 1]} ${d}, ${y}` })
+            ),
+            el('span', { class: 'week__count', text: isCurrent ? `${n} of ${total}` : `${n} ${n === 1 ? 'answer' : 'answers'}` })
           ),
-          el('div', { class: 'week__answers' }, w.answers.map((a) =>
-            el('div', {}, el('p', { class: 'week__q', text: a.question }), el('p', { class: 'week__a', text: a.answer }))
-          ))
+          el('div', { class: 'week__answers' },
+            n
+              ? w.answers.map((a) => el('div', {}, el('p', { class: 'week__q', text: a.question }), el('p', { class: 'week__a', text: a.answer })))
+              : el('p', { class: 'daylog__empty' }, 'Not answered yet. ', el('a', { href: '#today', text: 'Reflect on the Today tab' }), '.')
+          )
         );
-        return details;
       }));
     } catch (err) {
       if (err.message !== 'auth') body.replaceChildren(el('p', { class: 'daylog__empty', text: 'Couldn\'t load your reflections. Please refresh.' }));
@@ -783,7 +780,6 @@
       clearingCard(),
       practiceCard(),
       gratitudeCard(),
-      restCard(),
       weeklyCard(),
       declarationsCard(),
       repsCard(),

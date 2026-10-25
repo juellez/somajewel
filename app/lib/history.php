@@ -89,7 +89,6 @@ function usp_history_day(int $user_id, string $date): ?array
         'clearing'  => $content['clearing']['title'],
         'practice'  => 'Practice',
         'gratitude' => $content['gratitude']['title'],
-        'rest'      => $content['rest']['title'],
     ];
 
     $items = [];

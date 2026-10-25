@@ -25,12 +25,12 @@ Database tables (`{prefix}usp_*`) are created automatically on first visit.
 ## How it works
 
 - **Today:** a counter header (Days, Streak, Longest, Reps), then the daily
-  rituals: morning clearing, practice (declaration + skill + after-mood),
-  evening gratitude, and conscious rest. Any one of them counts for the day.
+  rituals: morning clearing, practice (declaration + skill + after-mood), and
+  evening gratitude. Any one of them counts for the day. Conscious rest is a
+  practice skill, so choosing rest with intention counts too.
 - **Days, streak, longest, reps:** Days is every day you've practiced and only
   ever grows. Streak is consecutive days, and stays alive through today if you
   practiced yesterday. A missed day resets the streak but never Days or Reps.
-  Choosing conscious rest counts as practicing.
 - **Grace window:** until noon, anything can be logged for yesterday, for late
   nights. Streaks are recalculated from the days you actually logged, so a
   late entry fills its gap.
@@ -60,7 +60,7 @@ keep it; change the text freely.
 | `lib/history.php` | Month calendar, day summaries, weekly reflections |
 | `lib/declarations.php` | Declarations (up to 3, with version history) |
 | `lib/content.php` | Weekly questions and the page's state |
-| `content/prompts.php` | Moods, skills, clearing, gratitude, rest, weekly questions |
+| `content/prompts.php` | Moods, skills (conscious rest first), clearing, gratitude, weekly questions |
 | `assets/app.js` | Front end, including voice-to-text |
 | `assets/app.css` | Kaleidoscope theme (light and dark mode) |
 | `assets/fonts/` | Jost, hosted with the app (SIL Open Font License) |

@@ -159,7 +159,6 @@ function usp_build_state(int $user_id): array
         'rituals'          => $rituals,
         'clearing'         => $content['clearing'],
         'gratitude'        => $content['gratitude'],
-        'rest'             => $content['rest'],
         'weekly'           => usp_weekly_state($user_id, $today),
     ];
 }

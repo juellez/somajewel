@@ -4,7 +4,7 @@
  *
  * All dates are in each user's own timezone, so "today" flips at their local
  * midnight, not the server's. A day counts when it has at least one daily
- * entry: a clearing, a practice, gratitude, or conscious rest.
+ * entry: a clearing, a practice (conscious rest included), or gratitude.
  *
  * Streaks are recalculated from the days actually logged, rather than nudged
  * along entry by entry, so an entry logged for yesterday (see the grace window
