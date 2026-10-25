@@ -1,15 +1,25 @@
 <?php
 /**
- * Copy this file to config.php to override defaults.
- * config.php is ignored by git, so each environment can have its own.
+ * Copy this file to config.php to override defaults: config.php is ignored by git.
  */
 
 return [
-    // Path to WordPress's wp-load.php. The default (parent folder) works when
-    // the app sits inside the WordPress root, e.g. unstrucksomatics.com/app.
+    // When using WP to handle auth and DB connectors, this is the path to wp-load.php. 
+    // The default (parent folder) works when the app sits inside the WordPress root
     // For a subdomain later, point this at the main site's WordPress folder:
-    // 'wp_load_path' => '/var/www/unstrucksomatics.com/wp-load.php',
+    #'wp_load_path' => '/var/www/.../wp-load.php',
+
+    // Contact email shown on the Terms & Privacy page.
+    'contact_email' => 'yourname@email.com',
 
     // Timezone given to new users until they choose their own.
     'default_timezone' => 'America/Chicago',
+
+    // Link to this app's source code, shown on the Terms & Privacy page. If you
+    // run a modified version, point this to your modified source (AGPL section 13).
+    #'source_url' => 'https://github.com/your-name/your-fork',
+
+    // By default, the footer links to the app's own Terms & Privacy page
+    // (legal.php, generated from LEGAL.md). Set this to link elsewhere instead.
+    #'legal_url' => 'https://yoursite.com/terms',
 ];
