@@ -8,20 +8,8 @@
 const USP_VERSION    = '0.2.0';
 const USP_DB_VERSION = 2;
 
-$usp_config = [
-    // All default config values. See config.php to set or override.
-
-    'db_auth_module'   => 'wordpress', // wordpress module for authentication and DB connection
-    'wp_load_path'     => dirname(__DIR__) . '/wp-load.php', // app folder is nested in WP root
-    'default_timezone' => 'America/Chicago',
-    'legal_url'       => '/app/legal.html', // shown in the footer
-    'source_url'       => 'https://github.com/juellez/somajewel', // shared on legal page
-    'contact_email'   => '', // shared on legal page
-];
-
-if (is_file(__DIR__ . '/config.php')) {
-    $usp_config = array_merge($usp_config, (array) require __DIR__ . '/config.php');
-}
+// Default config values live in lib/config.php; set or override them in config.php.
+require_once __DIR__ . '/lib/config.php';
 
 switch($usp_config['db_auth_module']){
     case 'wordpress':

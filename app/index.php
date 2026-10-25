@@ -18,6 +18,7 @@ $boot = [
     'nonce' => wp_create_nonce('usp_api'),
 ];
 $asset = fn (string $file) => $base . '/assets/' . $file . '?v=' . filemtime(__DIR__ . '/assets/' . $file);
+$legal = $usp_config['legal_url'] ?: $base . '/legal.php';
 
 header('Cache-Control: no-store');
 ?>
@@ -38,7 +39,7 @@ header('Cache-Control: no-store');
     <footer class="footer">
         <a href="<?php echo esc_url(wp_logout_url(home_url('/'))); ?>">Log out</a>
         <span aria-hidden="true">·</span>
-        <a href="<?php echo esc_url($usp_config['legal_url']); ?>">Terms of Use & Privacy</a>
+        <a href="<?php echo esc_url($legal); ?>">Terms of Use &amp; Privacy</a>
     </footer>
 
     <script>window.USP = <?php echo wp_json_encode($boot); ?>;</script>
