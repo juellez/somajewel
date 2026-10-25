@@ -1,4 +1,7 @@
 <?php
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Jewel Mlnarik · https://github.com/juellez/somajewel
+
 /**
  * App shell. Sends logged-out visitors to the WordPress login,
  * then hands off to assets/app.js, which talks to api.php.
@@ -37,6 +40,8 @@ header('Cache-Control: no-store');
 
     <footer class="footer">
         <a href="<?php echo esc_url(wp_logout_url(home_url('/'))); ?>">Log out</a>
+        <span aria-hidden="true">·</span>
+        <a href="<?php echo esc_url($usp_config['source_url']); ?>">Source code</a>
     </footer>
 
     <script>window.USP = <?php echo wp_json_encode($boot); ?>;</script>

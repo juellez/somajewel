@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: AGPL-3.0-or-later · Copyright (C) 2026 Jewel Mlnarik · https://github.com/juellez/somajewel */
 /* Unstruck Somatics practice app */
 
 :root {
@@ -324,7 +325,9 @@ body {
 .toast.is-leaving { opacity: 0; transform: translate(-50%, 8px); }
 
 .footer { text-align: center; padding: 8px 16px 32px; }
-.footer a { color: var(--muted); font-size: 0.9rem; }
+.footer { color: var(--muted); font-size: 0.9rem; }
+.footer a { color: var(--muted); }
+.footer span { margin: 0 6px; }
 
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; }

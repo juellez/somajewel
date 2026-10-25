@@ -1,4 +1,7 @@
 <?php
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Jewel Mlnarik · https://github.com/juellez/somajewel
+
 /**
  * Declarations: up to USP_MAX_DECLARATIONS active at once, in the user's
  * own words. Refining one keeps its reps and saves the earlier wording

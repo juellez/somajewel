@@ -1,4 +1,7 @@
 <?php
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Jewel Mlnarik · https://github.com/juellez/somajewel
+
 /**
  * JSON API for the front end.
  *   GET  api.php?action=state                → everything the page needs

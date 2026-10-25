@@ -1,4 +1,7 @@
 <?php
+// SPDX-License-Identifier: CC-BY-SA-4.0
+// Copyright (C) 2026 Jewel Mlnarik · https://github.com/juellez/somajewel
+
 /**
  * App content: edit freely.
  *

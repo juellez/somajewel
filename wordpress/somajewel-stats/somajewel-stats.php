@@ -1,4 +1,7 @@
 <?php
+// SPDX-License-Identifier: GPL-2.0-or-later
+// Copyright (C) 2026 Jewel Mlnarik · https://github.com/juellez/somajewel
+
 /**
  * Plugin Name: SomaJewel Stats
  * Description: Usage stats for the SomaJewel practice app: streaks, counts, and activity. Never shows journal content, notes, answers, moods, or declaration text.
