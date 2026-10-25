@@ -1,6 +1,7 @@
 # Deploys the app to the live server whenever the "live" branch changes.
 # Setup (server user, SSH key, and GitHub secrets): see docs/deploy.md.
-# *_PATH secrets are relative to "/var/www"
+# *_PATH secrets are relative to "/var/www" (e.g. example.com/app), or absolute
+# if they start with "/".
 
 name: Deploy to live
 
@@ -30,6 +31,50 @@ jobs:
       - name: Check PHP syntax
         run: find app wordpress -name '*.php' -print0 | xargs -0 -n1 php -l > /dev/null
 
+      # Turns each *_PATH secret into a full server path and refuses anything
+      # risky: deploys delete files missing from git, so a wrong folder matters.
+      - name: Resolve server paths
+        env:
+          APP_PATH: ${{ secrets.DEPLOY_APP_PATH }}
+          PLUGIN_PATH: ${{ secrets.DEPLOY_PLUGIN_PATH }}
+        run: |
+          resolve() {
+            local name="$1" path="$2"
+            path="${path%/}"
+            case "$path" in
+              "") echo ""; return ;;
+              /*) ;;
+              *)  path="/var/www/$path" ;;
+            esac
+            case "$path" in
+              *..*|/|/var/www|/var/www/*/|/home|/root)
+                echo "::error::$name resolves to an unsafe folder. Use a site's app or plugin folder." >&2
+                return 1 ;;
+            esac
+            # At least /var/www/<site>/<folder>: never a whole site folder.
+            if [ "$(printf '%s' "$path" | tr -cd / | wc -c)" -lt 4 ]; then
+              echo "::error::$name points at a whole site or higher. Point it at the app or plugin folder inside a site." >&2
+              return 1
+            fi
+            echo "$path"
+          }
+          app=$(resolve DEPLOY_APP_PATH "$APP_PATH") || exit 1
+          plugin=$(resolve DEPLOY_PLUGIN_PATH "$PLUGIN_PATH") || exit 1
+          if [ -z "$app" ]; then
+            echo "::error::DEPLOY_APP_PATH is not set." >&2
+            exit 1
+          fi
+          if [ -n "$plugin" ] && [ "$(basename "$plugin")" != "somajewel-stats" ]; then
+            echo "::error::DEPLOY_PLUGIN_PATH must end in /somajewel-stats." >&2
+            exit 1
+          fi
+          echo "::add-mask::$app"
+          [ -n "$plugin" ] && echo "::add-mask::$plugin"
+          {
+            echo "APP_DEST=$app"
+            echo "PLUGIN_DEST=$plugin"
+          } >> "$GITHUB_ENV"
+
       - name: Set up SSH
         env:
           SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
@@ -40,33 +85,50 @@ jobs:
           chmod 600 ~/.ssh/deploy_key
           printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
 
-      # Server details are secrets, not plain values, so they stay hidden in
-      # this public repo's logs.
+      # Last check before anything is deleted: only deploy into a folder that's
+      # new or empty, or that already holds this app (bootstrap.php) or this
+      # plugin (somajewel-stats.php). Any other folder means the path is wrong.
+      # Server details are secrets, so they stay hidden in this public repo's logs.
+      - name: Check destination folders
+        env:
+          HOST: ${{ secrets.DEPLOY_HOST }}
+          USER: ${{ secrets.DEPLOY_USER }}
+        run: |
+          check() {
+            local name="$1" dest="$2" marker="$3"
+            [ -z "$dest" ] && return 0
+            if ! ssh -i ~/.ssh/deploy_key -o BatchMode=yes "$USER@$HOST" \
+                "[ ! -d '$dest' ] || [ -z \"\$(ls -A '$dest')\" ] || [ -e '$dest/$marker' ]"; then
+              echo "::error::$name points at a folder that isn't empty and doesn't contain $marker. Nothing was deployed." >&2
+              return 1
+            fi
+          }
+          check DEPLOY_APP_PATH "$APP_DEST" bootstrap.php || exit 1
+          check DEPLOY_PLUGIN_PATH "$PLUGIN_DEST" somajewel-stats.php || exit 1
+
       - name: Deploy app
         env:
           HOST: ${{ secrets.DEPLOY_HOST }}
           USER: ${{ secrets.DEPLOY_USER }}
-          APP_PATH: ${{ secrets.DEPLOY_APP_PATH }}
         run: |
           rsync -rlz --delete --delay-updates --chmod=D755,F644 \
             --exclude config.php --exclude .DS_Store \
             -e "ssh -i ~/.ssh/deploy_key -o BatchMode=yes" \
-            app/ "$USER@$HOST:$APP_PATH/"
+            app/ "$USER@$HOST:$APP_DEST/"
 
       - name: Deploy WordPress stats plugin
         env:
           HOST: ${{ secrets.DEPLOY_HOST }}
           USER: ${{ secrets.DEPLOY_USER }}
-          PLUGIN_PATH: ${{ secrets.DEPLOY_PLUGIN_PATH }}
         run: |
-          if [ -z "$PLUGIN_PATH" ]; then
+          if [ -z "$PLUGIN_DEST" ]; then
             echo "DEPLOY_PLUGIN_PATH not set; skipping the plugin."
             exit 0
           fi
           rsync -rlz --delete --delay-updates --chmod=D755,F644 \
             --exclude .DS_Store \
             -e "ssh -i ~/.ssh/deploy_key -o BatchMode=yes" \
-            wordpress/somajewel-stats/ "$USER@$HOST:$PLUGIN_PATH/"
+            wordpress/somajewel-stats/ "$USER@$HOST:$PLUGIN_DEST/"
 
       - name: Clean up the SSH key
         if: always()

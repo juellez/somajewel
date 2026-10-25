@@ -11,6 +11,11 @@ feature branch → pull request → main → merge main into live → deployed
 
 What a deploy does and doesn't touch:
 
+- It only deploys into a folder that's new or empty, or that already holds
+  this app (`bootstrap.php`) or this plugin (`somajewel-stats.php`). A path
+  pointing at a whole site, a WordPress folder, or anything else stops the
+  deploy before anything changes, since deploys delete files missing from git.
+
 - Files removed from `app/` in git are removed from the server too.
 - Each server's `config.php` is never copied or deleted, so its settings stay put.
 - No `.git` folder ends up on the server.
@@ -73,8 +78,8 @@ In the repository, go to **Settings → Environments → New environment**, name
 |---|---|
 | `DEPLOY_HOST` | The server's IP address or hostname |
 | `DEPLOY_USER` | `deploy` |
-| `DEPLOY_APP_PATH` | The app folder, e.g. `/var/www/example.com/app` |
-| `DEPLOY_PLUGIN_PATH` | Optional. The plugin folder, or leave it out to skip the plugin |
+| `DEPLOY_APP_PATH` | The app folder, relative to `/var/www` (e.g. `example.com/app`) or a full path starting with `/` |
+| `DEPLOY_PLUGIN_PATH` | Optional. The plugin folder, same format, ending in `/somajewel-stats` (e.g. `example.com/wp-content/plugins/somajewel-stats`). Leave it out to skip the plugin |
 | `DEPLOY_SSH_KEY` | The **private** key: the full output of `cat ~/.ssh/somajewel_deploy` |
 | `DEPLOY_KNOWN_HOSTS` | The output of `ssh-keyscan -t ed25519 YOUR_SERVER` |
 
