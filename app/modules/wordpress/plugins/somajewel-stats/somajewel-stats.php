@@ -100,7 +100,7 @@ function sjs_render_page(): void
             (SELECT COUNT(*) FROM $entries e WHERE e.user_id = p.user_id AND e.type = 'clearing')  AS clearing,
             (SELECT COUNT(*) FROM $entries e WHERE e.user_id = p.user_id AND e.type = 'practice')  AS practice,
             (SELECT COUNT(*) FROM $entries e WHERE e.user_id = p.user_id AND e.type = 'gratitude') AS gratitude,
-            (SELECT COUNT(*) FROM $entries e WHERE e.user_id = p.user_id AND e.type = 'rest')      AS rest,
+            (SELECT COUNT(*) FROM $entries e WHERE e.user_id = p.user_id AND e.type = 'practice' AND e.skill_key = 'rest') AS rest,
             (SELECT COUNT(*) FROM $declarations d WHERE d.user_id = p.user_id AND d.status = 'active') AS decls,
             (SELECT COUNT(*) FROM $weekly w WHERE w.user_id = p.user_id AND TRIM(w.response) <> '') AS weekly_answers,
             UNIX_TIMESTAMP(GREATEST(

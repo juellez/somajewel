@@ -13,7 +13,7 @@ SomaJewel is a small, independent practice app made by Unstruck Somatics, LLC ("
 To work, the app saves the following on a private server I manage:
 
 - **Your account:** your name, email address, and login, through the website's account system (WordPress).
-- **Your practice:** your declarations (including earlier wordings as you refine one), the practices you log, the moods you choose, your morning clearings, gratitude and rest entries, notes, and weekly reflection answers.
+- **Your practice:** your declarations (including earlier wordings as you refine one), the practices you log, the moods you choose, your morning clearings, gratitude entries, notes, and weekly reflection answers.
 - **Your progress:** days practiced, streaks, practice counts, and your timezone.
 
 ### Who can see it

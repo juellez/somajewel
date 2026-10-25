@@ -3,19 +3,19 @@
  * Daily entries and reps.
  *
  * Every entry is a rep: it adds to the count for its type (clearing,
- * practice, gratitude, rest), its skill, and its declaration. Each count
+ * practice, gratitude), its skill, and its declaration. Each count
  * fills a ring toward the next milestone (10, 20, 50, 100, then every 100),
  * celebrates, and starts the next ring fresh.
  */
 
-const USP_ENTRY_TYPES = ['clearing', 'practice', 'gratitude', 'rest'];
+// Conscious rest is a practice skill ('rest'), not its own type.
+const USP_ENTRY_TYPES = ['clearing', 'practice', 'gratitude'];
 const USP_MILESTONES  = [10, 20, 50, 100];
 
 const USP_TYPE_LABELS = [
     'clearing'  => ['one' => 'clearing', 'many' => 'clearings'],
     'practice'  => ['one' => 'practice', 'many' => 'practices'],
     'gratitude' => ['one' => 'gratitude practice', 'many' => 'gratitude practices'],
-    'rest'      => ['one' => 'rest day', 'many' => 'rest days'],
 ];
 
 // ---------- milestones ----------
@@ -222,8 +222,10 @@ function usp_celebrations(array $before, array $after, string $type, ?string $sk
         ($a[$key] ?? 0) > ($b[$key] ?? 0) && usp_is_milestone($a[$key] ?? 0);
 
     if ($skill && $crossed($before['skills'], $after['skills'], $skill)) {
-        $title = usp_skills_by_key()[$skill]['title'];
-        $out[] = sprintf('%d %s reps!', $after['skills'][$skill], $title);
+        $info  = usp_skills_by_key()[$skill];
+        $out[] = isset($info['milestone'])
+            ? sprintf('%d %s!', $after['skills'][$skill], $info['milestone'])
+            : sprintf('%d %s reps!', $after['skills'][$skill], $info['title']);
     }
 
     if ($declaration_id && $crossed($before['declarations'], $after['declarations'], $declaration_id)) {

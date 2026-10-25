@@ -6,7 +6,7 @@
  */
 
 const USP_VERSION    = '0.2.0';
-const USP_DB_VERSION = 2;
+const USP_DB_VERSION = 3;
 
 // Default config values live in lib/settings.php; set or override them in config.php.
 require_once __DIR__ . '/lib/settings.php';
