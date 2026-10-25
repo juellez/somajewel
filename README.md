@@ -7,6 +7,9 @@ The practice/tracking app which currently uses the WP auth/login and DB connecto
 ## wordpress
 The WP admin used for monitoring usage stats for testing.
 
+## Deploying
+Pushing to the `live` branch deploys the app to the server automatically. Setup and everyday use: [docs/deploy.md](docs/deploy.md).
+
 ## License
 
 SomaJewel is community software: anyone can use it, change it, and build on it, as long as improvements are shared back and the original work is credited.

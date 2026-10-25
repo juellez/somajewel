@@ -1,0 +1,72 @@
+# Deploys the app to the live server whenever the "live" branch changes.
+# Setup (server user, SSH key, and GitHub secrets): see docs/deploy.md.
+
+name: Deploy to live
+
+on:
+  push:
+    branches: [live]
+  workflow_dispatch: # lets you re-run a deploy from the Actions tab
+
+# One deploy at a time; a newer push waits for the current one to finish.
+concurrency:
+  group: deploy-live
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: live
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out the live branch
+        uses: actions/checkout@v4
+
+      - name: Check PHP syntax
+        run: find app wordpress -name '*.php' -print0 | xargs -0 -n1 php -l > /dev/null
+
+      - name: Set up SSH
+        env:
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+
+      # Server details are secrets, not plain values, so they stay hidden in
+      # this public repo's logs.
+      - name: Deploy app
+        env:
+          HOST: ${{ secrets.DEPLOY_HOST }}
+          USER: ${{ secrets.DEPLOY_USER }}
+          APP_PATH: ${{ secrets.DEPLOY_APP_PATH }}
+        run: |
+          rsync -rlz --delete --delay-updates --chmod=D755,F644 \
+            --exclude config.php --exclude .DS_Store \
+            -e "ssh -i ~/.ssh/deploy_key -o BatchMode=yes" \
+            app/ "$USER@$HOST:$APP_PATH/"
+
+      - name: Deploy WordPress stats plugin
+        env:
+          HOST: ${{ secrets.DEPLOY_HOST }}
+          USER: ${{ secrets.DEPLOY_USER }}
+          PLUGIN_PATH: ${{ secrets.DEPLOY_PLUGIN_PATH }}
+        run: |
+          if [ -z "$PLUGIN_PATH" ]; then
+            echo "DEPLOY_PLUGIN_PATH not set; skipping the plugin."
+            exit 0
+          fi
+          rsync -rlz --delete --delay-updates --chmod=D755,F644 \
+            --exclude .DS_Store \
+            -e "ssh -i ~/.ssh/deploy_key -o BatchMode=yes" \
+            wordpress/somajewel-stats/ "$USER@$HOST:$PLUGIN_PATH/"
+
+      - name: Clean up the SSH key
+        if: always()
+        run: rm -f ~/.ssh/deploy_key
