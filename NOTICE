@@ -1,5 +1,4 @@
 SomaJewel
-https://github.com/juellez/somajewel
 
 Code (app/ and wordpress/)
   Copyright (C) 2026 Unstruck Somatics, LLC
@@ -19,7 +18,7 @@ not inside a folder with its own LICENSE.
 Attribution
   Code: under section 7(b) of the AGPL, anyone who conveys this program or
   a modified version must keep this NOTICE file and the attribution
-  "SomaJewel, by Unstruck Somatics, LLC" with a link to the original
+  "SomaJewel, by Unstruck Somatics, LLC UnstruckSomatics.com" with a link to the original
   repository. Running a modified version for others over a network also
   means offering them its source code (AGPL section 13); the app's Terms &
   Privacy page links to the source to make that easy.

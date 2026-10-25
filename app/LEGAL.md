@@ -40,7 +40,7 @@ Your data is stored on a server hosted by DigitalOcean in the United States. It'
 
 ### Your choices
 
-- **Get a copy** of your entries: me at the contact information below. [FUTURE: an export button in the app.]
+- **Get a copy** of your entries: contact me using the contact information below. [FUTURE: an export button in the app.]
 - **Delete your data:** email me and I'll delete your account and everything you've written within [28] days.
 - **Correct your information:** edit your account in the website's profile settings, or email me.
 
