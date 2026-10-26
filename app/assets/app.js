@@ -332,7 +332,7 @@
     return {
       node: el('div', { class: 'when' },
         el('div', { class: 'segmented', role: 'group', 'aria-label': 'Log this for' }, buttons),
-        el('p', { class: 'when__hint', text: `Late night? Until ${state.grace.until}, you can log yesterday's practice.` })
+        el('p', { class: 'when__hint', text: `Late night or forgot to track? Until ${state.grace.until}, you can still log practice for yesterday.` })
       ),
       get value() { return value; },
     };
@@ -488,8 +488,8 @@
       ...meta,
       body: [
         el('p', { class: 'step', text: 'Declaration' }), decl.node,
-        el('p', { class: 'step', text: 'What did you practice?' }), skill.node, hint,
-        el('p', { class: 'step', text: 'How do you feel now?' }), mood.node,
+        el('p', { class: 'step', text: 'What are you practicing?' }), skill.node, hint,
+        el('p', { class: 'step', text: 'Mood check: What do you notice in your body now and how would you describe that in one word (or a few)?' }), mood.node,
         note.node,
         when.node, save, error,
       ],
