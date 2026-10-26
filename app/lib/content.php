@@ -139,10 +139,18 @@ function usp_build_state(int $user_id): array
         $user_id
     ));
 
+    // The day's shape: clearing in the morning, practice all day, gratitude at night.
+    $ritual_names = [
+        'clearing'  => ['name' => 'Clearing',  'time' => 'Morning'],
+        'practice'  => ['name' => 'Practice',  'time' => 'All day'],
+        'gratitude' => ['name' => 'Gratitude', 'time' => 'Evening'],
+    ];
     $rituals = [];
     foreach (USP_ENTRY_TYPES as $type) {
-        $rituals[$type] = ['label' => ucfirst(USP_TYPE_LABELS[$type]['many'])]
-            + ['ring' => usp_ring($reps['types'][$type] ?? 0)];
+        $rituals[$type] = $ritual_names[$type] + [
+            'label' => ucfirst(USP_TYPE_LABELS[$type]['many']),
+            'ring'  => usp_ring($reps['types'][$type] ?? 0),
+        ];
     }
 
     return [
@@ -151,6 +159,7 @@ function usp_build_state(int $user_id): array
         'timezone'         => $profile['timezone'],
         'stats'            => usp_streak_stats($user_id) + ['reps' => array_sum($reps['types'])],
         'today_counts'     => usp_today_counts($user_id, $today->format('Y-m-d')),
+        'today_skills'     => (object) usp_today_skill_counts($user_id, $today->format('Y-m-d')),
         'grace'            => [
             'open'      => usp_can_log_yesterday($profile['timezone']),
             'yesterday' => $today->modify('-1 day')->format('Y-m-d'),

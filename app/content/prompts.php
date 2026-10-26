@@ -8,17 +8,21 @@
 
 return [
 
-    // How do you feel now? Shown as a 3×3 keypad, in this order.
+    // How do you feel now? Shown as a 4×3 grid, in this order: lifted,
+    // settled, heavy. 'icon' is a Phosphor icon in assets/icons.svg.
     'moods' => [
-        ['key' => 'elated',     'emoji' => '🤩', 'label' => 'Elated'],
-        ['key' => 'joyful',     'emoji' => '😄', 'label' => 'Joyful'],
-        ['key' => 'loving',     'emoji' => '🥰', 'label' => 'Loving'],
-        ['key' => 'calm',       'emoji' => '😌', 'label' => 'Calm'],
-        ['key' => 'tender',     'emoji' => '🥹', 'label' => 'Tender'],
-        ['key' => 'blah',       'emoji' => '😐', 'label' => 'Blah'],
-        ['key' => 'anxious',    'emoji' => '😟', 'label' => 'Anxious'],
-        ['key' => 'sad',        'emoji' => '😢', 'label' => 'Sad'],
-        ['key' => 'heartbroken','emoji' => '💔', 'label' => 'Heartbroken'],
+        ['key' => 'elated',      'icon' => 'lightning',      'label' => 'Energized'],
+        ['key' => 'joyful',      'icon' => 'smiley',         'label' => 'Joyful'],
+        ['key' => 'loving',      'icon' => 'heart',          'label' => 'Loving'],
+        ['key' => 'sacred',      'icon' => 'flower-lotus',   'label' => 'Sacred'],
+        ['key' => 'calm',        'icon' => 'feather',        'label' => 'Peaceful'],
+        ['key' => 'grounded',    'icon' => 'mountains',      'label' => 'Grounded'],
+        ['key' => 'tender',      'icon' => 'plant',          'label' => 'Tender'],
+        ['key' => 'blah',        'icon' => 'smiley-meh',     'label' => 'Blah'],
+        ['key' => 'anxious',     'icon' => 'smiley-nervous', 'label' => 'Anxious'],
+        ['key' => 'sad',         'icon' => 'smiley-sad',     'label' => 'Sad'],
+        ['key' => 'heartbroken', 'icon' => 'heart-break',    'label' => 'Heartbroken'],
+        ['key' => 'other',       'icon' => 'dots-three',     'label' => 'Other'],
     ],
 
     // Practice menu. What makes it somatic: intention, awareness, repetition.
