@@ -116,14 +116,19 @@ function usp_build_state(int $user_id): array
     $today   = usp_today($profile['timezone']);
     $reps    = usp_rep_counts($user_id);
 
-    $skills = array_map(fn ($s) => $s + [
-        'ring' => usp_ring($reps['skills'][$s['key']] ?? 0),
-    ], $content['skills']);
+    // Skills without milestones get a plain count and no ring.
+    $skills = array_map(function ($s) use ($reps) {
+        $count = $reps['skills'][$s['key']] ?? 0;
+        return $s + [
+            'count' => $count,
+            'ring'  => ($s['milestones'] ?? true) ? usp_ring($count) : null,
+        ];
+    }, $content['skills']);
 
+    // Declaration reps are counted (usp_rep_counts) but not shown, for now.
     $declarations = array_map(fn ($d) => [
         'id'   => (int) $d['id'],
         'text' => $d['text'],
-        'ring' => usp_ring($reps['declarations'][(int) $d['id']] ?? 0),
     ], usp_declarations($user_id));
 
     // Preselect the declaration practiced most recently.
@@ -144,8 +149,13 @@ function usp_build_state(int $user_id): array
         'user'             => ['name' => wp_get_current_user()->display_name],
         'today'            => $today->format('Y-m-d'),
         'timezone'         => $profile['timezone'],
-        'streak'           => usp_streak_status($profile),
+        'stats'            => usp_streak_stats($user_id) + ['reps' => array_sum($reps['types'])],
         'today_counts'     => usp_today_counts($user_id, $today->format('Y-m-d')),
+        'grace'            => [
+            'open'      => usp_can_log_yesterday($profile['timezone']),
+            'yesterday' => $today->modify('-1 day')->format('Y-m-d'),
+            'until'     => USP_GRACE_HOUR === 12 ? 'noon' : sprintf('%d:00', USP_GRACE_HOUR),
+        ],
         'moods'            => $content['moods'],
         'skills'           => $skills,
         'declarations'     => $declarations,
@@ -154,7 +164,6 @@ function usp_build_state(int $user_id): array
         'rituals'          => $rituals,
         'clearing'         => $content['clearing'],
         'gratitude'        => $content['gratitude'],
-        'rest'             => $content['rest'],
         'weekly'           => usp_weekly_state($user_id, $today),
     ];
 }

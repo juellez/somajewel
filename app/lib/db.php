@@ -114,6 +114,11 @@ function usp_maybe_migrate(): void
 
             "DROP TABLE IF EXISTS " . usp_table('checkins'),
         ],
+
+        // Conscious rest becomes a practice skill instead of its own entry type.
+        3 => [
+            "UPDATE " . usp_table('entries') . " SET type = 'practice', skill_key = 'rest' WHERE type = 'rest'",
+        ],
     ];
 
     foreach ($migrations as $version => $queries) {

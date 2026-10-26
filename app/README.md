@@ -1,7 +1,8 @@
-# Unstruck Practice
+# SomaJewel
 
-A small self-coaching and daily somatic practice app. Weekly reflection
-questions, daily check-ins with streaks, and voice-to-text answers.
+A small self-coaching and daily somatic practice app. Daily rituals with
+streaks, weekly reflection questions, a history of your practice, and
+voice-to-text answers.
 
 It runs as a plain PHP app beside a WordPress site and uses WordPress only
 for logins. Anyone with a WordPress account can use it.
@@ -16,19 +17,34 @@ for logins. Anyone with a WordPress account can use it.
 
 1. Put this folder inside the WordPress root, so it's reachable at `/app`.
 2. Optional: copy `config.sample.php` to `config.php` to change defaults.
-3. Visit `/app`. You'll be sent to the WordPress login, then back.
+3. Optional: add the app icon as `assets/icon-192.png` (and `assets/icon-512.png`).
+4. Visit `/app`. You'll be sent to the WordPress login, then back.
 
 Database tables (`{prefix}usp_*`) are created automatically on first visit.
 
 ## How it works
 
-- **Daily rituals:** morning clearing, practice (declaration + skill + after-mood),
-  evening gratitude, and conscious rest. Any one of them keeps the daily streak.
-- **Reps:** every entry adds to its skill, its declaration, and its ritual.
-  Each count fills a ring toward the next milestone (10, 20, 50, 100, then every
-  100), celebrates, and starts the next ring fresh.
-- **Streak freezes:** one is earned every 7 days of streak (max 2) and covers a
-  missed day automatically.
+- **Today:** a counter header (Days, Streak, Longest, Reps), then the daily
+  rituals: morning clearing, practice (declaration + skill + after-mood), and
+  evening gratitude. Any one of them counts for the day. Conscious rest is a
+  practice skill, so choosing rest with intention counts too.
+- **Days, streak, longest, reps:** Days is every day you've practiced and only
+  ever grows. Streak is consecutive days, and stays alive through today if you
+  practiced yesterday. A missed day resets the streak but never Days or Reps.
+- **Grace window:** until noon, anything can be logged for yesterday, for late
+  nights. Streaks are recalculated from the days you actually logged, so a
+  late entry fills its gap.
+- **Reps:** every entry adds to its ritual, its skill, and its declaration.
+  Ritual and skill counts each fill a ring toward their next milestone,
+  celebrate, and start the next ring fresh. Days and streaks celebrate at the
+  same milestones. Conscious Rest is counted (and counts toward the Practice
+  ring) but has no milestones of its own. Declaration reps are counted but not
+  shown yet.
+- **Milestones:** 10, 20, 50, 100, 150, 300, 500, 750, 1,000, then every
+  1,000. Set in `lib/entries.php` (`USP_MILESTONES`); a skill opts out with
+  `'milestones' => false` in `content/prompts.php`.
+- **History:** a calendar of practice days (tap a day for a read-only summary)
+  and a list of past weekly reflections.
 - **Weekly reflection:** seven questions, the last one optional.
 
 ## Editing content
@@ -40,17 +56,19 @@ keep it; change the text freely.
 
 | File | What it does |
 |---|---|
-| `index.php` | Login gate and page shell |
-| `api.php` | JSON endpoints: `state`, `entry`, `declaration`, `declaration_archive`, `weekly` |
+| `index.php` | Login gate and page shell (header, Today and History tabs) |
+| `api.php` | JSON endpoints: `state`, `entry`, `declaration`, `declaration_archive`, `weekly`, `history_month`, `history_day`, `history_weekly` |
 | `bootstrap.php` | Loads config, WordPress, and the libraries |
 | `lib/db.php` | Tables, migrations, user profiles |
-| `lib/streaks.php` | Streak and streak-freeze logic (user's timezone) |
+| `lib/streaks.php` | Days, streaks, and the grace window (user's timezone) |
 | `lib/entries.php` | Daily entries, reps, and milestone rings |
+| `lib/history.php` | Month calendar, day summaries, weekly reflections |
 | `lib/declarations.php` | Declarations (up to 3, with version history) |
 | `lib/content.php` | Weekly questions and the page's state |
-| `content/prompts.php` | Moods, skills, clearing, gratitude, rest, weekly questions |
+| `content/prompts.php` | Moods, skills (conscious rest first), clearing, gratitude, weekly questions |
 | `assets/app.js` | Front end, including voice-to-text |
-| `assets/app.css` | Styles (light and dark mode) |
+| `assets/app.css` | Kaleidoscope theme (light and dark mode) |
+| `assets/fonts/` | Jost, hosted with the app (SIL Open Font License) |
 
 ## Voice-to-text
 
@@ -61,7 +79,10 @@ browser vendor (Google or Apple), not this server.
 ## Roadmap
 
 - Settings: choose your timezone
-- History view and export (for reviewing patterns, or with AI)
+- Export your history (for reviewing patterns, or with AI)
+- Declaration milestones as an embodiment journey: 300 reps (muscle memory)
+  to 3,000 (embodied), or a check-in after 100 reps under one declaration,
+  possibly as a weekly reflection question
 - Friends: see each other's streaks, send nudges
 - Installable app (PWA) with daily push reminders
 - v2: community share space

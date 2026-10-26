@@ -3,19 +3,23 @@
  * Daily entries and reps.
  *
  * Every entry is a rep: it adds to the count for its type (clearing,
- * practice, gratitude, rest), its skill, and its declaration. Each count
- * fills a ring toward the next milestone (10, 20, 50, 100, then every 100),
- * celebrates, and starts the next ring fresh.
+ * practice, gratitude), its skill, and its declaration. Type and skill
+ * counts fill a ring toward the next milestone (USP_MILESTONES, then every
+ * 1,000), celebrate, and start the next ring fresh.
+ *
+ * Declarations are counted but have no milestones (yet), and a skill can opt
+ * out with 'milestones' => false (conscious rest does).
  */
 
-const USP_ENTRY_TYPES = ['clearing', 'practice', 'gratitude', 'rest'];
-const USP_MILESTONES  = [10, 20, 50, 100];
+// Conscious rest is a practice skill ('rest'), not its own type.
+const USP_ENTRY_TYPES = ['clearing', 'practice', 'gratitude'];
+const USP_MILESTONES  = [10, 20, 50, 100, 150, 300, 500, 750, 1000];
+const USP_MILESTONE_STEP = 1000; // after the last one, every 1,000
 
 const USP_TYPE_LABELS = [
     'clearing'  => ['one' => 'clearing', 'many' => 'clearings'],
     'practice'  => ['one' => 'practice', 'many' => 'practices'],
-    'gratitude' => ['one' => 'gratitude practice', 'many' => 'gratitude practices'],
-    'rest'      => ['one' => 'rest day', 'many' => 'rest days'],
+    'gratitude' => ['one' => 'generative gratitude', 'many' => 'gratitude'],
 ];
 
 // ---------- milestones ----------
@@ -27,13 +31,13 @@ function usp_next_milestone(int $count): int
             return $m;
         }
     }
-    return (intdiv($count, 100) + 1) * 100;
+    return (intdiv($count, USP_MILESTONE_STEP) + 1) * USP_MILESTONE_STEP;
 }
 
 function usp_prev_milestone(int $count): int
 {
-    if ($count >= 100) {
-        return intdiv($count, 100) * 100;
+    if ($count >= USP_MILESTONE_STEP) {
+        return intdiv($count, USP_MILESTONE_STEP) * USP_MILESTONE_STEP;
     }
     $prev = 0;
     foreach (USP_MILESTONES as $m) {
@@ -57,7 +61,7 @@ function usp_ring(int $count): array
     return [
         'count' => $count,
         'next'  => $next,
-        'pct'   => (int) round(100 * ($count - $prev) / ($next - $prev)),
+        'pct'   => (int) floor(100 * ($count - $prev) / ($next - $prev)), // never a full ring before the milestone
     ];
 }
 
@@ -111,9 +115,10 @@ function usp_today_counts(int $user_id, string $today): array
 // ---------- creating entries ----------
 
 /**
- * Validates and saves one entry, advances the streak, and reports any
- * milestones reached. Returns ['error' => code] or
- * ['celebrations' => [...], 'first_today' => bool].
+ * Validates and saves one entry and reports any milestones reached.
+ * $in['for'] = 'yesterday' logs it for yesterday, allowed until noon.
+ * Returns ['error' => code] or
+ * ['celebrations' => [...], 'first_of_day' => bool, 'date' => Y-m-d, 'for_yesterday' => bool].
  */
 function usp_create_entry(int $user_id, array $in): array
 {
@@ -167,15 +172,27 @@ function usp_create_entry(int $user_id, array $in): array
 
     $note    = mb_substr(trim((string) ($in['note'] ?? '')), 0, 5000);
     $profile = usp_get_profile($user_id);
-    $today   = usp_today($profile['timezone'])->format('Y-m-d');
-    $first   = $profile['last_checkin_date'] !== $today;
-    $before  = usp_rep_counts($user_id);
+    $today   = usp_today($profile['timezone']);
+
+    $for_yesterday = ($in['for'] ?? 'today') === 'yesterday';
+    if ($for_yesterday && !usp_can_log_yesterday($profile['timezone'])) {
+        return ['error' => 'grace_closed'];
+    }
+    $date = ($for_yesterday ? $today->modify('-1 day') : $today)->format('Y-m-d');
+
+    $first = !$wpdb->get_var($wpdb->prepare(
+        'SELECT 1 FROM ' . usp_table('entries') . ' WHERE user_id = %d AND entry_date = %s LIMIT 1',
+        $user_id,
+        $date
+    ));
+    $before       = usp_rep_counts($user_id);
+    $days_before  = usp_streak_stats($user_id);
 
     $saved = $wpdb->insert(
         usp_table('entries'),
         [
             'user_id'        => $user_id,
-            'entry_date'     => $today,
+            'entry_date'     => $date,
             'type'           => $type,
             'declaration_id' => $declaration_id,
             'skill_key'      => $skill,
@@ -190,37 +207,39 @@ function usp_create_entry(int $user_id, array $in): array
         return ['error' => 'save_failed'];
     }
 
-    $streak = usp_touch_streak($user_id);
-    $after  = usp_rep_counts($user_id);
+    $after      = usp_rep_counts($user_id);
+    $days_after = usp_streak_stats($user_id);
 
     return [
-        'celebrations' => usp_celebrations($before, $after, $type, $skill, $declaration_id, $streak),
-        'first_today'  => $first,
+        'celebrations'  => usp_celebrations($before, $after, $type, $skill, $days_before, $days_after),
+        'first_of_day'  => $first,
+        'date'          => $date,
+        'for_yesterday' => $for_yesterday,
     ];
 }
 
 /** Messages for any milestone this entry just reached. */
-function usp_celebrations(array $before, array $after, string $type, ?string $skill, ?int $declaration_id, array $streak): array
+function usp_celebrations(array $before, array $after, string $type, ?string $skill, array $days_before, array $days_after): array
 {
     $out     = [];
     $crossed = fn (array $b, array $a, $key) =>
         ($a[$key] ?? 0) > ($b[$key] ?? 0) && usp_is_milestone($a[$key] ?? 0);
 
-    if ($skill && $crossed($before['skills'], $after['skills'], $skill)) {
-        $title = usp_skills_by_key()[$skill]['title'];
-        $out[] = sprintf('%d %s reps!', $after['skills'][$skill], $title);
-    }
-
-    if ($declaration_id && $crossed($before['declarations'], $after['declarations'], $declaration_id)) {
-        $out[] = sprintf('%d reps of your declaration!', $after['declarations'][$declaration_id]);
+    $info = $skill ? usp_skills_by_key()[$skill] : null;
+    if ($info && ($info['milestones'] ?? true) && $crossed($before['skills'], $after['skills'], $skill)) {
+        $out[] = sprintf('%d %s reps!', $after['skills'][$skill], $info['title']);
     }
 
     if ($crossed($before['types'], $after['types'], $type)) {
         $out[] = sprintf('%d %s!', $after['types'][$type], USP_TYPE_LABELS[$type]['many']);
     }
 
-    if (!empty($streak['earned_freeze'])) {
-        $out[] = sprintf('%d-day streak. You earned a streak freeze.', $streak['streak']);
+    if ($days_after['days'] > $days_before['days'] && usp_is_milestone($days_after['days'])) {
+        $out[] = sprintf('%d days of practice!', $days_after['days']);
+    }
+
+    if ($days_after['streak'] > $days_before['streak'] && usp_is_milestone($days_after['streak'])) {
+        $out[] = sprintf('%d-day streak!', $days_after['streak']);
     }
 
     return $out;
