@@ -519,7 +519,7 @@
         el('ol', { class: 'steps' }, g.steps.map((s) =>
           el('li', {}, el('strong', { text: s.title }), ' ', s.text)
         )),
-        el('p', { class: 'step', text: 'How do you feel now? (optional)' }), mood.node,
+        el('p', { class: 'step', text: 'Mood check: What do you notice in your body after your practice?' }), mood.node,
         note.node,
         when.node, save, error,
       ],
@@ -662,10 +662,10 @@
     );
 
     return card('reps', {
-      eyebrow: 'Your reps',
-      title: 'Rituals and skills',
+      eyebrow: 'Your Reps',
+      title: 'Rituals and Skills',
       body: [
-        el('p', { class: 'card__body', text: 'Every rep fills a ring toward its next milestone.' }),
+        el('p', { class: 'card__body', text: 'Every rep builds muscle memory.' }),
         el('p', { class: 'step', text: 'Rituals' }),
         el('div', { class: 'reps' }, Object.values(state.rituals).map((r) => tile(r.label, r.ring))),
         el('p', { class: 'step', text: 'Skills' }),

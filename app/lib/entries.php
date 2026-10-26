@@ -19,7 +19,7 @@ const USP_MILESTONE_STEP = 1000; // after the last one, every 1,000
 const USP_TYPE_LABELS = [
     'clearing'  => ['one' => 'clearing', 'many' => 'clearings'],
     'practice'  => ['one' => 'practice', 'many' => 'practices'],
-    'gratitude' => ['one' => 'gratitude practice', 'many' => 'gratitude practices'],
+    'gratitude' => ['one' => 'generative gratitude', 'many' => 'gratitude'],
 ];
 
 // ---------- milestones ----------
