@@ -3,14 +3,18 @@
  * Daily entries and reps.
  *
  * Every entry is a rep: it adds to the count for its type (clearing,
- * practice, gratitude), its skill, and its declaration. Each count
- * fills a ring toward the next milestone (10, 20, 50, 100, then every 100),
- * celebrates, and starts the next ring fresh.
+ * practice, gratitude), its skill, and its declaration. Type and skill
+ * counts fill a ring toward the next milestone (USP_MILESTONES, then every
+ * 1,000), celebrate, and start the next ring fresh.
+ *
+ * Declarations are counted but have no milestones (yet), and a skill can opt
+ * out with 'milestones' => false (conscious rest does).
  */
 
 // Conscious rest is a practice skill ('rest'), not its own type.
 const USP_ENTRY_TYPES = ['clearing', 'practice', 'gratitude'];
-const USP_MILESTONES  = [10, 20, 50, 100];
+const USP_MILESTONES  = [10, 20, 50, 100, 150, 300, 500, 750, 1000];
+const USP_MILESTONE_STEP = 1000; // after the last one, every 1,000
 
 const USP_TYPE_LABELS = [
     'clearing'  => ['one' => 'clearing', 'many' => 'clearings'],
@@ -27,13 +31,13 @@ function usp_next_milestone(int $count): int
             return $m;
         }
     }
-    return (intdiv($count, 100) + 1) * 100;
+    return (intdiv($count, USP_MILESTONE_STEP) + 1) * USP_MILESTONE_STEP;
 }
 
 function usp_prev_milestone(int $count): int
 {
-    if ($count >= 100) {
-        return intdiv($count, 100) * 100;
+    if ($count >= USP_MILESTONE_STEP) {
+        return intdiv($count, USP_MILESTONE_STEP) * USP_MILESTONE_STEP;
     }
     $prev = 0;
     foreach (USP_MILESTONES as $m) {
@@ -57,7 +61,7 @@ function usp_ring(int $count): array
     return [
         'count' => $count,
         'next'  => $next,
-        'pct'   => (int) round(100 * ($count - $prev) / ($next - $prev)),
+        'pct'   => (int) floor(100 * ($count - $prev) / ($next - $prev)), // never a full ring before the milestone
     ];
 }
 
@@ -207,7 +211,7 @@ function usp_create_entry(int $user_id, array $in): array
     $days_after = usp_streak_stats($user_id);
 
     return [
-        'celebrations'  => usp_celebrations($before, $after, $type, $skill, $declaration_id, $days_before, $days_after),
+        'celebrations'  => usp_celebrations($before, $after, $type, $skill, $days_before, $days_after),
         'first_of_day'  => $first,
         'date'          => $date,
         'for_yesterday' => $for_yesterday,
@@ -215,21 +219,15 @@ function usp_create_entry(int $user_id, array $in): array
 }
 
 /** Messages for any milestone this entry just reached. */
-function usp_celebrations(array $before, array $after, string $type, ?string $skill, ?int $declaration_id, array $days_before, array $days_after): array
+function usp_celebrations(array $before, array $after, string $type, ?string $skill, array $days_before, array $days_after): array
 {
     $out     = [];
     $crossed = fn (array $b, array $a, $key) =>
         ($a[$key] ?? 0) > ($b[$key] ?? 0) && usp_is_milestone($a[$key] ?? 0);
 
-    if ($skill && $crossed($before['skills'], $after['skills'], $skill)) {
-        $info  = usp_skills_by_key()[$skill];
-        $out[] = isset($info['milestone'])
-            ? sprintf('%d %s!', $after['skills'][$skill], $info['milestone'])
-            : sprintf('%d %s reps!', $after['skills'][$skill], $info['title']);
-    }
-
-    if ($declaration_id && $crossed($before['declarations'], $after['declarations'], $declaration_id)) {
-        $out[] = sprintf('%d reps of your declaration!', $after['declarations'][$declaration_id]);
+    $info = $skill ? usp_skills_by_key()[$skill] : null;
+    if ($info && ($info['milestones'] ?? true) && $crossed($before['skills'], $after['skills'], $skill)) {
+        $out[] = sprintf('%d %s reps!', $after['skills'][$skill], $info['title']);
     }
 
     if ($crossed($before['types'], $after['types'], $type)) {

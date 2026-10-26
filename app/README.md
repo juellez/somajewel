@@ -34,10 +34,15 @@ Database tables (`{prefix}usp_*`) are created automatically on first visit.
 - **Grace window:** until noon, anything can be logged for yesterday, for late
   nights. Streaks are recalculated from the days you actually logged, so a
   late entry fills its gap.
-- **Reps:** every entry adds to its skill, its declaration, and its ritual.
-  Each count fills a ring toward the next milestone (10, 20, 50, 100, then every
-  100), celebrates, and starts the next ring fresh. Days and streaks celebrate
-  at the same milestones.
+- **Reps:** every entry adds to its ritual, its skill, and its declaration.
+  Ritual and skill counts each fill a ring toward their next milestone,
+  celebrate, and start the next ring fresh. Days and streaks celebrate at the
+  same milestones. Conscious Rest is counted (and counts toward the Practice
+  ring) but has no milestones of its own. Declaration reps are counted but not
+  shown yet.
+- **Milestones:** 10, 20, 50, 100, 150, 300, 500, 750, 1,000, then every
+  1,000. Set in `lib/entries.php` (`USP_MILESTONES`); a skill opts out with
+  `'milestones' => false` in `content/prompts.php`.
 - **History:** a calendar of practice days (tap a day for a read-only summary)
   and a list of past weekly reflections.
 - **Weekly reflection:** seven questions, the last one optional.
@@ -75,6 +80,9 @@ browser vendor (Google or Apple), not this server.
 
 - Settings: choose your timezone
 - Export your history (for reviewing patterns, or with AI)
+- Declaration milestones as an embodiment journey: 300 reps (muscle memory)
+  to 3,000 (embodied), or a check-in after 100 reps under one declaration,
+  possibly as a weekly reflection question
 - Friends: see each other's streaks, send nudges
 - Installable app (PWA) with daily push reminders
 - v2: community share space

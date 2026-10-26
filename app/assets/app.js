@@ -131,7 +131,8 @@
       const btn = el('button', {
         type: 'button', class: 'choice', role: 'radio',
         'aria-checked': String(opt.value === value), title: opt.hint || null,
-      }, opt.ring ? ring(opt.ring, 'ring--sm') : null, el('span', { text: opt.text }));
+      }, el('span', { text: opt.text }),
+        opt.count ? el('span', { class: 'choice__count', text: `· ${opt.count}` }) : null);
       btn.addEventListener('click', () => {
         value = opt.value;
         group.querySelectorAll('.choice').forEach((b) => b.setAttribute('aria-checked', String(b === btn)));
@@ -466,7 +467,7 @@
 
     const decl = declarationChoices({ selected: defaultDeclaration(), onChange: update });
     const skill = choiceGroup(
-      state.skills.map((s) => ({ value: s.key, text: s.title, hint: s.description, ring: s.ring })),
+      state.skills.map((s) => ({ value: s.key, text: s.title, hint: s.description, count: s.count })),
       { label: 'Skill', onChange: update }
     );
     const mood = moodPad({ onChange: update });
@@ -627,7 +628,6 @@
           }
         });
         row.replaceChildren(
-          ring(d.ring),
           el('div', { class: 'decl__body' },
             el('p', { class: 'decl__text', text: d.text }),
             el('div', { class: 'decl__actions' }, refine, archive)
@@ -653,15 +653,23 @@
   // ---------- reps ----------
 
   function repsCard() {
-    const tile = (r, label) => el('div', { class: 'rep' }, ring(r, 'ring--lg'), el('span', { class: 'rep__label', text: label }));
+    // A ring with "count / next" under it, or just the count when there's no
+    // milestone (conscious rest). The caption line stays so tiles line up.
+    const tile = (label, r, count) => el('div', { class: 'rep' },
+      r ? ring(r, 'ring--lg') : el('span', { class: 'rep__plain' }, el('span', { class: 'ring__n', text: String(count) })),
+      el('span', { class: 'rep__label', text: label }),
+      el('span', { class: 'rep__next', text: r ? `${r.count} / ${r.next}` : '' })
+    );
 
     return card('reps', {
       eyebrow: 'Your reps',
-      title: 'Skills & rituals',
+      title: 'Rituals and skills',
       body: [
-        el('p', { class: 'card__body', text: 'Every rep fills a ring. Milestones at 10, 20, 50, 100, then every 100.' }),
-        el('div', { class: 'reps' }, state.skills.map((s) => tile(s.ring, s.title))),
-        el('div', { class: 'reps' }, Object.values(state.rituals).map((r) => tile(r.ring, r.label))),
+        el('p', { class: 'card__body', text: 'Every rep fills a ring toward its next milestone.' }),
+        el('p', { class: 'step', text: 'Rituals' }),
+        el('div', { class: 'reps' }, Object.values(state.rituals).map((r) => tile(r.label, r.ring))),
+        el('p', { class: 'step', text: 'Skills' }),
+        el('div', { class: 'reps' }, state.skills.map((s) => tile(s.title, s.ring, s.count))),
       ],
     });
   }

@@ -23,13 +23,13 @@ return [
 
     // Practice menu. What makes it somatic: intention, awareness, repetition.
     // Optional per skill: 'note_placeholder' (the note box's prompt) and
-    // 'milestone' (how celebrations name its reps, e.g. "10 conscious rests").
+    // 'milestones' => false (count its reps, but no ring or celebrations).
     'skills' => [
-        ['key' => 'rest',           'title' => 'Conscious rest', 'description' => 'Choosing rest with intention is a practice too.',
-         'note_placeholder' => 'Optional: what are you resting from, or for?', 'milestone' => 'conscious rests'],
-        ['key' => 'one-breath',     'title' => 'One breath',     'description' => 'Take one breath, right now, with your declaration.'],
+        ['key' => 'rest',           'title' => 'Conscious Rest', 'description' => 'Choosing rest with intention is a practice too.',
+         'note_placeholder' => 'Optional: what are you resting from, or for?', 'milestones' => false],
+        ['key' => 'one-breath',     'title' => 'One Breath',     'description' => 'Take one breath, right now, with your declaration.'],
         ['key' => 'centering',      'title' => 'Centering',      'description' => 'Length, width, depth. Center around your declaration.'],
-        ['key' => 'mindful-minute', 'title' => 'Mindful minute', 'description' => 'One minute of full attention.'],
+        ['key' => 'mindful-minute', 'title' => 'Mindful Minute', 'description' => 'One minute of full attention.'],
         ['key' => 'breath',         'title' => 'Breath',         'description' => 'Any breathwork.'],
         ['key' => 'meditation',     'title' => 'Meditation',     'description' => 'Any length.'],
         ['key' => 'jo',             'title' => 'Jo',             'description' => 'Kata, partner practice, or any jo work.'],

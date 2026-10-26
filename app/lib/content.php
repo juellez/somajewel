@@ -116,14 +116,19 @@ function usp_build_state(int $user_id): array
     $today   = usp_today($profile['timezone']);
     $reps    = usp_rep_counts($user_id);
 
-    $skills = array_map(fn ($s) => $s + [
-        'ring' => usp_ring($reps['skills'][$s['key']] ?? 0),
-    ], $content['skills']);
+    // Skills without milestones get a plain count and no ring.
+    $skills = array_map(function ($s) use ($reps) {
+        $count = $reps['skills'][$s['key']] ?? 0;
+        return $s + [
+            'count' => $count,
+            'ring'  => ($s['milestones'] ?? true) ? usp_ring($count) : null,
+        ];
+    }, $content['skills']);
 
+    // Declaration reps are counted (usp_rep_counts) but not shown, for now.
     $declarations = array_map(fn ($d) => [
         'id'   => (int) $d['id'],
         'text' => $d['text'],
-        'ring' => usp_ring($reps['declarations'][(int) $d['id']] ?? 0),
     ], usp_declarations($user_id));
 
     // Preselect the declaration practiced most recently.
