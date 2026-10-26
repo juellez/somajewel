@@ -1,14 +1,16 @@
 <?php
 /**
  * Plugin Name: SomaJewel Stats
- * Description: Usage stats for the SomaJewel practice app: streaks, counts, and activity. Never shows journal content, notes, answers, moods, or declaration text.
- * Version:     0.1.0
+ * Description: Usage stats for the SomaJewel practice app: streaks, counts, and activity. Never shows journal content, notes, answers, moods, or declaration text. Also sends non-admins to the app after login.
+ * Version:     0.2.0
  * Author:      Unstruck Somatics, LLC
  * License:     GPL-2.0-or-later
  * Requires PHP: 8.1
  */
 
 defined('ABSPATH') || exit;
+
+require_once __DIR__ . '/login-redirect.php';
 
 const SJS_DAYS = 14; // width of the activity strip
 
