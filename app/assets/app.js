@@ -6,12 +6,15 @@
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
   let state = null;
+  let view = 'today';
+  const hist = { mode: 'daily', month: null, months: {}, selected: null, days: {}, weeks: null };
   const openCards = new Set(); // which cards are expanded, kept across re-renders
 
   // ---------- helpers ----------
 
-  async function api(action, { method = 'GET', body } = {}) {
-    const res = await fetch(`${USP.api}?action=${encodeURIComponent(action)}`, {
+  async function api(action, { method = 'GET', body, params = {} } = {}) {
+    const query = new URLSearchParams({ action, ...params });
+    const res = await fetch(`${USP.api}?${query}`, {
       method,
       credentials: 'same-origin',
       headers: { 'Content-Type': 'application/json', 'X-USP-Nonce': USP.nonce },
@@ -61,6 +64,7 @@
     mood_required: 'Tap how you feel now.',
     empty: 'Write something in at least one box.',
     limit: 'You can hold up to 3 declarations. Archive one to add another.',
+    grace_closed: 'It\'s past noon, so this can only be logged for today.',
   };
 
   /** Disables a button while a request runs, and shows errors inline. */
@@ -127,7 +131,8 @@
       const btn = el('button', {
         type: 'button', class: 'choice', role: 'radio',
         'aria-checked': String(opt.value === value), title: opt.hint || null,
-      }, opt.ring ? ring(opt.ring, 'ring--sm') : null, el('span', { text: opt.text }));
+      }, el('span', { text: opt.text }),
+        opt.count ? el('span', { class: 'choice__count', text: `· ${opt.count}` }) : null);
       btn.addEventListener('click', () => {
         value = opt.value;
         group.querySelectorAll('.choice').forEach((b) => b.setAttribute('aria-checked', String(b === btn)));
@@ -174,6 +179,24 @@
 
   // ---------- voice to text ----------
 
+  // Microphone permission, checked once. Asking for it on its own first means
+  // the browser's permission prompts can't stall speech recognition (Safari).
+  let micGranted = false;
+  if (navigator.permissions && navigator.permissions.query) {
+    navigator.permissions.query({ name: 'microphone' })
+      .then((p) => { micGranted = p.state === 'granted'; })
+      .catch(() => {});
+  }
+  let activeMic = null; // only one field listens at a time
+
+  const MIC_ERRORS = {
+    'not-allowed': 'Microphone access is blocked. Allow it in your browser\'s settings for this site, or type instead.',
+    'service-not-allowed': 'Voice input is turned off for this browser. Check its settings, or type instead.',
+    'audio-capture': 'No microphone was found. Check that one is connected, or type instead.',
+    'network': 'Voice input needs an internet connection. Try again, or type instead.',
+    'no-speech': 'Didn\'t catch anything. Tap the mic and try again.',
+  };
+
   function micButton(field) {
     const btn = el('button', {
       class: 'mic', type: 'button', 'aria-pressed': 'false',
@@ -185,18 +208,67 @@
       return btn;
     }
 
+    let phase = 'idle'; // idle → starting → listening
     let rec = null;
+    let watchdog = null;
 
-    btn.addEventListener('click', () => {
-      if (rec) { rec.stop(); return; }
+    function setPhase(next) {
+      phase = next;
+      btn.classList.toggle('is-starting', next === 'starting');
+      btn.classList.toggle('is-listening', next === 'listening');
+      btn.setAttribute('aria-pressed', String(next !== 'idle'));
+      btn.setAttribute('aria-label', next === 'idle' ? 'Speak your answer' : 'Stop listening');
+    }
+
+    // Safe to call any number of times, from any state.
+    function reset() {
+      clearTimeout(watchdog);
+      if (rec) {
+        const r = rec;
+        rec = null;
+        r.onresult = r.onerror = r.onend = r.onstart = null;
+        try { r.abort(); } catch (e) { /* already stopped */ }
+      }
+      if (activeMic === stopThis) activeMic = null;
+      setPhase('idle');
+    }
+    const stopThis = () => {
+      if (rec && phase === 'listening') {
+        clearTimeout(watchdog);
+        try { rec.stop(); } catch (e) { reset(); } // onend keeps the final text
+      } else {
+        reset();
+      }
+    };
+
+    btn.addEventListener('click', async () => {
+      if (phase !== 'idle') { stopThis(); return; }
+      if (activeMic) activeMic();
+      activeMic = stopThis;
+      setPhase('starting');
+
+      if (!micGranted && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          stream.getTracks().forEach((t) => t.stop());
+          micGranted = true;
+        } catch (err) {
+          reset();
+          toast(MIC_ERRORS['not-allowed']);
+          return;
+        }
+        if (phase !== 'starting') return; // tapped again while the prompt was open
+      }
+
+      const before = field.value ? field.value.replace(/\s*$/, ' ') : '';
+      let finalText = '';
 
       rec = new SpeechRecognition();
       rec.lang = navigator.language || 'en-US';
       rec.continuous = true;
       rec.interimResults = true;
 
-      const before = field.value ? field.value.replace(/\s*$/, ' ') : '';
-      let finalText = '';
+      rec.onstart = () => { clearTimeout(watchdog); setPhase('listening'); };
 
       rec.onresult = (event) => {
         let interim = '';
@@ -210,26 +282,60 @@
       };
 
       rec.onerror = (event) => {
-        if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
-          alert('Microphone access was blocked. Allow it in your browser settings, or type instead.');
-        }
+        if (event.error !== 'aborted' && MIC_ERRORS[event.error]) toast(MIC_ERRORS[event.error]);
+        if (event.error === 'not-allowed') micGranted = false;
       };
 
       rec.onend = () => {
         field.value = before + finalText;
         field.dispatchEvent(new Event('input'));
-        rec = null;
-        btn.classList.remove('is-listening');
-        btn.setAttribute('aria-pressed', 'false');
+        reset();
         field.focus(); // ready to edit the transcript
       };
 
-      rec.start();
-      btn.classList.add('is-listening');
-      btn.setAttribute('aria-pressed', 'true');
+      // If recognition hasn't started in a few seconds, don't leave the button stuck.
+      watchdog = setTimeout(() => {
+        if (phase === 'starting') {
+          reset();
+          toast('Voice input didn\'t start. Tap the mic to try again.');
+        }
+      }, 8000);
+
+      try {
+        rec.start();
+      } catch (err) {
+        // Some browsers only start from a direct tap; the permission is set now.
+        reset();
+        toast('Microphone is ready. Tap the mic again to speak.');
+      }
     });
 
     return btn;
+  }
+
+  // ---------- grace window: log for yesterday until noon ----------
+
+  /** "Today | Yesterday" choice, shown only before noon. Returns { node, value }. */
+  function whenPicker() {
+    let value = 'today';
+    if (!state.grace.open) return { node: null, get value() { return value; } };
+
+    const buttons = [['today', 'Today'], ['yesterday', 'Yesterday']].map(([key, label]) => {
+      const b = el('button', { type: 'button', 'aria-pressed': String(key === value), text: label });
+      b.addEventListener('click', () => {
+        value = key;
+        buttons.forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+      });
+      return b;
+    });
+
+    return {
+      node: el('div', { class: 'when' },
+        el('div', { class: 'segmented', role: 'group', 'aria-label': 'Log this for' }, buttons),
+        el('p', { class: 'when__hint', text: `Late night? Until ${state.grace.until}, you can log yesterday's practice.` })
+      ),
+      get value() { return value; },
+    };
   }
 
   // ---------- saving entries ----------
@@ -240,11 +346,15 @@
     openCards.delete(cardId);
     render();
 
+    hist.months = {};
+    hist.days = {};
+    const s = state.stats;
     if (res.celebrations.length) {
       toast(`🎉 ${res.celebrations.join(' · ')}`);
-    } else if (res.first_today) {
-      const days = state.streak.streak;
-      toast(`🔥 ${days} ${days === 1 ? 'day' : 'days'}. You showed up.`);
+    } else if (res.for_yesterday) {
+      toast(res.first_of_day ? `Logged for yesterday. Streak: ${s.streak}.` : 'Rep logged for yesterday.');
+    } else if (res.first_of_day) {
+      toast(`Day ${s.days}. You showed up.`);
     } else {
       toast('Rep logged. Nicely done.');
     }
@@ -252,32 +362,45 @@
 
   // ---------- header ----------
 
-  function streakBadge() {
-    const s = state.streak;
-    const t = state.today_counts;
-    let message;
-    if (s.done_today) message = `You showed up today. Longest streak: ${s.longest}.`;
-    else if (s.freezes_needed > 0) message = 'A streak freeze is covering your missed day. Any practice today keeps you going.';
-    else if (s.streak > 0) message = 'Any practice today keeps your streak. Even one breath.';
-    else message = 'Every streak starts with one breath.';
+  function counters() {
+    const s = state.stats;
+    const yesterday = state.grace.yesterday;
+    const dayBefore = new Date(`${yesterday}T12:00:00`);
+    dayBefore.setDate(dayBefore.getDate() - 1);
+    const dayBeforeKey = dayBefore.toISOString().slice(0, 10);
 
+    let note;
+    if (s.done_today) note = 'You showed up today.';
+    else if (state.grace.open && s.last_date === dayBeforeKey) note = `Missed yesterday? You can still log it until ${state.grace.until}.`;
+    else if (s.streak > 0) note = 'Any practice today keeps your streak. Even one breath.';
+    else if (s.days > 0) note = `${s.days} ${s.days === 1 ? 'day' : 'days'} of practice, and counting. Every streak starts with one breath.`;
+    else note = 'Every streak starts with one breath.';
+
+    const counter = (label, value, hero) =>
+      el('div', { class: `counter ${hero ? 'counter--hero' : ''}` },
+        el('span', { class: 'counter__label', text: label }),
+        el('span', { class: 'counter__value', text: String(value) })
+      );
+
+    return el('section', { class: 'counters', 'aria-label': 'Your practice' },
+      el('div', { class: 'counters__row' },
+        counter('Days', s.days, true),
+        counter('Streak', s.streak, true),
+        counter('Longest', s.longest),
+        counter('Reps', s.reps)
+      ),
+      el('p', { class: 'counters__note', text: note })
+    );
+  }
+
+  function todayChips() {
+    const t = state.today_counts;
     const chip = (label, count) =>
       el('span', { class: `chip ${count ? 'is-done' : ''}`, text: count > 1 ? `${label} ×${count}` : label });
-
-    return el('section', { class: `streak ${s.done_today ? 'is-done' : ''}`, 'aria-label': 'Your streak' },
-      el('div', { class: 'streak__count' },
-        el('span', { class: 'streak__flame', 'aria-hidden': 'true', text: '🔥' }),
-        el('span', { class: 'streak__number', text: String(s.streak) }),
-        el('span', { class: 'streak__label', text: s.streak === 1 ? 'day' : 'days' }),
-        s.freezes ? el('span', { class: 'streak__freezes', title: 'Streak freezes', text: `❄️ ${s.freezes}` }) : null
-      ),
-      el('p', { class: 'streak__meta', text: message }),
-      el('div', { class: 'chips', 'aria-label': 'Today' },
-        chip('Clearing', t.clearing),
-        chip('Practice', t.practice),
-        chip('Gratitude', t.gratitude),
-        t.rest ? chip('Rest', t.rest) : null
-      )
+    return el('div', { class: 'chips', 'aria-label': 'Today' },
+      chip('Clearing', t.clearing),
+      chip('Practice', t.practice),
+      chip('Gratitude', t.gratitude)
     );
   }
 
@@ -291,11 +414,12 @@
       return { key: q.key, ...f, label: el('label', { class: 'question__text', for: id, text: q.text }) };
     });
     const error = el('p', { class: 'form-error', 'aria-live': 'polite' });
+    const when = whenPicker();
     const save = el('button', { class: 'btn btn--primary', type: 'button', text: 'Save clearing' });
 
     save.addEventListener('click', () => withButton(save, error, () => {
       const answers = Object.fromEntries(fields.map((f) => [f.key, f.field.value]));
-      return saveEntry('clearing', { type: 'clearing', answers });
+      return saveEntry('clearing', { type: 'clearing', answers, for: when.value });
     }));
 
     return card('clearing', {
@@ -305,7 +429,7 @@
       body: [
         el('p', { class: 'card__body', text: c.intro }),
         fields.map((f) => el('div', { class: 'question' }, f.label, f.node)),
-        save, error,
+        when.node, save, error,
       ],
     });
   }
@@ -332,15 +456,23 @@
 
     const error = el('p', { class: 'form-error', 'aria-live': 'polite' });
     const save = el('button', { class: 'btn btn--primary', type: 'button', text: 'Log practice' });
-    const update = () => { save.disabled = !(decl.value && skill.value && mood.value); };
+    const hint = el('p', { class: 'skill-hint', 'aria-live': 'polite' });
+    const update = () => {
+      save.disabled = !(decl.value && skill.value && mood.value);
+      // The chosen skill's description, and its own note prompt (e.g. conscious rest).
+      const chosen = state.skills.find((x) => x.key === skill.value);
+      hint.textContent = chosen ? chosen.description : '';
+      note.field.placeholder = (chosen && chosen.note_placeholder) || 'Optional note';
+    };
 
     const decl = declarationChoices({ selected: defaultDeclaration(), onChange: update });
     const skill = choiceGroup(
-      state.skills.map((s) => ({ value: s.key, text: s.title, hint: s.description, ring: s.ring })),
+      state.skills.map((s) => ({ value: s.key, text: s.title, hint: s.description, count: s.count })),
       { label: 'Skill', onChange: update }
     );
     const mood = moodPad({ onChange: update });
     const note = textField({ rows: 2, placeholder: 'Optional note', label: 'Practice note' });
+    const when = whenPicker();
     update();
 
     save.addEventListener('click', () => withButton(save, error, () => saveEntry('practice', {
@@ -349,16 +481,17 @@
       skill_key: skill.value,
       mood: mood.value,
       note: note.field.value,
+      for: when.value,
     })));
 
     return card('practice', {
       ...meta,
       body: [
         el('p', { class: 'step', text: 'Declaration' }), decl.node,
-        el('p', { class: 'step', text: 'What did you practice?' }), skill.node,
+        el('p', { class: 'step', text: 'What did you practice?' }), skill.node, hint,
         el('p', { class: 'step', text: 'How do you feel now?' }), mood.node,
         note.node,
-        save, error,
+        when.node, save, error,
       ],
     });
   }
@@ -370,10 +503,11 @@
     const error = el('p', { class: 'form-error', 'aria-live': 'polite' });
     const mood = moodPad();
     const note = textField({ rows: 2, placeholder: g.note_placeholder, label: 'Gratitude note' });
+    const when = whenPicker();
     const save = el('button', { class: 'btn btn--primary', type: 'button', text: 'I practiced gratitude' });
 
     save.addEventListener('click', () => withButton(save, error, () => saveEntry('gratitude', {
-      type: 'gratitude', mood: mood.value, note: note.field.value,
+      type: 'gratitude', mood: mood.value, note: note.field.value, for: when.value,
     })));
 
     return card('gratitude', {
@@ -385,35 +519,9 @@
         el('ol', { class: 'steps' }, g.steps.map((s) =>
           el('li', {}, el('strong', { text: s.title }), ' ', s.text)
         )),
-        el('p', { class: 'step', text: 'How do you feel now? (optional)' }), mood.node,
+        el('p', { class: 'step', text: 'Mood check: What do you notice in your body after your practice?' }), mood.node,
         note.node,
-        save, error,
-      ],
-    });
-  }
-
-  // ---------- conscious rest ----------
-
-  function restCard() {
-    const r = state.rest;
-    const error = el('p', { class: 'form-error', 'aria-live': 'polite' });
-    const decl = state.declarations.length ? declarationChoices() : null;
-    const note = textField({ rows: 2, placeholder: r.note_placeholder, label: 'Rest note' });
-    const save = el('button', { class: 'btn btn--primary', type: 'button', text: 'I\'m choosing rest today' });
-
-    save.addEventListener('click', () => withButton(save, error, () => saveEntry('rest', {
-      type: 'rest', declaration_id: decl ? decl.value : null, note: note.field.value,
-    })));
-
-    return card('rest', {
-      eyebrow: 'Anytime',
-      title: r.title,
-      done: state.today_counts.rest ? '✓ Chosen' : '',
-      body: [
-        el('p', { class: 'card__body', text: r.intro }),
-        decl ? [el('p', { class: 'step', text: 'Resting in service of… (optional)' }), decl.node] : null,
-        note.node,
-        save, error,
+        when.node, save, error,
       ],
     });
   }
@@ -453,7 +561,10 @@
         await api('weekly', { method: 'POST', body: { key: q.key, response: field.value } });
         lastSaved = field.value;
         q.response = field.value;
+        hist.weeks = null; // History reloads with this answer
         status.textContent = 'Saved';
+        // Saved as you left the box for the History tab? Refresh what it shows.
+        if (view === 'history' && hist.mode === 'weekly') render();
       } catch (err) {
         status.textContent = 'Not saved. Try again.';
       } finally {
@@ -517,7 +628,6 @@
           }
         });
         row.replaceChildren(
-          ring(d.ring),
           el('div', { class: 'decl__body' },
             el('p', { class: 'decl__text', text: d.text }),
             el('div', { class: 'decl__actions' }, refine, archive)
@@ -543,39 +653,246 @@
   // ---------- reps ----------
 
   function repsCard() {
-    const tile = (r, label) => el('div', { class: 'rep' }, ring(r, 'ring--lg'), el('span', { class: 'rep__label', text: label }));
+    // A ring with "count / next" under it, or just the count when there's no
+    // milestone (conscious rest). The caption line stays so tiles line up.
+    const tile = (label, r, count) => el('div', { class: 'rep' },
+      r ? ring(r, 'ring--lg') : el('span', { class: 'rep__plain' }, el('span', { class: 'ring__n', text: String(count) })),
+      el('span', { class: 'rep__label', text: label }),
+      el('span', { class: 'rep__next', text: r ? `${r.count} / ${r.next}` : '' })
+    );
 
     return card('reps', {
-      eyebrow: 'Your reps',
-      title: 'Skills & rituals',
+      eyebrow: 'Your Reps',
+      title: 'Rituals and Skills',
       body: [
-        el('p', { class: 'card__body', text: 'Every rep fills a ring. Milestones at 10, 20, 50, 100, then every 100.' }),
-        el('div', { class: 'reps' }, state.skills.map((s) => tile(s.ring, s.title))),
-        el('div', { class: 'reps' }, Object.values(state.rituals).map((r) => tile(r.ring, r.label))),
+        el('p', { class: 'card__body', text: 'Every rep builds muscle memory.' }),
+        el('p', { class: 'step', text: 'Rituals' }),
+        el('div', { class: 'reps' }, Object.values(state.rituals).map((r) => tile(r.label, r.ring))),
+        el('p', { class: 'step', text: 'Skills' }),
+        el('div', { class: 'reps' }, state.skills.map((s) => tile(s.title, s.ring, s.count))),
       ],
     });
   }
 
+  // ---------- history ----------
+
+  const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+  function shiftMonth(month, by) {
+    const [y, m] = month.split('-').map(Number);
+    const d = new Date(Date.UTC(y, m - 1 + by, 1));
+    return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
+  }
+
+  function longDate(key) {
+    const [y, m, d] = key.split('-').map(Number);
+    const date = new Date(Date.UTC(y, m - 1, d));
+    return `${WEEKDAYS[date.getUTCDay()]}, ${MONTHS[m - 1]} ${d}`;
+  }
+
+  async function loadMonth(month) {
+    if (!hist.months[month]) hist.months[month] = await api('history_month', { params: { month } });
+    return hist.months[month];
+  }
+
+  async function loadDay(date) {
+    if (!hist.days[date]) hist.days[date] = await api('history_day', { params: { date } });
+    return hist.days[date];
+  }
+
+  function historyView() {
+    const toggle = el('div', { class: 'segmented', role: 'group', 'aria-label': 'History view' },
+      [['daily', 'Daily practice'], ['weekly', 'Weekly reflections']].map(([key, label]) => {
+        const b = el('button', { type: 'button', 'aria-pressed': String(hist.mode === key), text: label });
+        b.addEventListener('click', () => { hist.mode = key; render(); });
+        return b;
+      })
+    );
+    const body = el('div', { class: 'weeks' }, el('p', { class: 'loading', text: 'Loading…' }));
+
+    if (hist.mode === 'daily') fillDaily(body);
+    else fillWeekly(body);
+
+    return [counters(), toggle, body];
+  }
+
+  async function fillDaily(body) {
+    try {
+      const month = hist.month || state.today.slice(0, 7);
+      const data = await loadMonth(month);
+      hist.month = month;
+      if (!hist.selected) hist.selected = state.today;
+      body.replaceChildren(calendar(data), dayLog());
+    } catch (err) {
+      if (err.message !== 'auth') body.replaceChildren(el('p', { class: 'daylog__empty', text: 'Couldn\'t load your history. Please refresh.' }));
+    }
+  }
+
+  function calendar(data) {
+    const [y, m] = data.month.split('-').map(Number);
+    const firstDow = (new Date(Date.UTC(y, m - 1, 1)).getUTCDay() + 6) % 7; // Monday first
+    const daysInMonth = new Date(Date.UTC(y, m, 0)).getUTCDate();
+
+    const prev = el('button', { class: 'calendar__nav', type: 'button', 'aria-label': 'Previous month', text: '‹' });
+    const next = el('button', { class: 'calendar__nav', type: 'button', 'aria-label': 'Next month', text: '›' });
+    prev.disabled = data.month <= data.first_month;
+    next.disabled = data.month >= data.current_month;
+    prev.addEventListener('click', () => { hist.month = shiftMonth(data.month, -1); render(); });
+    next.addEventListener('click', () => { hist.month = shiftMonth(data.month, 1); render(); });
+
+    const grid = el('div', { class: 'calendar__grid' },
+      ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((d) =>
+        el('div', { class: 'calendar__dow', 'aria-hidden': 'true', text: d.slice(0, 1) })
+      ),
+      Array.from({ length: firstDow }, () => el('div'))
+    );
+
+    for (let d = 1; d <= daysInMonth; d++) {
+      const key = `${data.month}-${String(d).padStart(2, '0')}`;
+      const n = data.days[key] || 0;
+      const future = key > data.today;
+      const level = n >= 4 ? 'day--l3' : n >= 2 ? 'day--l2' : n === 1 ? 'day--l1' : '';
+      const btn = el('button', {
+        type: 'button',
+        class: `day ${level} ${key === data.today ? 'day--today' : ''} ${future ? 'day--future' : ''}`,
+        'aria-pressed': String(key === hist.selected),
+        'aria-label': `${longDate(key)}: ${n ? `${n} ${n === 1 ? 'rep' : 'reps'}` : 'no entries'}`,
+        text: String(d),
+      });
+      if (future) btn.disabled = true;
+      else btn.addEventListener('click', () => { hist.selected = key; render(); });
+      grid.append(btn);
+    }
+
+    const swatch = (style, label) => el('span', {}, el('i', { style }), label);
+
+    return el('section', { class: 'calendar', 'aria-label': 'Calendar' },
+      el('div', { class: 'calendar__head' },
+        prev,
+        el('span', { class: 'calendar__month', text: `${MONTHS[m - 1]} ${y}` }),
+        next
+      ),
+      grid,
+      el('div', { class: 'legend' },
+        swatch('border:1.5px solid var(--rasp)', '1 rep'),
+        swatch('background:var(--rasp-soft)', '2–3'),
+        swatch('background:var(--rasp)', '4+'),
+        swatch('outline:1.5px solid var(--teal);outline-offset:1px', 'Today')
+      )
+    );
+  }
+
+  function dayLog() {
+    const date = hist.selected;
+    const box = el('section', { class: 'daylog', 'aria-live': 'polite' },
+      el('h2', { class: 'daylog__title', text: date === state.today ? 'Today' : longDate(date) }),
+      el('p', { class: 'daylog__empty', text: 'Loading…' })
+    );
+
+    loadDay(date).then((day) => {
+      const title = box.firstChild;
+      if (!day.items.length) {
+        box.replaceChildren(title, el('p', { class: 'daylog__empty', text: 'No entries. Rest counts too.' }));
+        return;
+      }
+      box.replaceChildren(title, ...day.items.map((item) =>
+        el('div', { class: 'daylog__item' },
+          el('div', { class: 'daylog__name' },
+            el('span', { text: item.title }),
+            item.mood ? el('span', { class: 'daylog__mood', text: `${item.mood.emoji} ${item.mood.label}` }) : null
+          ),
+          item.declaration ? el('p', { class: 'daylog__line', text: item.declaration }) : null,
+          item.summary ? el('p', { class: 'daylog__line', text: item.summary }) : null,
+          item.note ? el('p', { class: 'daylog__line', text: `“${item.note}”` }) : null
+        )
+      ));
+    }).catch((err) => {
+      if (err.message !== 'auth') box.replaceChildren(box.firstChild, el('p', { class: 'daylog__empty', text: 'Couldn\'t load this day.' }));
+    });
+
+    return box;
+  }
+
+  async function fillWeekly(body) {
+    try {
+      if (!hist.weeks) hist.weeks = (await api('history_weekly')).weeks;
+
+      // This week is always first, even before it has answers.
+      const current = state.weekly ? state.weekly.week_start : null;
+      const weeks = hist.weeks.slice();
+      if (current && !weeks.some((w) => w.week_start === current)) {
+        weeks.unshift({ week_start: current, answers: [] });
+      }
+      if (!weeks.length) {
+        body.replaceChildren(el('p', { class: 'daylog__empty', text: 'Your weekly reflections will collect here.' }));
+        return;
+      }
+
+      body.replaceChildren(...weeks.map((w) => {
+        const [y, m, d] = w.week_start.split('-').map(Number);
+        const isCurrent = w.week_start === current;
+        const n = w.answers.length;
+        const total = isCurrent ? state.weekly.questions.length : 0;
+        return el('details', { class: `week ${isCurrent ? 'week--current' : ''}`, open: isCurrent || weeks.length === 1 },
+          el('summary', {},
+            el('span', { class: 'week__heading' },
+              isCurrent ? el('span', { class: 'week__badge', text: 'This week' }) : null,
+              el('span', { class: 'week__title', text: `Week of ${MONTHS[m - 1]} ${d}, ${y}` })
+            ),
+            el('span', { class: 'week__count', text: isCurrent ? `${n} of ${total}` : `${n} ${n === 1 ? 'answer' : 'answers'}` })
+          ),
+          el('div', { class: 'week__answers' },
+            n
+              ? w.answers.map((a) => el('div', {}, el('p', { class: 'week__q', text: a.question }), el('p', { class: 'week__a', text: a.answer })))
+              : el('p', { class: 'daylog__empty' }, 'Not answered yet. ', el('a', { href: '#today', text: 'Reflect on the Today tab' }), '.')
+          )
+        );
+      }));
+    } catch (err) {
+      if (err.message !== 'auth') body.replaceChildren(el('p', { class: 'daylog__empty', text: 'Couldn\'t load your reflections. Please refresh.' }));
+    }
+  }
+
   // ---------- render ----------
 
-  function render() {
-    // Keep the scroll position steady across re-renders.
-    const y = window.scrollY;
-    root.replaceChildren(
-      el('header', { class: 'top' },
-        el('h1', { class: 'top__greeting', text: greeting(state.user.name) })
-      ),
-      streakBadge(),
+  function todayView() {
+    return [
+      el('h1', { class: 'top__greeting', text: greeting(state.user.name) }),
+      counters(),
+      todayChips(),
       clearingCard(),
       practiceCard(),
       gratitudeCard(),
-      restCard(),
       weeklyCard(),
       declarationsCard(),
-      repsCard()
-    );
+      repsCard(),
+    ];
+  }
+
+  function render() {
+    // Keep the scroll position steady across re-renders of the same view.
+    const y = window.scrollY;
+    root.replaceChildren(...(view === 'history' ? historyView() : todayView()));
     window.scrollTo(0, y);
   }
+
+  function setView() {
+    const next = location.hash === '#history' ? 'history' : 'today';
+    const changed = next !== view;
+    view = next;
+    document.querySelectorAll('.tabs__tab').forEach((tab) => {
+      if (tab.dataset.view === view) tab.setAttribute('aria-current', 'page');
+      else tab.removeAttribute('aria-current');
+    });
+    if (state) {
+      render();
+      if (changed) window.scrollTo(0, 0);
+    }
+  }
+
+  window.addEventListener('hashchange', setView);
+  setView();
 
   api('state')
     .then((data) => {

@@ -22,29 +22,35 @@ return [
     ],
 
     // Practice menu. What makes it somatic: intention, awareness, repetition.
+    // Optional per skill: 'note_placeholder' (the note box's prompt) and
+    // 'milestones' => false (count its reps, but no ring or celebrations).
     'skills' => [
-        ['key' => 'one-breath',     'title' => 'One breath',     'description' => 'Take one breath, right now, with your declaration.'],
-        ['key' => 'centering',      'title' => 'Centering',      'description' => 'Length, width, depth. Center around your declaration.'],
-        ['key' => 'mindful-minute', 'title' => 'Mindful minute', 'description' => 'One minute of full attention.'],
-        ['key' => 'breath',         'title' => 'Breath',         'description' => 'Any breathwork.'],
-        ['key' => 'meditation',     'title' => 'Meditation',     'description' => 'Any length.'],
+        ['key' => 'rest',           'title' => 'Conscious Rest', 'description' => 'Choosing rest with intention is a practice, too.',
+         'note_placeholder' => 'Optional: what are you resting from, or for?', 'milestones' => false],
+        ['key' => 'one-breath',     'title' => 'One Breath',     'description' => 'Take one breath, right now, with your declaration.'],
+        ['key' => 'centering',      'title' => 'Centering',      'description' => 'Length, width, depth. Note how your body wants to organize around your sense of purpose.'],
+        ['key' => 'mindful-minute', 'title' => 'Mindful Minute', 'description' => 'One minute of full attention.'],
+        ['key' => 'breath',         'title' => 'Breathwork',         'description' => 'Coherence Breath. Any breathwork.'],
+        ['key' => 'meditation',     'title' => 'Meditation',     'description' => 'Any style, any length.'],
         ['key' => 'jo',             'title' => 'Jo',             'description' => 'Kata, partner practice, or any jo work.'],
+        ['key' => 'mutual-connection',             'title' => 'Hand on Heart',             'description' => 'Mutual Connection with Self, Spirit, or another person.'],
+        ['key' => 'relational',             'title' => 'Relational',             'description' => 'Centered request or yes/no/maybe. Any practice for the sake of building your capacity to be in Right Relation with self and others.'],
     ],
 
     'clearing' => [
-        'title'     => 'Morning clearing',
-        'intro'     => 'Clear what is in the way, then take a stand for how you want to be today.',
+        'title'     => 'Morning Clearing',
+        'intro'     => 'Clear what\'s in the way, then take a stand for your way of being today.',
         'questions' => [
-            ['key' => 'worries',        'text' => 'Fears, concerns, complaints, worries'],
-            ['key' => 'story',          'text' => 'What\'s the story? What am I making this mean?'],
+            ['key' => 'worries',        'text' => 'Fears, concerns, complaints, worries?'],
+            ['key' => 'story',          'text' => 'What am I making this mean?'],
             ['key' => 'interpretation', 'text' => 'Interpretation or fact? Is it empowering or disempowering?'],
             ['key' => 'stand',          'text' => 'What way of being (not "fixing") do I want to be today? My stand.'],
         ],
     ],
 
     'gratitude' => [
-        'title' => 'Evening gratitude',
-        'intro' => 'Don\'t force it. Let gratitude arise through extension and feeling, and name whatever wells up, silently is fine.',
+        'title' => 'Generative Gratitude',
+        'intro' => 'We can practice generating gratitude through extension, creating space to explore what naturally wells up (or doesn\'t).',
         'steps' => [
             ['title' => 'Ground', 'text' => 'Extend down into the ground. Feel for gratitude.'],
             ['title' => 'Sky',    'text' => 'Extend up to the sky. Feel for gratitude.'],
@@ -54,11 +60,6 @@ return [
         'note_placeholder' => 'Optional: what welled up, or anything else from today',
     ],
 
-    'rest' => [
-        'title' => 'Conscious rest',
-        'intro' => 'Choosing rest with intention is a practice too. It keeps your streak.',
-        'note_placeholder' => 'Optional: what are you resting from, or for?',
-    ],
 
     // One set = the same questions every week. Add more sets to rotate.
     'weekly' => [
