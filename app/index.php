@@ -66,12 +66,12 @@ header('Cache-Control: no-store');
     </main>
 
     <footer class="footer">
-        <a href="<?php echo esc_url(wp_logout_url(home_url('/'))); ?>">Log out</a>
+        <a href="<?php echo esc_url(wp_logout_url(home_url('/'))); ?>">Log Out</a>
         <span aria-hidden="true">·</span>
         <a href="<?php echo esc_url($legal); ?>">Terms of Use &amp; Privacy</a>
         <?php if ($feedback) : ?>
             <span aria-hidden="true">·</span>
-            <a href="<?php echo esc_url($feedback); ?>" target="_blank" rel="noopener">Feedback &amp; roadmap</a>
+            <a href="<?php echo esc_url($feedback); ?>" target="_blank" rel="noopener">Roadmap &amp; Feature Requests</a>
         <?php endif; ?>
     </footer>
 
