@@ -84,4 +84,241 @@ return [
         ],
     ],
 
+    // ------------------------------------------------------------------
+    // Screen text: every label, heading, button, and message in the app.
+    // Edit freely. Words in {braces} are filled in by the app; keep them.
+    // ------------------------------------------------------------------
+    'ui' => [
+
+        'app' => [
+            'loading'    => 'Loading your practice…',
+            'load_error' => 'Something went wrong loading your practice. Please refresh.',
+            'back'       => 'Back',
+            'saving'     => 'Saving…',
+            'save_error' => 'Not saved. Please try again.',
+            'optional'   => 'optional',
+        ],
+
+        // Tabs, the top bar, the settings menu, and the footer.
+        'nav' => [
+            'today'        => 'Today',
+            'progress'     => 'Progress',
+            'reflect'      => 'Reflect',
+            'history'      => 'History',
+            'declarations' => 'Declarations',
+            'settings'     => 'Settings',
+            'signed_in_as' => 'Signed in as',
+            'log_out'      => 'Log Out',
+            'terms'        => 'Terms of Use & Privacy',
+            'feedback'     => 'Roadmap & Feature Requests',
+        ],
+
+        // Beta: two icon styles to compare. Each person gets one; the
+        // settings menu lets them switch. To end the test, put the winner
+        // in 'a' and delete 'b' (the switch disappears).
+        'icon_test' => [
+            'label' => 'Icon style',
+            'a'     => ['progress' => 'flower-lotus', 'sacred' => 'sparkle'],
+            'b'     => ['progress' => 'footprints',   'sacred' => 'flower-lotus'],
+        ],
+
+        'greeting' => [
+            'morning'   => 'Good morning, {name}',
+            'afternoon' => 'Good afternoon, {name}',
+            'evening'   => 'Good evening, {name}',
+        ],
+
+        // The plum counter card (Today and Progress).
+        'counters' => [
+            'days'          => 'Days',
+            'streak'        => 'Streak',
+            'longest'       => 'Longest',
+            'reps'          => 'Reps',
+            'note_done'     => 'You showed up today.',
+            'note_grace'    => 'Missed yesterday? You can still log it until {until}.',
+            'note_streak'   => 'Any practice today keeps your streak. Even one breath.',
+            'note_days'     => '{days} days of practice, and counting. Every streak starts with one breath.',
+            'note_one_day'  => '1 day of practice, and counting. Every streak starts with one breath.',
+            'note_start'    => 'Every streak starts with one breath.',
+        ],
+
+        // Today's checklist.
+        'checklist' => [
+            'clearing'        => 'Clearing',
+            'practice'        => 'Practice',
+            'gratitude'       => 'Gratitude',
+            'weekly'          => 'Weekly Reflection',
+            'weekly_progress' => '{n} of {total}',
+            // Days the Weekly Reflection line shows on Today, until something
+            // is answered. 0 = Sunday … 6 = Saturday.
+            'weekly_days'     => [5, 6, 0],
+        ],
+
+        'cards' => [
+            'done'  => 'Done',
+            'today' => 'today',
+        ],
+
+        'clearing' => [
+            'eyebrow' => 'Morning',
+            'save'    => 'Save clearing',
+        ],
+
+        'practice' => [
+            'eyebrow'           => 'Practice',
+            'title'             => 'Log a practice',
+            'first_declaration' => 'Start with a declaration, in your own words. Every practice builds toward it, and you can refine it anytime.',
+            'declaration'       => 'Declaration',
+            'new_declaration'   => 'New',
+            'skill'             => 'What are you practicing?',
+            'mood'              => 'Mood check: What do you notice in your body now and how would you describe that in one word (or a few)?',
+            'note'              => 'Optional note',
+            'save'              => 'Log practice',
+        ],
+
+        'gratitude' => [
+            'eyebrow' => 'Evening',
+            'mood'    => 'Mood check: What do you notice in your body after your practice?',
+            'save'    => 'I practiced gratitude',
+        ],
+
+        // "Log this for Today | Yesterday", shown until noon.
+        'when' => [
+            'label'     => 'Log this for',
+            'today'     => 'Today',
+            'yesterday' => 'Yesterday',
+            'hint'      => 'Late night or forgot to track? Until {until}, you can still log practice for yesterday.',
+        ],
+
+        'reflect' => [
+            'title'       => 'Reflect',
+            'lede'        => 'The slower rhythm: your week, and what you\'re a stand for.',
+            'this_week'   => 'This week · {date}',
+            'answered'    => 'of {total}',
+            'save'        => 'Save',
+            'saved'       => 'Saved',
+            'unsaved'     => 'Unsaved',
+            'save_failed' => 'Not saved. Try again.',
+            'past'        => 'Past reflections are in History',
+        ],
+
+        'declarations' => [
+            'title'          => 'Declarations',
+            'intro_title'    => 'What\'s a declaration?',
+            'intro'          => 'A declaration is a commitment to a future you bring into being: your North Star. You don\'t have a declaration; you are it, and you embody it through practice.',
+            'intro_points'   => [
+                'Say it as "I am a commitment to…" or "I am a stand for…"',
+                'Every practice connects to it: intention, feeling, repetition.',
+                'About 300 reps builds muscle memory; about 3,000, embodiment.',
+                'It evolves. Refine the words as you grow.',
+            ],
+            'eyebrow'        => 'Your North Star',
+            'count'          => '{n} of {max}',
+            'reps'           => '{n} reps',
+            'one_rep'        => '1 rep',
+            'embodied'       => 'Embodied',
+            'empty'          => 'No declaration yet. Write your first one below.',
+            'add'            => 'Add a declaration',
+            'placeholder'    => 'I am a stand for…  /  I am a commitment to…',
+            'refine'         => 'Refine',
+            'retire'         => 'Retire',
+            'reactivate'     => 'Reactivate',
+            'save'           => 'Save declaration',
+            'save_refined'   => 'Save',
+            'cancel'         => 'Cancel',
+            'retire_confirm' => 'Retire this declaration? It leaves your practice card. Its reps and history stay on Progress, and you can reactivate it later.',
+            'saved'          => 'Declaration saved.',
+            'refined'        => 'Declaration refined.',
+            'retired'        => 'Declaration retired. You\'ll find it on Progress.',
+            'reactivated'    => 'Declaration reactivated.',
+            'full'           => 'You\'re holding {max}. Retire one to make room.',
+        ],
+
+        'progress' => [
+            'rituals_eyebrow'      => 'Your Day',
+            'time_clearing'        => 'Morning',
+            'time_practice'        => 'All day',
+            'time_gratitude'       => 'Evening',
+            'rituals_title'        => 'Rituals',
+            'skills_eyebrow'       => 'Your Skills',
+            'skills_title'         => 'Practices',
+            'skills_body'          => 'Every rep builds muscle memory.',
+            'declarations_eyebrow' => 'By Declaration',
+            'declarations_title'   => 'Your North Star',
+            'toward'               => '{n} reps toward {goal}',
+            'embodied'             => '{n} reps · embodied',
+            'no_reps'              => 'No practices logged with this one yet.',
+            'retired'              => 'Retired',
+        ],
+
+        'history' => [
+            'daily'          => 'Daily practice',
+            'weekly'         => 'Weekly reflections',
+            'today'          => 'Today',
+            'loading'        => 'Loading…',
+            'no_entries'     => 'No entries. Rest counts too.',
+            'one_rep'        => '1 rep',
+            'reps'           => '{n} reps',
+            'legend_more'    => '4+',
+            'legend_some'    => '2–3',
+            'legend_today'   => 'Today',
+            'previous_month' => 'Previous month',
+            'next_month'     => 'Next month',
+            'this_week'      => 'This week',
+            'week_of'        => 'Week of {date}',
+            'answers'        => '{n} answers',
+            'one_answer'     => '1 answer',
+            'not_answered'   => 'Not answered yet.',
+            'go_reflect'     => 'Reflect now',
+            'no_reflections' => 'Your weekly reflections will collect here.',
+            'load_error'     => 'Couldn\'t load your history. Please refresh.',
+            'day_error'      => 'Couldn\'t load this day.',
+        ],
+
+        // Little messages after saving.
+        'toasts' => [
+            'first_of_day'     => 'Day {days}. You showed up.',
+            'rep'              => 'Rep logged. Nicely done.',
+            'yesterday_first'  => 'Logged for yesterday. Streak: {streak}.',
+            'yesterday_rep'    => 'Rep logged for yesterday.',
+        ],
+
+        // Milestone messages. {n} is the count; {name} the skill or ritual.
+        'celebrations' => [
+            'skill'          => '{n} {name} reps!',
+            'ritual'         => '{n} {name}!',
+            'days'           => '{n} days of practice!',
+            'streak'         => '{n}-day streak!',
+            'declaration'    => '{n} reps of your declaration: muscle memory!',
+            'declaration_3k' => '{n} reps of your declaration: embodied!',
+            // How each ritual is named in its milestone ("10 clearings!").
+            'ritual_names'   => [
+                'clearing'  => 'clearings',
+                'practice'  => 'practices',
+                'gratitude' => 'gratitude',
+            ],
+        ],
+
+        'errors' => [
+            'declaration_required' => 'Choose a declaration first.',
+            'skill_required'       => 'Choose what you practiced.',
+            'mood_required'        => 'Tap how you feel now.',
+            'empty'                => 'Write something in at least one box.',
+            'limit'                => 'You can hold up to {max} declarations. Retire one to add another.',
+            'grace_closed'         => 'It\'s past noon, so this can only be logged for today.',
+        ],
+
+        'mic' => [
+            'label'               => 'Speak your answer',
+            'stop'                => 'Stop listening',
+            'not-allowed'         => 'Microphone access is blocked. Allow it in your browser\'s settings for this site, or type instead.',
+            'service-not-allowed' => 'Voice input is turned off for this browser. Check its settings, or type instead.',
+            'audio-capture'       => 'No microphone was found. Check that one is connected, or type instead.',
+            'network'             => 'Voice input needs an internet connection. Try again, or type instead.',
+            'no-speech'           => 'Didn\'t catch anything. Tap the mic and try again.',
+            'stalled'             => 'Voice input didn\'t start. Tap the mic to try again.',
+            'ready'               => 'Microphone is ready. Tap the mic again to speak.',
+        ],
+    ],
+
 ];

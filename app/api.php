@@ -5,7 +5,8 @@
  *   POST api.php?action=entry                → { type, declaration_id?, skill_key?, mood?, note?, answers?, for? }
  *                                               (for: "yesterday" logs it for yesterday, until noon)
  *   POST api.php?action=declaration          → { id?, text }  (create, or refine when id is given)
- *   POST api.php?action=declaration_archive  → { id }
+ *   POST api.php?action=declaration_retire   → { id }
+ *   POST api.php?action=declaration_reactivate → { id }
  *   POST api.php?action=weekly               → { key, response }
  *   GET  api.php?action=history_month&month=Y-m   → entry counts per day
  *   GET  api.php?action=history_day&date=Y-m-d    → summaries of that day's entries
@@ -55,8 +56,13 @@ switch ("$method $action") {
         $error = usp_save_declaration($user_id, (int) ($input['id'] ?? 0) ?: null, (string) ($input['text'] ?? ''));
         $error ? usp_json(['error' => $error], 400) : usp_json(['state' => usp_build_state($user_id)]);
 
-    case 'POST declaration_archive':
-        usp_archive_declaration($user_id, (int) ($input['id'] ?? 0))
+    case 'POST declaration_reactivate':
+        $error = usp_reactivate_declaration($user_id, (int) ($input['id'] ?? 0));
+        $error ? usp_json(['error' => $error], 400) : usp_json(['state' => usp_build_state($user_id)]);
+
+    case 'POST declaration_archive': // older name, kept for any open pages
+    case 'POST declaration_retire':
+        usp_retire_declaration($user_id, (int) ($input['id'] ?? 0))
             ? usp_json(['state' => usp_build_state($user_id)])
             : usp_json(['error' => 'not_found'], 404);
 
