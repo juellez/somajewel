@@ -35,6 +35,7 @@ return [
         ['key' => 'jo',             'title' => 'Jo',             'description' => 'Kata, partner practice, or any jo work.'],
         ['key' => 'mutual-connection',             'title' => 'Hand on Heart',             'description' => 'Mutual Connection with Self, Spirit, or another person.'],
         ['key' => 'relational',             'title' => 'Relational',             'description' => 'Centered request or yes/no/maybe. Any practice for the sake of building your capacity to be in Right Relation with self and others.'],
+        ['key' => 'prayer',             'title' => 'Prayer',             'description' => 'Daily prayer, devotions, intentions.'],
     ],
 
     'clearing' => [
