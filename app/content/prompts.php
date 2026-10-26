@@ -55,12 +55,12 @@ return [
 
     'gratitude' => [
         'title' => 'Generative Gratitude',
-        'intro' => 'We can practice generating gratitude through extension, creating space to explore what naturally wells up (or doesn\'t).',
+        'intro' => 'We can practice gratitude through physical extension, creating space to explore what naturally wells up (or doesn\'t).',
         'steps' => [
-            ['title' => 'Ground', 'text' => 'Extend down into the ground. Feel for gratitude.'],
-            ['title' => 'Sky',    'text' => 'Extend up to the sky. Feel for gratitude.'],
-            ['title' => 'Out',    'text' => 'Extend out to others and the world. Feel for gratitude.'],
-            ['title' => 'Self',   'text' => 'Extend to yourself, like a hug. Feel for gratitude.'],
+            ['title' => 'Ground', 'text' => 'Extend down into the ground.'],
+            ['title' => 'Sky',    'text' => 'Extend up to the sky.'],
+            ['title' => 'Out',    'text' => 'Extend out to others and the world.'],
+            ['title' => 'Self',   'text' => 'Extend to yourself, like a hug.'],
         ],
         'note_placeholder' => 'Optional: what welled up, or anything else from today',
     ],
