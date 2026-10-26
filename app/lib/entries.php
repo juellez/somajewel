@@ -112,6 +112,22 @@ function usp_today_counts(int $user_id, string $today): array
     return $counts;
 }
 
+/** Practices logged today, by skill: ['centering' => 3, 'rest' => 1] */
+function usp_today_skill_counts(int $user_id, string $today): array
+{
+    global $wpdb;
+
+    $rows = $wpdb->get_results($wpdb->prepare(
+        'SELECT skill_key, COUNT(*) AS n FROM ' . usp_table('entries') . "
+         WHERE user_id = %d AND entry_date = %s AND type = 'practice' AND skill_key IS NOT NULL
+         GROUP BY skill_key",
+        $user_id,
+        $today
+    ), ARRAY_A) ?: [];
+
+    return array_map('intval', array_column($rows, 'n', 'skill_key'));
+}
+
 // ---------- creating entries ----------
 
 /**

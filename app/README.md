@@ -24,10 +24,18 @@ Database tables (`{prefix}usp_*`) are created automatically on first visit.
 
 ## How it works
 
-- **Today:** a counter header (Days, Streak, Longest, Reps), then the daily
-  rituals: morning clearing, practice (declaration + skill + after-mood), and
-  evening gratitude. Any one of them counts for the day. Conscious rest is a
-  practice skill, so choosing rest with intention counts too.
+- **Tabs:** Today, Progress, and History along the bottom; the cog at the top
+  shows who's signed in, with Log Out.
+- **Today:** the counters (Days, Streak, Longest, Reps), a checklist of today's
+  rituals with the practices named ("Centering ×3"), then the rituals
+  themselves: morning clearing, practice (declaration + skill + mood check),
+  and evening gratitude. Any one of them counts for the day. The practice card
+  opens on arrival and stays open after logging, ready for the next rep. Each
+  skill shows a teal badge with today's reps and its running total. Conscious
+  Rest is a skill, so choosing rest with intention counts too.
+- **Moods:** twelve, in a 4×3 grid, from lifted to settled to heavy. "Other"
+  pairs with the optional note.
+- **Progress:** the counters, then a ring per ritual and per skill.
 - **Days, streak, longest, reps:** Days is every day you've practiced and only
   ever grows. Streak is consecutive days, and stays alive through today if you
   practiced yesterday. A missed day resets the streak but never Days or Reps.
@@ -56,7 +64,7 @@ keep it; change the text freely.
 
 | File | What it does |
 |---|---|
-| `index.php` | Login gate and page shell (header, Today and History tabs) |
+| `index.php` | Login gate and page shell (header, settings menu, tab bar) |
 | `api.php` | JSON endpoints: `state`, `entry`, `declaration`, `declaration_archive`, `weekly`, `history_month`, `history_day`, `history_weekly` |
 | `bootstrap.php` | Loads config, WordPress, and the libraries |
 | `lib/db.php` | Tables, migrations, user profiles |
@@ -65,9 +73,10 @@ keep it; change the text freely.
 | `lib/history.php` | Month calendar, day summaries, weekly reflections |
 | `lib/declarations.php` | Declarations (up to 3, with version history) |
 | `lib/content.php` | Weekly questions and the page's state |
-| `content/prompts.php` | Moods, skills (conscious rest first), clearing, gratitude, weekly questions |
+| `content/prompts.php` | Moods (with icons), skills (Conscious Rest first), clearing, gratitude, weekly questions |
 | `assets/app.js` | Front end, including voice-to-text |
 | `assets/app.css` | Kaleidoscope theme (light and dark mode) |
+| `assets/icons.svg` | Phosphor icons (light, with a soft duotone tint; MIT) |
 | `assets/fonts/` | Jost, hosted with the app (SIL Open Font License) |
 
 ## Voice-to-text

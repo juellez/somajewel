@@ -25,6 +25,8 @@
   --teal-soft: #e0f4f1;
   --error: #b3261e;
   --radius: 16px;
+  --icon-tint: 0.2;         /* soft fill inside icons; 0 = outline only */
+  --tabbar: 64px;
   --font: "Jost", ui-sans-serif, -apple-system, "Segoe UI", Roboto, sans-serif;
   color-scheme: light;
 }
@@ -59,7 +61,11 @@ body {
   color: var(--text);
   font: 400 17px/1.55 var(--font);
   -webkit-font-smoothing: antialiased;
+  /* room for the tab bar */
+  padding-bottom: calc(var(--tabbar) + env(safe-area-inset-bottom));
 }
+
+.icon { width: 1.25em; height: 1.25em; fill: currentColor; flex: none; vertical-align: -0.25em; }
 
 .caps { text-transform: uppercase; letter-spacing: 0.16em; }
 
@@ -88,20 +94,46 @@ body {
 .brand__icon { width: 30px; height: 30px; border-radius: 50%; display: block; }
 .brand__icon--drawn { background: #5c1a3e; display: grid; place-items: center; }
 .brand__icon--drawn span { width: 12px; height: 16px; background: #e58a8f; border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%; }
-.tabs { display: flex; gap: 18px; }
-.tabs__tab {
-  color: inherit;
-  text-decoration: none;
-  font-weight: 300;
-  font-size: 0.8rem;
-  text-transform: uppercase;
-  letter-spacing: 0.16em;
-  padding: 6px 0 4px;
-  border-bottom: 1.5px solid transparent;
-  opacity: 0.8;
+.brand:focus-visible { outline: 2px solid var(--on-head); outline-offset: 3px; border-radius: 4px; }
+
+/* settings menu */
+.account { position: relative; }
+.account__toggle { list-style: none; cursor: pointer; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; font-size: 1.3rem; }
+.account__toggle::-webkit-details-marker { display: none; }
+.account__toggle:focus-visible { outline: 2px solid var(--on-head); outline-offset: 2px; }
+.account[open] .account__toggle { background: rgb(255 255 255 / 0.15); }
+.account__menu {
+  position: absolute; right: 0; top: calc(100% + 6px); z-index: 20;
+  min-width: 220px;
+  background: var(--surface); color: var(--text);
+  border: 1px solid var(--line); border-radius: 14px;
+  padding: 12px 16px;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.18);
+  display: grid; gap: 10px;
+  font-size: 0.95rem;
 }
-.tabs__tab[aria-current="page"] { opacity: 1; border-bottom-color: currentColor; }
-.tabs__tab:focus-visible, .brand:focus-visible { outline: 2px solid var(--on-head); outline-offset: 3px; border-radius: 4px; }
+.account__name { margin: 0; color: var(--muted); }
+.account__name strong { color: var(--text); font-weight: 500; }
+.account__menu a { color: var(--rasp); display: inline-flex; align-items: center; gap: 6px; }
+
+/* bottom tab bar */
+.tabbar {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 10;
+  display: flex; justify-content: space-around;
+  background: var(--surface);
+  border-top: 1px solid var(--line);
+  padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
+}
+.tabbar__tab {
+  display: grid; justify-items: center; gap: 1px;
+  min-width: 72px; padding: 4px 8px;
+  color: var(--muted); text-decoration: none;
+  font-size: 0.72rem; letter-spacing: 0.04em;
+  border-radius: 12px;
+}
+.tabbar__tab .icon { font-size: 1.35rem; }
+.tabbar__tab[aria-current="page"] { color: var(--rasp); }
+.tabbar__tab:focus-visible { outline: 2px solid var(--rasp); outline-offset: 2px; }
 
 /* ---------- layout ---------- */
 .app {
@@ -123,10 +155,23 @@ body {
 .counter--hero .counter__value { font-size: 2.3rem; }
 .counters__note { margin: 8px 12px 0; text-align: center; font-size: 0.85rem; font-weight: 300; opacity: 0.92; }
 
-.chips { display: flex; flex-wrap: wrap; gap: 6px; }
-.chip { font-size: 0.85rem; padding: 3px 10px; border-radius: 999px; border: 1px dashed var(--muted); color: var(--muted); }
-.chip.is-done { border: 1px solid var(--teal); background: var(--teal-soft); color: var(--teal); }
-.chip.is-done::before { content: "✓ "; }
+/* today's rituals, one per line */
+.rituals { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.ritual { display: flex; align-items: baseline; gap: 8px; padding: 7px 14px; border-radius: 12px; border: 1px dashed var(--line); color: var(--muted); font-size: 0.95rem; }
+.ritual .icon { align-self: center; --icon-tint: 0; }
+.ritual.is-done { border: 1px solid transparent; background: var(--teal-soft); color: var(--teal); }
+.ritual__detail { color: var(--text); font-size: 0.85rem; }
+
+/* today's count: a small teal badge, wherever "today" is counted */
+.today-badge {
+  display: inline-grid; place-items: center;
+  min-width: 22px; height: 22px; padding: 0 6px;
+  border-radius: 999px;
+  font-size: 0.75rem; font-weight: 500; line-height: 1;
+  color: var(--teal); background: var(--teal-soft); border: 1px solid var(--teal);
+  font-variant-numeric: tabular-nums;
+}
+.card__done .today-badge { margin-right: 4px; }
 
 /* ---------- cards ---------- */
 .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
@@ -208,7 +253,8 @@ body {
   cursor: pointer;
 }
 .choice__count { color: var(--muted); margin-left: -2px; }
-.choice[aria-checked="true"] { border-color: var(--rasp); background: var(--rasp-soft); box-shadow: inset 0 0 0 1px var(--rasp); }
+.choice:has(.today-badge) { padding-left: 6px; }
+.choice[aria-checked="true"] { border-color: var(--teal); box-shadow: inset 0 0 0 1px var(--teal); }
 
 .segmented { display: flex; background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 3px; }
 .segmented button {
@@ -226,20 +272,21 @@ body {
 .when { display: grid; gap: 6px; }
 .when__hint { margin: 0; font-size: 0.85rem; color: var(--muted); }
 
-/* ---------- mood keypad ---------- */
-.moods { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; max-width: 360px; }
+/* ---------- mood grid ---------- */
+.moods { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; max-width: 440px; }
 .mood {
   display: grid; justify-items: center; gap: 2px;
-  padding: 10px 4px 8px;
+  padding: 9px 2px 7px;
   font: inherit; color: var(--text);
   background: var(--bg);
   border: 1px solid var(--line);
   border-radius: 14px;
   cursor: pointer;
 }
-.mood__emoji { font-size: 1.8rem; line-height: 1; }
-.mood__label { font-size: 0.78rem; color: var(--muted); }
-.mood[aria-checked="true"] { border-color: var(--rasp); background: var(--rasp-soft); box-shadow: inset 0 0 0 1px var(--rasp); }
+.mood .icon { font-size: 1.45rem; color: var(--rasp); }
+.mood__label { font-size: 0.72rem; color: var(--muted); max-width: 100%; overflow-wrap: anywhere; }
+.mood[aria-checked="true"] { border-color: var(--teal); box-shadow: inset 0 0 0 1px var(--teal); }
+.mood[aria-checked="true"] .mood__label { color: var(--text); }
 
 /* ---------- rings ---------- */
 .ring {
@@ -265,6 +312,10 @@ body {
 .rep__plain { width: 56px; height: 56px; display: grid; place-items: center; }
 .rep__label { font-size: 0.85rem; line-height: 1.25; }
 .rep__next { font-size: 0.78rem; color: var(--muted); min-height: 1em; font-variant-numeric: tabular-nums; }
+.rep__next .today-badge { margin-right: 4px; height: 18px; min-width: 18px; font-size: 0.7rem; }
+.reps--rituals { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.rep__time { display: block; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.12em; color: var(--rasp); }
+.daylog__mood .icon { color: var(--rasp); margin-right: 2px; }
 
 /* ---------- declarations ---------- */
 .decls { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
@@ -387,3 +438,7 @@ body {
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; }
 }
+
+/* sections that don't fold (Progress) */
+.card--static .card__summary { cursor: default; }
+.card--static .card__summary::after { display: none; }
