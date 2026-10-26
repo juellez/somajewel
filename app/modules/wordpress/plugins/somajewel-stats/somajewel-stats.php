@@ -16,8 +16,8 @@ const SJS_DAYS = 14; // width of the activity strip
 
 add_action('admin_menu', function () {
     add_menu_page(
-        'Practice stats',
-        'Practice stats',
+        'SomaJewel',
+        'SomaJewel',
         'manage_options',
         'somajewel-stats',
         'sjs_render_page',
