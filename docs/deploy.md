@@ -32,7 +32,7 @@ needs them over the web. This needs Apache with `.htaccess` enabled
 ## One-time setup
 
 The examples use `/var/www/example.com/app` as the app folder and
-`/var/www/example.com/siteadmin` as the WordPress folder. Use your own.
+`/var/www/example.com` as the WordPress folder. Use your own.
 
 ### 1. On the server: a deploy user that owns the app folder
 
@@ -124,7 +124,7 @@ Once, as your admin user, after the first deploy has put the plugin on the serve
 
 ```bash
 sudo ln -s /var/www/example.com/app/modules/wordpress/plugins/somajewel-stats \
-           /var/www/example.com/siteadmin/wp-content/plugins/somajewel-stats
+           /var/www/example.com/wp-content/plugins/somajewel-stats
 ```
 
 Then activate **SomaJewel Stats** under **Plugins** in WP admin. Later deploys

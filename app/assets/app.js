@@ -44,6 +44,24 @@
     return node;
   }
 
+  /** A Phosphor icon from assets/icons.svg. */
+  function icon(name) {
+    const NS = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(NS, 'svg');
+    svg.setAttribute('class', 'icon');
+    svg.setAttribute('aria-hidden', 'true');
+    svg.setAttribute('focusable', 'false');
+    const use = document.createElementNS(NS, 'use');
+    use.setAttribute('href', `${window.USP.icons}#i-${name}`);
+    svg.append(use);
+    return svg;
+  }
+
+  /** Teal badge for today's count. */
+  function todayBadge(n) {
+    return el('span', { class: 'today-badge', text: String(n) });
+  }
+
   function greeting(name) {
     const hour = new Date().getHours();
     const part = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
@@ -98,7 +116,7 @@
           el('span', { class: 'card__eyebrow', text: eyebrow }),
           el('span', { class: 'card__title', text: title })
         ),
-        done ? el('span', { class: 'card__done', text: done }) : null
+        done ? el('span', { class: 'card__done' }, done) : null
       ),
       el('div', { class: 'card__content' }, body)
     );
@@ -131,7 +149,9 @@
       const btn = el('button', {
         type: 'button', class: 'choice', role: 'radio',
         'aria-checked': String(opt.value === value), title: opt.hint || null,
-      }, el('span', { text: opt.text }),
+        'aria-label': opt.today ? `${opt.text}, ${opt.today} today, ${opt.count} total` : null,
+      }, opt.today ? todayBadge(opt.today) : null,
+        el('span', { text: opt.text }),
         opt.count ? el('span', { class: 'choice__count', text: `· ${opt.count}` }) : null);
       btn.addEventListener('click', () => {
         value = opt.value;
@@ -143,15 +163,14 @@
     return { node: group, get value() { return value; } };
   }
 
-  /** 3×3 mood keypad. Tap again to clear. Returns { node, value }. */
+  /** 4×3 mood grid. Tap again to clear. Returns { node, value }. */
   function moodPad({ onChange } = {}) {
     let value = '';
     const pad = el('div', { class: 'moods', role: 'radiogroup', 'aria-label': 'How do you feel now?' });
     for (const mood of state.moods) {
       const btn = el('button', {
         type: 'button', class: 'mood', role: 'radio', 'aria-checked': 'false', 'aria-label': mood.label,
-      }, el('span', { class: 'mood__emoji', 'aria-hidden': 'true', text: mood.emoji }),
-         el('span', { class: 'mood__label', text: mood.label }));
+      }, icon(mood.icon), el('span', { class: 'mood__label', text: mood.label }));
       btn.addEventListener('click', () => {
         value = value === mood.key ? '' : mood.key;
         pad.querySelectorAll('.mood').forEach((b) => b.setAttribute('aria-checked', String(b === btn && value !== '')));
@@ -332,7 +351,7 @@
     return {
       node: el('div', { class: 'when' },
         el('div', { class: 'segmented', role: 'group', 'aria-label': 'Log this for' }, buttons),
-        el('p', { class: 'when__hint', text: `Late night? Until ${state.grace.until}, you can log yesterday's practice.` })
+        el('p', { class: 'when__hint', text: `Late night or forgot to track? Until ${state.grace.until}, you can still log practice for yesterday.` })
       ),
       get value() { return value; },
     };
@@ -343,7 +362,8 @@
   async function saveEntry(cardId, payload) {
     const res = await api('entry', { method: 'POST', body: payload });
     state = res.state;
-    openCards.delete(cardId);
+    // Practice stays open, ready for the next rep; the others fold away.
+    if (cardId !== 'practice') openCards.delete(cardId);
     render();
 
     hist.months = {};
@@ -393,14 +413,27 @@
     );
   }
 
-  function todayChips() {
+  /** Today's practices by name: "Centering ×3, Conscious Rest". */
+  function practicedToday() {
+    return state.skills
+      .filter((s) => state.today_skills[s.key])
+      .map((s) => (state.today_skills[s.key] > 1 ? `${s.title} ×${state.today_skills[s.key]}` : s.title))
+      .join(', ');
+  }
+
+  /** Today's three rituals, one per line, with the practices named. */
+  function ritualList() {
     const t = state.today_counts;
-    const chip = (label, count) =>
-      el('span', { class: `chip ${count ? 'is-done' : ''}`, text: count > 1 ? `${label} ×${count}` : label });
-    return el('div', { class: 'chips', 'aria-label': 'Today' },
-      chip('Clearing', t.clearing),
-      chip('Practice', t.practice),
-      chip('Gratitude', t.gratitude)
+    const row = (name, done, detail) =>
+      el('li', { class: `ritual ${done ? 'is-done' : ''}` },
+        icon(done ? 'check' : 'circle'),
+        el('span', { text: name }),
+        detail ? el('span', { class: 'ritual__detail', text: detail }) : null
+      );
+    return el('ul', { class: 'rituals', 'aria-label': 'Today' },
+      row('Clearing', t.clearing),
+      row('Practice', t.practice, practicedToday()),
+      row('Gratitude', t.gratitude)
     );
   }
 
@@ -425,7 +458,7 @@
     return card('clearing', {
       eyebrow: 'Morning',
       title: c.title,
-      done: state.today_counts.clearing ? '✓ Done' : '',
+      done: state.today_counts.clearing ? [icon('check'), ' Done'] : '',
       body: [
         el('p', { class: 'card__body', text: c.intro }),
         fields.map((f) => el('div', { class: 'question' }, f.label, f.node)),
@@ -441,7 +474,7 @@
     const meta = {
       eyebrow: 'Practice',
       title: 'Log a practice',
-      done: n ? `✓ ${n} today` : '',
+      done: n ? [todayBadge(n), 'today'] : '',
     };
 
     if (!state.declarations.length) {
@@ -467,7 +500,7 @@
 
     const decl = declarationChoices({ selected: defaultDeclaration(), onChange: update });
     const skill = choiceGroup(
-      state.skills.map((s) => ({ value: s.key, text: s.title, hint: s.description, count: s.count })),
+      state.skills.map((s) => ({ value: s.key, text: s.title, count: s.count, today: state.today_skills[s.key] || 0 })),
       { label: 'Skill', onChange: update }
     );
     const mood = moodPad({ onChange: update });
@@ -488,8 +521,8 @@
       ...meta,
       body: [
         el('p', { class: 'step', text: 'Declaration' }), decl.node,
-        el('p', { class: 'step', text: 'What did you practice?' }), skill.node, hint,
-        el('p', { class: 'step', text: 'How do you feel now?' }), mood.node,
+        el('p', { class: 'step', text: 'What are you practicing?' }), skill.node, hint,
+        el('p', { class: 'step', text: 'Mood check: What do you notice in your body now and how would you describe that in one word (or a few)?' }), mood.node,
         note.node,
         when.node, save, error,
       ],
@@ -513,7 +546,7 @@
     return card('gratitude', {
       eyebrow: 'Evening',
       title: g.title,
-      done: state.today_counts.gratitude ? '✓ Done' : '',
+      done: state.today_counts.gratitude ? [icon('check'), ' Done'] : '',
       body: [
         el('p', { class: 'card__body', text: g.intro }),
         el('ol', { class: 'steps' }, g.steps.map((s) =>
@@ -650,28 +683,37 @@
     });
   }
 
-  // ---------- reps ----------
+  // ---------- progress ----------
 
-  function repsCard() {
+  function progressView() {
     // A ring with "count / next" under it, or just the count when there's no
     // milestone (conscious rest). The caption line stays so tiles line up.
-    const tile = (label, r, count) => el('div', { class: 'rep' },
+    const tile = ({ label, time, r, count, today }) => el('div', { class: 'rep' },
       r ? ring(r, 'ring--lg') : el('span', { class: 'rep__plain' }, el('span', { class: 'ring__n', text: String(count) })),
-      el('span', { class: 'rep__label', text: label }),
-      el('span', { class: 'rep__next', text: r ? `${r.count} / ${r.next}` : '' })
+      el('span', { class: 'rep__label' }, time ? el('span', { class: 'rep__time', text: time }) : null, label),
+      el('span', { class: 'rep__next' }, today ? todayBadge(today) : null, r ? `${r.count} / ${r.next}` : '')
     );
 
-    return card('reps', {
-      eyebrow: 'Your Reps',
-      title: 'Rituals and Skills',
-      body: [
+    const rituals = Object.entries(state.rituals).map(([type, r]) =>
+      tile({ label: r.name, time: r.time, r: r.ring, today: state.today_counts[type] }));
+    const skills = state.skills.map((s) =>
+      tile({ label: s.title, r: s.ring, count: s.count, today: state.today_skills[s.key] }));
+
+    const section = (eyebrow, title, body) => el('section', { class: 'card card--static' },
+      el('div', { class: 'card__summary' },
+        el('span', { class: 'card__heading' },
+          el('span', { class: 'card__eyebrow', text: eyebrow }),
+          el('span', { class: 'card__title', text: title }))),
+      el('div', { class: 'card__content' }, body));
+
+    return [
+      counters(),
+      section('Your Day', 'Rituals', el('div', { class: 'reps reps--rituals' }, rituals)),
+      section('Your Skills', 'Practices', [
         el('p', { class: 'card__body', text: 'Every rep builds muscle memory.' }),
-        el('p', { class: 'step', text: 'Rituals' }),
-        el('div', { class: 'reps' }, Object.values(state.rituals).map((r) => tile(r.label, r.ring))),
-        el('p', { class: 'step', text: 'Skills' }),
-        el('div', { class: 'reps' }, state.skills.map((s) => tile(s.title, s.ring, s.count))),
-      ],
-    });
+        el('div', { class: 'reps' }, skills),
+      ]),
+    ];
   }
 
   // ---------- history ----------
@@ -800,7 +842,7 @@
         el('div', { class: 'daylog__item' },
           el('div', { class: 'daylog__name' },
             el('span', { text: item.title }),
-            item.mood ? el('span', { class: 'daylog__mood', text: `${item.mood.emoji} ${item.mood.label}` }) : null
+            item.mood ? el('span', { class: 'daylog__mood' }, icon(item.mood.icon), item.mood.label) : null
           ),
           item.declaration ? el('p', { class: 'daylog__line', text: item.declaration }) : null,
           item.summary ? el('p', { class: 'daylog__line', text: item.summary }) : null,
@@ -860,28 +902,28 @@
     return [
       el('h1', { class: 'top__greeting', text: greeting(state.user.name) }),
       counters(),
-      todayChips(),
+      ritualList(),
       clearingCard(),
       practiceCard(),
       gratitudeCard(),
       weeklyCard(),
       declarationsCard(),
-      repsCard(),
     ];
   }
 
   function render() {
     // Keep the scroll position steady across re-renders of the same view.
     const y = window.scrollY;
-    root.replaceChildren(...(view === 'history' ? historyView() : todayView()));
+    const views = { today: todayView, progress: progressView, history: historyView };
+    root.replaceChildren(...views[view]());
     window.scrollTo(0, y);
   }
 
   function setView() {
-    const next = location.hash === '#history' ? 'history' : 'today';
+    const next = ['#progress', '#history'].includes(location.hash) ? location.hash.slice(1) : 'today';
     const changed = next !== view;
     view = next;
-    document.querySelectorAll('.tabs__tab').forEach((tab) => {
+    document.querySelectorAll('.tabbar__tab').forEach((tab) => {
       if (tab.dataset.view === view) tab.setAttribute('aria-current', 'page');
       else tab.removeAttribute('aria-current');
     });
@@ -892,12 +934,18 @@
   }
 
   window.addEventListener('hashchange', setView);
+
+  // Close the settings menu when tapping anywhere else.
+  document.addEventListener('click', (e) => {
+    const menu = document.querySelector('.account[open]');
+    if (menu && !menu.contains(e.target)) menu.open = false;
+  });
   setView();
 
   api('state')
     .then((data) => {
       state = data;
-      if (!state.declarations.length) openCards.add('practice');
+      openCards.add('practice'); // open on arrival: the main thing you come to do
       render();
     })
     .catch((err) => {

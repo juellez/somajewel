@@ -111,7 +111,7 @@ function usp_history_day(int $user_id, string $date): ?array
             'type'        => $row['type'],
             'title'       => $title,
             'declaration' => $row['declaration'] ? usp_snippet($row['declaration']) : null,
-            'mood'        => $mood ? ['emoji' => $mood['emoji'], 'label' => $mood['label']] : null,
+            'mood'        => $mood ? ['icon' => $mood['icon'], 'label' => $mood['label']] : null,
             'summary'     => usp_snippet($summary),
             'note'        => usp_snippet($row['note']),
         ];

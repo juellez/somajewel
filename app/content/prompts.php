@@ -8,17 +8,21 @@
 
 return [
 
-    // How do you feel now? Shown as a 3×3 keypad, in this order.
+    // How do you feel now? Shown as a 4×3 grid, in this order: lifted,
+    // settled, heavy. 'icon' is a Phosphor icon in assets/icons.svg.
     'moods' => [
-        ['key' => 'elated',     'emoji' => '🤩', 'label' => 'Elated'],
-        ['key' => 'joyful',     'emoji' => '😄', 'label' => 'Joyful'],
-        ['key' => 'loving',     'emoji' => '🥰', 'label' => 'Loving'],
-        ['key' => 'calm',       'emoji' => '😌', 'label' => 'Calm'],
-        ['key' => 'tender',     'emoji' => '🥹', 'label' => 'Tender'],
-        ['key' => 'blah',       'emoji' => '😐', 'label' => 'Blah'],
-        ['key' => 'anxious',    'emoji' => '😟', 'label' => 'Anxious'],
-        ['key' => 'sad',        'emoji' => '😢', 'label' => 'Sad'],
-        ['key' => 'heartbroken','emoji' => '💔', 'label' => 'Heartbroken'],
+        ['key' => 'elated',      'icon' => 'lightning',      'label' => 'Energized'],
+        ['key' => 'joyful',      'icon' => 'smiley',         'label' => 'Joyful'],
+        ['key' => 'loving',      'icon' => 'heart',          'label' => 'Loving'],
+        ['key' => 'sacred',      'icon' => 'flower-lotus',   'label' => 'Sacred'],
+        ['key' => 'calm',        'icon' => 'feather',        'label' => 'Peaceful'],
+        ['key' => 'grounded',    'icon' => 'mountains',      'label' => 'Grounded'],
+        ['key' => 'tender',      'icon' => 'plant',          'label' => 'Tender'],
+        ['key' => 'blah',        'icon' => 'smiley-meh',     'label' => 'Blah'],
+        ['key' => 'anxious',     'icon' => 'smiley-nervous', 'label' => 'Anxious'],
+        ['key' => 'sad',         'icon' => 'smiley-sad',     'label' => 'Sad'],
+        ['key' => 'heartbroken', 'icon' => 'heart-break',    'label' => 'Heartbroken'],
+        ['key' => 'other',       'icon' => 'dots-three',     'label' => 'Other'],
     ],
 
     // Practice menu. What makes it somatic: intention, awareness, repetition.
@@ -35,27 +39,28 @@ return [
         ['key' => 'jo',             'title' => 'Jo',             'description' => 'Kata, partner practice, or any jo work.'],
         ['key' => 'mutual-connection',             'title' => 'Hand on Heart',             'description' => 'Mutual Connection with Self, Spirit, or another person.'],
         ['key' => 'relational',             'title' => 'Relational',             'description' => 'Centered request or yes/no/maybe. Any practice for the sake of building your capacity to be in Right Relation with self and others.'],
+        ['key' => 'prayer',             'title' => 'Prayer',             'description' => 'Daily prayer, devotions, intentions.'],
     ],
 
     'clearing' => [
-        'title'     => 'Morning Clearing',
-        'intro'     => 'Clear what\'s in the way, then take a stand for your way of being today.',
+        'title'     => 'Clearing & Intention',
+        'intro'     => 'Honor what is. Clear what you\'re ready to release. Set your intentions.',
         'questions' => [
-            ['key' => 'worries',        'text' => 'Fears, concerns, complaints, worries?'],
+            ['key' => 'worries',        'text' => 'Any fears, concerns, complaints, worries?'],
             ['key' => 'story',          'text' => 'What am I making this mean?'],
             ['key' => 'interpretation', 'text' => 'Interpretation or fact? Is it empowering or disempowering?'],
-            ['key' => 'stand',          'text' => 'What way of being (not "fixing") do I want to be today? My stand.'],
+            ['key' => 'stand',          'text' => 'What way of being (not "fixing") do I want to be today? My "stand".'],
         ],
     ],
 
     'gratitude' => [
         'title' => 'Generative Gratitude',
-        'intro' => 'We can practice generating gratitude through extension, creating space to explore what naturally wells up (or doesn\'t).',
+        'intro' => 'We can practice gratitude through physical extension, creating space to explore what naturally wells up (or doesn\'t).',
         'steps' => [
-            ['title' => 'Ground', 'text' => 'Extend down into the ground. Feel for gratitude.'],
-            ['title' => 'Sky',    'text' => 'Extend up to the sky. Feel for gratitude.'],
-            ['title' => 'Out',    'text' => 'Extend out to others and the world. Feel for gratitude.'],
-            ['title' => 'Self',   'text' => 'Extend to yourself, like a hug. Feel for gratitude.'],
+            ['title' => 'Ground', 'text' => 'Extend down into the ground.'],
+            ['title' => 'Sky',    'text' => 'Extend up to the sky.'],
+            ['title' => 'Out',    'text' => 'Extend out to others and the world.'],
+            ['title' => 'Self',   'text' => 'Extend to yourself, like a hug.'],
         ],
         'note_placeholder' => 'Optional: what welled up, or anything else from today',
     ],
