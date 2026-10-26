@@ -39,13 +39,13 @@ return [
     ],
 
     'clearing' => [
-        'title'     => 'Morning Clearing',
-        'intro'     => 'Clear what\'s in the way, then take a stand for your way of being today.',
+        'title'     => 'Clearing & Intention',
+        'intro'     => 'Honor what is. Clear what you\'re ready to release. Set your intentions.',
         'questions' => [
-            ['key' => 'worries',        'text' => 'Fears, concerns, complaints, worries?'],
+            ['key' => 'worries',        'text' => 'Any fears, concerns, complaints, worries?'],
             ['key' => 'story',          'text' => 'What am I making this mean?'],
             ['key' => 'interpretation', 'text' => 'Interpretation or fact? Is it empowering or disempowering?'],
-            ['key' => 'stand',          'text' => 'What way of being (not "fixing") do I want to be today? My stand.'],
+            ['key' => 'stand',          'text' => 'What way of being (not "fixing") do I want to be today? My "stand".'],
         ],
     ],
 
