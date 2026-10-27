@@ -19,6 +19,7 @@ $boot = [
     'icons' => $icons,
     'loadError' => usp_ui('app.load_error'),
     'version'   => usp_build()['label'],
+    'logout'    => wp_logout_url(home_url('/')),
     'nonce' => wp_create_nonce('usp_api'),
 ];
 $asset = fn (string $file) => $base . '/assets/' . $file . '?v=' . filemtime(__DIR__ . '/assets/' . $file);
@@ -73,15 +74,7 @@ header('Cache-Control: no-store');
                 <span class="brand__name"><?php echo esc_html($app_name); ?></span>
             </a>
             <a class="masthead__icon" href="#declarations" data-view="declarations" aria-label="<?php echo esc_attr(usp_ui('nav.declarations')); ?>" title="<?php echo esc_attr(usp_ui('nav.declarations')); ?>"><?php echo $svg('compass'); ?></a>
-            <details class="account">
-                <summary class="account__toggle" aria-label="<?php echo esc_attr(usp_ui('nav.settings')); ?>"><?php echo $svg('gear-six'); ?></summary>
-                <div class="account__menu">
-                    <p class="account__name"><?php echo esc_html(usp_ui('nav.signed_in_as')); ?> <strong><?php echo esc_html(wp_get_current_user()->display_name); ?></strong></p>
-                    <a href="#feedback"><?php echo $svg('chat-circle-dots'); ?> <?php echo esc_html(usp_ui('nav.feedback_form')); ?></a>
-                    <a href="#settings"><?php echo $svg('gear-six'); ?> <?php echo esc_html(usp_ui('nav.settings')); ?></a>
-                    <a href="<?php echo esc_url(wp_logout_url(home_url('/'))); ?>"><?php echo $svg('sign-out'); ?> <?php echo esc_html(usp_ui('nav.log_out')); ?></a>
-                </div>
-            </details>
+            <a class="masthead__icon" href="#settings" data-view="settings" aria-label="<?php echo esc_attr(usp_ui('nav.settings')); ?>" title="<?php echo esc_attr(usp_ui('nav.settings')); ?>"><?php echo $svg('gear-six'); ?></a>
         </div>
     </header>
 
@@ -90,6 +83,8 @@ header('Cache-Control: no-store');
     </main>
 
     <footer class="footer">
+        <a href="#feedback"><?php echo esc_html(usp_ui('nav.feedback_form')); ?></a>
+        <span aria-hidden="true">·</span>
         <a href="<?php echo esc_url($legal); ?>"><?php echo esc_html(usp_ui('nav.terms')); ?></a>
         <?php if ($feedback) : ?>
             <span aria-hidden="true">·</span>

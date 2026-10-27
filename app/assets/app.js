@@ -965,6 +965,13 @@
       el('a', { class: 'back-link', href: `#${backTo}` }, icon('arrow-left'), t('app.back')),
       el('h1', { class: 'top__greeting', text: t('settings.title') }),
       section({
+        eyebrow: t('settings.account_title'),
+        body: el('div', { class: 'account-row' },
+          el('p', { class: 'card__body' }, `${t('nav.signed_in_as')} `, el('strong', { text: state.user.name })),
+          el('a', { class: 'account-row__out', href: USP.logout }, icon('sign-out'), ` ${t('nav.log_out')}`)),
+      }),
+      el('a', { class: 'btn btn--feedback', href: '#feedback' }, icon('chat-circle-dots'), ` ${t('nav.feedback_form')}`),
+      section({
         eyebrow: t('settings.timezone_title'),
         body: [el('p', { class: 'card__body', text: t('settings.timezone_body') }), select, now, useDevice],
       }),
@@ -1002,7 +1009,7 @@
     const other = el('input', { class: 'field field--line', type: 'text', maxlength: 100, placeholder: f.other_hint, 'aria-label': f.other });
     if (mine && mine.vote === 'other') other.value = mine.other;
     const vote = choiceGroup(
-      [...f.poll_options.map((name) => ({ value: name, text: name })), { value: 'other', text: f.other }],
+      [...((state.ui.name_test && state.ui.name_test.options) || []).map((name) => ({ value: name, text: name })), { value: 'other', text: f.other }],
       { label: f.poll_title, selected: mine ? mine.vote : null, onChange: (v) => { other.hidden = v !== 'other'; if (v === 'other') other.focus(); } }
     );
     other.hidden = !(mine && mine.vote === 'other');
@@ -1314,8 +1321,6 @@
     const next = VIEWS.includes(hash) ? hash : 'today';
     const changed = next !== view;
     if (SCREENS.includes(next) && !SCREENS.includes(view)) backTo = view;
-    const menu = document.querySelector('.account[open]');
-    if (menu) menu.open = false;
     view = next;
     document.querySelectorAll('.tabbar__tab, .masthead__icon').forEach((tab) => {
       if (tab.dataset.view === view) tab.setAttribute('aria-current', 'page');
@@ -1329,11 +1334,6 @@
 
   window.addEventListener('hashchange', setView);
 
-  // Close the settings menu when tapping anywhere else.
-  document.addEventListener('click', (e) => {
-    const menu = document.querySelector('.account[open]');
-    if (menu && !menu.contains(e.target)) menu.open = false;
-  });
   setView();
 
   api('state')

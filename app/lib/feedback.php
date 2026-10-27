@@ -7,10 +7,10 @@
 
 const USP_FEEDBACK_KINDS = ['issue', 'idea', 'naming'];
 
-/** Names in the poll, from content (ui → feedback → poll_options). */
+/** Names in the poll: the same list as the beta name switch (ui → name_test → options). */
 function usp_poll_options(): array
 {
-    return array_values(array_filter((array) (usp_content()['ui']['feedback']['poll_options'] ?? []), 'is_string'));
+    return array_values(array_filter((array) (usp_content()['ui']['name_test']['options'] ?? []), 'is_string'));
 }
 
 /** Returns an error code, or null when saved. */

@@ -71,7 +71,7 @@ Database tables (`{prefix}usp_*`) are created automatically on first visit.
 - **Weekly reflection timing:** each week's reflection opens Friday and stays
   editable until the next one opens; Today nudges Friday through Monday. Then
   it's read-only in History.
-- **Share Feedback** (cog): something that's off, an idea, or a vote in the
+- **Share Feedback** (Settings, or the footer): something that's off, an idea, or a vote in the
   name poll. Saved with the screen, device, and version; read it in WordPress
   admin under Practice stats → Feedback.
 - **Version:** the footer shows `v0.3.0 · a1b2c3d` (USP_VERSION in
@@ -110,7 +110,7 @@ entries), and keep words in `{braces}`, which the app fills in.
 | Icon style test (A/B) | `'ui'` → `'icon_test'` |
 | Settings screen and the time zone prompt | `'ui'` → `'settings'`, `'timezone_prompt'` |
 | When the weekly reflection opens | `'ui'` → `'reflect'` → `'opens_on'` |
-| Share Feedback, including the names in the poll | `'ui'` → `'feedback'` |
+| Share Feedback (the poll uses the names in `'name_test'`) | `'ui'` → `'feedback'` |
 
 Icons are named from `assets/icons.svg` (Phosphor). To use one that isn't
 there yet, add it to that file (see the note at its top).
