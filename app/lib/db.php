@@ -131,8 +131,18 @@ function usp_maybe_migrate(): void
             "ALTER TABLE " . usp_table('profiles') . " ADD COLUMN week_start TINYINT UNSIGNED NOT NULL DEFAULT 1 AFTER timezone_set",
         ],
 
-        // Feedback from testers (cog → Share Feedback), read in WordPress admin.
+        // Weekly reflections are tagged by their week's Thursday, the way ISO
+        // assigns weeks: the same tag whether a week starts Sunday or Monday.
+        // Existing tags (each a Sunday or Monday) move to that week's Thursday.
         6 => [
+            "ALTER TABLE " . usp_table('weekly_responses') . " CHANGE week_start week_key DATE NOT NULL",
+            "UPDATE IGNORE " . usp_table('weekly_responses') . " SET week_key = DATE_ADD(week_key, INTERVAL ((5 - DAYOFWEEK(week_key) + 7) % 7) DAY)",
+            // Only if one week was saved under both a Sunday and a Monday tag (test data).
+            "DELETE FROM " . usp_table('weekly_responses') . " WHERE DAYOFWEEK(week_key) <> 5",
+        ],
+
+        // Feedback from testers (Settings → Share Feedback), read in WordPress admin.
+        7 => [
             "CREATE TABLE IF NOT EXISTS " . usp_table('feedback') . " (
                 id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
                 user_id BIGINT UNSIGNED NOT NULL,

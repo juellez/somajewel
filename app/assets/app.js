@@ -1255,11 +1255,11 @@
     try {
       if (!hist.weeks) hist.weeks = (await api('history_weekly')).weeks;
 
-      // This week is always first, even before it has answers.
-      const current = state.weekly ? state.weekly.week_start : null;
-      // The open reflection always comes first, then the rest newest first.
-      const weeks = hist.weeks.filter((w) => w.week_start !== current);
-      if (current) weeks.unshift(hist.weeks.find((w) => w.week_start === current) || { week_start: current, answers: [] });
+      // The open reflection always comes first (even before it has answers),
+      // then the rest newest first. Weeks are matched by their Thursday key.
+      const current = state.weekly ? state.weekly.week_key : null;
+      const weeks = hist.weeks.filter((w) => w.week_key !== current);
+      if (current) weeks.unshift(hist.weeks.find((w) => w.week_key === current) || { week_key: current, week_start: state.weekly.week_start, answers: [] });
       if (!weeks.length) {
         body.replaceChildren(el('p', { class: 'daylog__empty', text: t('history.no_reflections') }));
         return;
@@ -1267,7 +1267,7 @@
 
       body.replaceChildren(...weeks.map((w) => {
         const [y, m, d] = w.week_start.split('-').map(Number);
-        const isCurrent = w.week_start === current;
+        const isCurrent = w.week_key === current;
         const n = w.answers.length;
         const total = isCurrent ? state.weekly.questions.length : 0;
         return el('details', { class: `week ${isCurrent ? 'week--current' : ''}`, open: isCurrent || weeks.length === 1 },
