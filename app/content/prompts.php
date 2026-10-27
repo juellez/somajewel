@@ -274,7 +274,7 @@ return [
         // SomaJewel Stats → Feedback.
         'feedback' => [
             'title'        => 'Share Feedback',
-            'intro'        => 'Thank you for testing with me. Tell me what feels off, what you\'d love, or help name the app. I read every note.',
+            'intro'        => 'Thank you for testing with me. Tell me what feels off, what you\'d love, or help name.',
             'kind_label'   => 'What kind of note?',
             'kinds'        => [
                 'issue'  => 'Something\'s off',
@@ -287,7 +287,7 @@ return [
                 'naming' => 'Anything about the name, or why you voted the way you did',
             ],
             'poll_title'   => 'Help name the app',
-            'poll_body'    => 'Which name feels most like this practice? Optional, and you can change your vote anytime.',
+            'poll_body'    => 'Optional and you can change your vote anytime.',
             // The poll lists the names in 'name_test' (below), so there's one list to edit.
             'other'        => 'Something else:',
             'other_hint'   => 'Your idea',
