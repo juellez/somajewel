@@ -327,7 +327,7 @@ return [
             'weekly'         => 'Weekly reflections',
             'today'          => 'Today',
             'loading'        => 'Loading…',
-            'no_entries'     => 'No entries. Rest counts too.',
+            'no_entries'     => 'No entries. Intional rest counts, too.',
             'one_rep'        => '1 rep',
             'reps'           => '{n} reps',
             'legend_more'    => '4+',
