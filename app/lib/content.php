@@ -79,6 +79,11 @@ function usp_variant_icons(int $user_id): array
 // content: ui → reflect → opens_on) and stays open, and editable, until the
 // next one opens. So on a Tuesday you're still finishing last week's; on
 // Friday this week's begins and last week's moves to History.
+//
+// Answers are saved under the week's Thursday (week_key), the day ISO uses to
+// assign a week to its year. Thursday falls in the same week whether weeks
+// start on Sunday or Monday, so changing that setting never splits a week.
+// What people see, "Week of Oct 19", follows their own week start.
 
 /** The first day of the week holding $date, for a week starting on $start_dow (0 = Sun, 1 = Mon). */
 function usp_week_start(DateTimeImmutable $date, int $start_dow = 1): string
@@ -87,48 +92,41 @@ function usp_week_start(DateTimeImmutable $date, int $start_dow = 1): string
     return $date->modify("-$back days")->format('Y-m-d');
 }
 
-/** The week whose reflection is open today: [week_start, is_this_week, next_opens (Y-m-d)]. */
+/** The Thursday of the week holding $date: the week's key. */
+function usp_week_key(DateTimeImmutable $date, int $start_dow = 1): string
+{
+    $start = new DateTimeImmutable(usp_week_start($date, $start_dow));
+    return $start->modify('+' . ((4 - $start_dow + 7) % 7) . ' days')->format('Y-m-d');
+}
+
+/** A week's first day (for display), from its key and the person's week start. */
+function usp_week_start_from_key(string $week_key, int $start_dow = 1): string
+{
+    return (new DateTimeImmutable($week_key))->modify('-' . ((4 - $start_dow + 7) % 7) . ' days')->format('Y-m-d');
+}
+
+/** The week whose reflection is open today. */
 function usp_reflection_week(DateTimeImmutable $today, int $start_dow): array
 {
-    $opens = (int) (usp_content()['ui']['reflect']['opens_on'] ?? 5);
-    $since = ((int) $today->format('w') - $opens + 7) % 7;   // days since it last opened
+    $opens  = (int) (usp_content()['ui']['reflect']['opens_on'] ?? 5);
+    $since  = ((int) $today->format('w') - $opens + 7) % 7;   // days since it last opened
     $opened = $today->modify("-$since days");
-    $week   = usp_week_start($opened, $start_dow);
     return [
-        'week_start' => $week,
-        'this_week'  => $week === usp_week_start($today, $start_dow),
+        'week_key'   => usp_week_key($opened, $start_dow),
+        'week_start' => usp_week_start($opened, $start_dow),
+        'this_week'  => usp_week_key($opened, $start_dow) === usp_week_key($today, $start_dow),
         'next_opens' => $opened->modify('+7 days')->format('Y-m-d'),
     ];
 }
 
-/**
- * The date a week's answers are saved under. Normally the week's first day,
- * but if someone switched between Sunday and Monday starts, that week's
- * answers may already be saved under the neighboring date; keep using it.
- */
-function usp_reflection_key(int $user_id, string $week_start, int $start_dow): string
-{
-    global $wpdb;
-
-    $alt  = (new DateTimeImmutable($week_start))->modify($start_dow === 0 ? '+1 day' : '-1 day')->format('Y-m-d');
-    $keys = $wpdb->get_col($wpdb->prepare(
-        'SELECT DISTINCT week_start FROM ' . usp_table('weekly_responses') . '
-         WHERE user_id = %d AND week_start IN (%s, %s)',
-        $user_id,
-        $week_start,
-        $alt
-    )) ?: [];
-    return (in_array($alt, $keys, true) && !in_array($week_start, $keys, true)) ? $alt : $week_start;
-}
-
 /** The question set for a week, rotating by its week number. */
-function usp_weekly_set(string $week_start): ?array
+function usp_weekly_set(string $week_key): ?array
 {
     $sets = usp_content()['weekly'] ?? [];
     if (!$sets) {
         return null;
     }
-    $week = (int) (new DateTimeImmutable($week_start))->modify('+3 days')->format('W');
+    $week = (int) (new DateTimeImmutable($week_key))->format('W');
     return $sets[$week % count($sets)];
 }
 
@@ -146,19 +144,17 @@ function usp_weekly_state(int $user_id, DateTimeImmutable $today): ?array
     global $wpdb;
 
     $profile = usp_get_profile($user_id);
-    $dow     = (int) ($profile['week_start'] ?? 1);
-    $week    = usp_reflection_week($today, $dow);
-    $week['week_start'] = usp_reflection_key($user_id, $week['week_start'], $dow);
-    $set     = usp_weekly_set($week['week_start']);
+    $week    = usp_reflection_week($today, (int) ($profile['week_start'] ?? 1));
+    $set     = usp_weekly_set($week['week_key']);
     if (!$set) {
         return null;
     }
 
     $rows = $wpdb->get_results($wpdb->prepare(
         'SELECT prompt_key, response FROM ' . usp_table('weekly_responses') . '
-         WHERE user_id = %d AND week_start = %s',
+         WHERE user_id = %d AND week_key = %s',
         $user_id,
-        $week['week_start']
+        $week['week_key']
     ), ARRAY_A) ?: [];
     $saved = array_column($rows, 'response', 'prompt_key');
 
@@ -177,6 +173,7 @@ function usp_weekly_state(int $user_id, DateTimeImmutable $today): ?array
     return [
         'title'      => $set['title'],
         'intro'      => $set['intro'] ?? '',
+        'week_key'   => $week['week_key'],
         'week_start' => $week['week_start'],
         'this_week'  => $week['this_week'],
         'next_opens' => $week['next_opens'],
@@ -190,20 +187,18 @@ function usp_save_weekly_response(int $user_id, string $prompt_key, string $resp
     global $wpdb;
 
     $profile = usp_get_profile($user_id);
-    $dow     = (int) ($profile['week_start'] ?? 1);
-    $week    = usp_reflection_week(usp_today($profile['timezone']), $dow);
-    $week['week_start'] = usp_reflection_key($user_id, $week['week_start'], $dow);
+    $week    = usp_reflection_week(usp_today($profile['timezone']), (int) ($profile['week_start'] ?? 1));
 
-    if (!in_array($prompt_key, usp_weekly_prompt_keys(usp_weekly_set($week['week_start'])), true)) {
+    if (!in_array($prompt_key, usp_weekly_prompt_keys(usp_weekly_set($week['week_key'])), true)) {
         return false;
     }
 
     return false !== $wpdb->query($wpdb->prepare(
         'INSERT INTO ' . usp_table('weekly_responses') . '
-            (user_id, week_start, prompt_key, response) VALUES (%d, %s, %s, %s)
+            (user_id, week_key, prompt_key, response) VALUES (%d, %s, %s, %s)
          ON DUPLICATE KEY UPDATE response = VALUES(response)',
         $user_id,
-        $week['week_start'],
+        $week['week_key'],
         $prompt_key,
         mb_substr($response, 0, 20000)
     ));
