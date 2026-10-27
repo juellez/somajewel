@@ -140,6 +140,24 @@ function usp_maybe_migrate(): void
             // Only if one week was saved under both a Sunday and a Monday tag (test data).
             "DELETE FROM " . usp_table('weekly_responses') . " WHERE DAYOFWEEK(week_key) <> 5",
         ],
+
+        // Feedback from testers (Settings → Share Feedback), read in WordPress admin.
+        7 => [
+            "CREATE TABLE IF NOT EXISTS " . usp_table('feedback') . " (
+                id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+                user_id BIGINT UNSIGNED NOT NULL,
+                kind VARCHAR(16) NOT NULL,
+                message TEXT NULL,
+                name_vote VARCHAR(64) NULL,
+                name_other VARCHAR(100) NULL,
+                screen VARCHAR(32) NULL,
+                device VARCHAR(255) NULL,
+                version VARCHAR(40) NULL,
+                created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (id),
+                KEY user_id (user_id)
+            ) $charset",
+        ],
     ];
 
     foreach ($migrations as $version => $queries) {

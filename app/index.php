@@ -83,6 +83,8 @@ header('Cache-Control: no-store');
     </main>
 
     <footer class="footer">
+        <a href="#feedback"><?php echo esc_html(usp_ui('nav.feedback_form')); ?></a>
+        <span aria-hidden="true">·</span>
         <a href="<?php echo esc_url($legal); ?>"><?php echo esc_html(usp_ui('nav.terms')); ?></a>
         <?php if ($feedback) : ?>
             <span aria-hidden="true">·</span>

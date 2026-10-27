@@ -108,6 +108,7 @@ return [
             'history'      => 'History',
             'declarations' => 'Declarations',
             'settings'     => 'Settings',
+            'feedback_form' => 'Share Feedback',
             'signed_in_as' => 'Signed in as',
             'log_out'      => 'Log Out',
             'terms'        => 'Terms of Use & Privacy',
@@ -269,6 +270,33 @@ return [
             'version'        => 'Running {version}',
         ],
 
+        // Share Feedback (cog menu), for testers. Read it in WordPress admin:
+        // SomaJewel Stats → Feedback.
+        'feedback' => [
+            'title'        => 'Share Feedback',
+            'intro'        => 'Thank you for testing with me. Tell me what feels off, what you\'d love, or help name the app. I read every note.',
+            'kind_label'   => 'What kind of note?',
+            'kinds'        => [
+                'issue'  => 'Something\'s off',
+                'idea'   => 'An idea',
+                'naming' => 'Naming',
+            ],
+            'placeholders' => [
+                'issue'  => 'What happened, and what did you expect?',
+                'idea'   => 'What would make this more useful for you?',
+                'naming' => 'Anything about the name, or why you voted the way you did',
+            ],
+            'poll_title'   => 'Help name the app',
+            'poll_body'    => 'Which name feels most like this practice? Optional, and you can change your vote anytime.',
+            // The poll lists the names in 'name_test' (below), so there's one list to edit.
+            'other'        => 'Something else:',
+            'other_hint'   => 'Your idea',
+            'your_vote'    => 'Your vote so far: {vote}',
+            'send'         => 'Send',
+            'sent'         => 'Thank you! Your note is on its way.',
+            'privacy'      => 'Sent with your name, this screen, your device type, and the app version ({version}), so I can follow up.',
+        ],
+
         // Shown on Today when this device's time zone differs from yours
         // (traveling, or a new phone).
         'timezone_prompt' => [
@@ -350,6 +378,7 @@ return [
             'empty'                => 'Write something in at least one box.',
             'limit'                => 'You can hold up to {max} declarations. Retire one to add another.',
             'grace_closed'         => 'It\'s past noon, so this can only be logged for today.',
+            'feedback_empty'       => 'Write a note or pick a name first.',
         ],
 
         'mic' => [

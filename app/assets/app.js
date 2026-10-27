@@ -970,6 +970,7 @@
           el('p', { class: 'card__body' }, `${t('nav.signed_in_as')} `, el('strong', { text: state.user.name })),
           el('a', { class: 'account-row__out', href: USP.logout }, icon('sign-out'), ` ${t('nav.log_out')}`)),
       }),
+      el('a', { class: 'btn btn--feedback', href: '#feedback' }, icon('chat-circle-dots'), ` ${t('nav.feedback_form')}`),
       section({
         eyebrow: t('settings.timezone_title'),
         body: [el('p', { class: 'card__body', text: t('settings.timezone_body') }), select, now, useDevice],
@@ -987,6 +988,58 @@
         eyebrow: t('settings.about_title'),
         body: el('p', { class: 'card__body', text: t('settings.version', { version: state.build.label }) }),
       }),
+    ];
+  }
+
+  // ---------- feedback ----------
+
+  function feedbackView() {
+    const f = state.ui.feedback;
+    const error = el('p', { class: 'form-error', 'aria-live': 'polite' });
+    const note = textField({ rows: 4, label: f.title });
+
+    const kind = choiceGroup(
+      Object.entries(f.kinds).map(([value, text]) => ({ value, text })),
+      { label: f.kind_label, selected: 'issue', onChange: (k) => { note.field.placeholder = f.placeholders[k] || ''; } }
+    );
+    note.field.placeholder = f.placeholders.issue || '';
+
+    // The name poll, with this person's last vote preselected.
+    const mine = state.my_vote;
+    const other = el('input', { class: 'field field--line', type: 'text', maxlength: 100, placeholder: f.other_hint, 'aria-label': f.other });
+    if (mine && mine.vote === 'other') other.value = mine.other;
+    const vote = choiceGroup(
+      [...((state.ui.name_test && state.ui.name_test.options) || []).map((name) => ({ value: name, text: name })), { value: 'other', text: f.other }],
+      { label: f.poll_title, selected: mine ? mine.vote : null, onChange: (v) => { other.hidden = v !== 'other'; if (v === 'other') other.focus(); } }
+    );
+    other.hidden = !(mine && mine.vote === 'other');
+
+    const send = el('button', { class: 'btn btn--primary', type: 'button', text: f.send });
+    send.addEventListener('click', () => withButton(send, error, async () => {
+      const res = await api('feedback', {
+        method: 'POST',
+        body: { kind: kind.value, message: note.field.value, vote: vote.value || '', other: other.value, screen: backTo },
+      });
+      state.my_vote = res.my_vote;
+      toast(f.sent);
+      location.hash = backTo;
+    }));
+
+    return [
+      el('a', { class: 'back-link', href: `#${backTo}` }, icon('arrow-left'), t('app.back')),
+      el('h1', { class: 'top__greeting', text: f.title }),
+      el('p', { class: 'lede', text: f.intro }),
+      section({ eyebrow: f.kind_label, body: [kind.node, note.node] }),
+      section({
+        eyebrow: f.poll_title,
+        body: [
+          el('p', { class: 'card__body', text: f.poll_body }),
+          vote.node, other,
+          mine ? el('p', { class: 'muted small', text: t('feedback.your_vote', { vote: mine.vote === 'other' ? mine.other : mine.vote }) }) : null,
+        ],
+      }),
+      el('p', { class: 'muted small', text: t('feedback.privacy', { version: state.build.label }) }),
+      send, error,
     ];
   }
 
@@ -1254,14 +1307,14 @@
   function render() {
     // Keep the scroll position steady across re-renders of the same view.
     const y = window.scrollY;
-    const views = { today: todayView, progress: progressView, reflect: reflectView, history: historyView, declarations: declarationsView, settings: settingsView };
+    const views = { today: todayView, progress: progressView, reflect: reflectView, history: historyView, declarations: declarationsView, settings: settingsView, feedback: feedbackView };
     // Skip empty slots (e.g. no time zone prompt today), which would otherwise show as "null".
     root.replaceChildren(...views[view]().flat(Infinity).filter(Boolean));
     window.scrollTo(0, y);
   }
 
-  const VIEWS = ['today', 'progress', 'reflect', 'history', 'declarations', 'settings'];
-  const SCREENS = ['declarations', 'settings']; // opened from the top bar, with Back
+  const VIEWS = ['today', 'progress', 'reflect', 'history', 'declarations', 'settings', 'feedback'];
+  const SCREENS = ['declarations', 'settings', 'feedback']; // opened from the top bar, with Back
   let backTo = 'today'; // where Back goes from those screens
 
   function setView() {

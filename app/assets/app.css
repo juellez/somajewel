@@ -503,7 +503,12 @@ body {
 .beta-row__label { font-size: 0.9rem; color: var(--muted); }
 .beta-row .segmented button { text-transform: none; letter-spacing: 0.02em; font-size: 0.85rem; }
 
+/* ---------- feedback ---------- */
+.field--line { padding: 10px 14px; }
+.small { font-size: 0.85rem; margin: 0; }
+
 .account-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 .account-row .card__body { margin: 0; }
 .account-row strong { color: var(--text); font-weight: 500; }
 .account-row__out { color: var(--rasp); display: inline-flex; align-items: center; gap: 6px; }
+.btn--feedback { display: inline-flex; align-items: center; justify-content: center; gap: 6px; text-decoration: none; }
