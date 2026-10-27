@@ -119,6 +119,45 @@ function usp_maybe_migrate(): void
         3 => [
             "UPDATE " . usp_table('entries') . " SET type = 'practice', skill_key = 'rest' WHERE type = 'rest'",
         ],
+
+        // Remember whether the timezone came from the person (or their device),
+        // rather than the site default.
+        4 => [
+            "ALTER TABLE " . usp_table('profiles') . " ADD COLUMN timezone_set TINYINT UNSIGNED NOT NULL DEFAULT 0 AFTER timezone",
+        ],
+
+        // Each person's first day of the week: 0 = Sunday, 1 = Monday.
+        5 => [
+            "ALTER TABLE " . usp_table('profiles') . " ADD COLUMN week_start TINYINT UNSIGNED NOT NULL DEFAULT 1 AFTER timezone_set",
+        ],
+
+        // Weekly reflections are tagged by their week's Thursday, the way ISO
+        // assigns weeks: the same tag whether a week starts Sunday or Monday.
+        // Existing tags (each a Sunday or Monday) move to that week's Thursday.
+        6 => [
+            "ALTER TABLE " . usp_table('weekly_responses') . " CHANGE week_start week_key DATE NOT NULL",
+            "UPDATE IGNORE " . usp_table('weekly_responses') . " SET week_key = DATE_ADD(week_key, INTERVAL ((5 - DAYOFWEEK(week_key) + 7) % 7) DAY)",
+            // Only if one week was saved under both a Sunday and a Monday tag (test data).
+            "DELETE FROM " . usp_table('weekly_responses') . " WHERE DAYOFWEEK(week_key) <> 5",
+        ],
+
+        // Feedback from testers (Settings → Share Feedback), read in WordPress admin.
+        7 => [
+            "CREATE TABLE IF NOT EXISTS " . usp_table('feedback') . " (
+                id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+                user_id BIGINT UNSIGNED NOT NULL,
+                kind VARCHAR(16) NOT NULL,
+                message TEXT NULL,
+                name_vote VARCHAR(64) NULL,
+                name_other VARCHAR(100) NULL,
+                screen VARCHAR(32) NULL,
+                device VARCHAR(255) NULL,
+                version VARCHAR(40) NULL,
+                created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (id),
+                KEY user_id (user_id)
+            ) $charset",
+        ],
     ];
 
     foreach ($migrations as $version => $queries) {
@@ -156,4 +195,35 @@ function usp_get_profile(int $user_id): array
     }
 
     return $row ?: [];
+}
+
+/**
+ * Saves settings: 'timezone' (an IANA name like America/Los_Angeles) and/or
+ * 'week_start' (0 = Sunday, 1 = Monday). Returns an error code, or null.
+ */
+function usp_save_settings(int $user_id, array $in): ?string
+{
+    global $wpdb;
+
+    $data = [];
+    if (isset($in['timezone'])) {
+        if (!in_array((string) $in['timezone'], DateTimeZone::listIdentifiers(), true)) {
+            return 'bad_timezone';
+        }
+        $data['timezone']     = (string) $in['timezone'];
+        $data['timezone_set'] = 1;
+    }
+    if (isset($in['week_start'])) {
+        if (!in_array((int) $in['week_start'], [0, 1], true)) {
+            return 'bad_week_start';
+        }
+        $data['week_start'] = (int) $in['week_start'];
+    }
+    if (!$data) {
+        return 'empty';
+    }
+
+    usp_get_profile($user_id); // make sure the profile exists
+    $ok = $wpdb->update(usp_table('profiles'), $data, ['user_id' => $user_id]);
+    return $ok === false ? 'save_failed' : null;
 }

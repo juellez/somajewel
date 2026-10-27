@@ -17,6 +17,9 @@ $icons = $base . '/assets/icons.svg?v=' . filemtime(__DIR__ . '/assets/icons.svg
 $boot = [
     'api'   => $base . '/api.php',
     'icons' => $icons,
+    'loadError' => usp_ui('app.load_error'),
+    'version'   => usp_build()['label'],
+    'logout'    => wp_logout_url(home_url('/')),
     'nonce' => wp_create_nonce('usp_api'),
 ];
 $asset = fn (string $file) => $base . '/assets/' . $file . '?v=' . filemtime(__DIR__ . '/assets/' . $file);
@@ -32,11 +35,15 @@ $icon = is_file(__DIR__ . '/assets/icon-192.png') ? $asset('icon-192.png') : (st
 $svg = fn (string $name) => '<svg class="icon" aria-hidden="true" focusable="false"><use href="'
     . esc_url($icons) . '#i-' . $name . '"></use></svg>';
 
-$tabs = [
-    'today'    => ['Today', 'sun-horizon'],
-    'progress' => ['Progress', 'chart-donut'],
-    'history'  => ['History', 'calendar-blank'],
+$user_id = get_current_user_id();
+$variant = usp_variant_icons($user_id);
+$tabs    = [
+    'today'    => [usp_ui('nav.today'), 'sun-horizon'],
+    'progress' => [usp_ui('nav.progress'), $variant['progress'] ?? 'chart-donut'],
+    'reflect'  => [usp_ui('nav.reflect'), 'notebook'],
+    'history'  => [usp_ui('nav.history'), 'calendar-blank'],
 ];
+$app_name = usp_app_name();
 
 header('Cache-Control: no-store');
 ?>
@@ -47,7 +54,7 @@ header('Cache-Control: no-store');
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="robots" content="noindex">
     <meta name="theme-color" content="#a9623f">
-    <title>SomaJewel</title>
+    <title><?php echo esc_html($app_name); ?></title>
     <?php if ($icon) : ?>
     <link rel="icon" href="<?php echo esc_url($icon); ?>">
     <link rel="apple-touch-icon" href="<?php echo esc_url($icon); ?>">
@@ -58,39 +65,37 @@ header('Cache-Control: no-store');
 <body>
     <header class="masthead">
         <div class="masthead__inner">
-            <a class="brand" href="#today" aria-label="SomaJewel, today">
+            <a class="brand" href="#today" aria-label="<?php echo esc_attr($app_name); ?>, <?php echo esc_attr(usp_ui('nav.today')); ?>">
                 <?php if ($icon) : ?>
                 <img class="brand__icon" src="<?php echo esc_url($icon); ?>" alt="" width="30" height="30">
                 <?php else : ?>
                 <span class="brand__icon brand__icon--drawn" aria-hidden="true"><span></span></span>
                 <?php endif; ?>
-                <span class="brand__name">SomaJewel</span>
+                <span class="brand__name"><?php echo esc_html($app_name); ?></span>
             </a>
-            <details class="account">
-                <summary class="account__toggle" aria-label="Settings"><?php echo $svg('gear-six'); ?></summary>
-                <div class="account__menu">
-                    <p class="account__name">Signed in as <strong><?php echo esc_html(wp_get_current_user()->display_name); ?></strong></p>
-                    <a href="<?php echo esc_url(wp_logout_url(home_url('/'))); ?>"><?php echo $svg('sign-out'); ?> Log Out</a>
-                </div>
-            </details>
+            <a class="masthead__icon" href="#declarations" data-view="declarations" aria-label="<?php echo esc_attr(usp_ui('nav.declarations')); ?>" title="<?php echo esc_attr(usp_ui('nav.declarations')); ?>"><?php echo $svg('compass'); ?></a>
+            <a class="masthead__icon" href="#settings" data-view="settings" aria-label="<?php echo esc_attr(usp_ui('nav.settings')); ?>" title="<?php echo esc_attr(usp_ui('nav.settings')); ?>"><?php echo $svg('gear-six'); ?></a>
         </div>
     </header>
 
     <main class="app" id="app" aria-live="polite">
-        <p class="loading">Loading your practice…</p>
+        <p class="loading"><?php echo esc_html(usp_ui('app.loading')); ?></p>
     </main>
 
     <footer class="footer">
-        <a href="<?php echo esc_url($legal); ?>">Terms of Use &amp; Privacy</a>
+        <a href="#feedback"><?php echo esc_html(usp_ui('nav.feedback_form')); ?></a>
+        <span aria-hidden="true">·</span>
+        <a href="<?php echo esc_url($legal); ?>"><?php echo esc_html(usp_ui('nav.terms')); ?></a>
         <?php if ($feedback) : ?>
             <span aria-hidden="true">·</span>
-            <a href="<?php echo esc_url($feedback); ?>" target="_blank" rel="noopener">Roadmap &amp; Feature Requests</a>
+            <a href="<?php echo esc_url($feedback); ?>" target="_blank" rel="noopener"><?php echo esc_html(usp_ui('nav.feedback')); ?></a>
         <?php endif; ?>
+        <span class="footer__version" title="<?php echo esc_attr(usp_build()['date']); ?>"><?php echo esc_html(usp_build()['label']); ?></span>
     </footer>
 
     <nav class="tabbar" aria-label="Views">
         <?php foreach ($tabs as $key => [$label, $icon_name]) : ?>
-        <a class="tabbar__tab" href="#<?php echo $key; ?>" data-view="<?php echo $key; ?>"><?php echo $svg($icon_name); ?><span><?php echo $label; ?></span></a>
+        <a class="tabbar__tab" href="#<?php echo $key; ?>" data-view="<?php echo $key; ?>"><?php echo $svg($icon_name); ?><span><?php echo esc_html($label); ?></span></a>
         <?php endforeach; ?>
     </nav>
 

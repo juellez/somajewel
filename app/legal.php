@@ -6,6 +6,7 @@
  * In LEGAL.md, these placeholders are filled in from config:
  *   [CONTACT_EMAIL]  contact_email, as a mailto link
  *   [SOURCE_URL]     source_url, as a link
+ *   [APP_NAME]       the app's name (content/prompts.php: ui → app → name)
  * Wrap notes you don't want shown in <!-- HTML comments -->.
  */
 
@@ -15,10 +16,13 @@ require __DIR__ . '/lib/markdown.php';
 $markdown = (string) @file_get_contents(__DIR__ . '/LEGAL.md');
 $email    = trim((string) $usp_config['contact_email']);
 $source   = trim((string) $usp_config['source_url']);
+$content  = (array) require __DIR__ . '/content/prompts.php';
+$app_name = (string) ($content['ui']['app']['name'] ?? 'SomaRosa');
 
 $markdown = strtr($markdown, [
     '[CONTACT_EMAIL]' => $email !== '' ? "[$email](mailto:$email)" : '*(contact email not set)*',
     '[SOURCE_URL]'    => $source !== '' ? "[$source]($source)" : '*(source link not set)*',
+    '[APP_NAME]'      => $app_name,
 ]);
 
 $title = preg_match('/^#\s+(.+)$/m', $markdown, $m) ? trim($m[1]) : 'Terms & Privacy';
@@ -31,7 +35,7 @@ header('Content-Type: text/html; charset=utf-8');
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title><?php echo htmlspecialchars($title, ENT_QUOTES, 'UTF-8'); ?> · SomaJewel</title>
+    <title><?php echo htmlspecialchars($title, ENT_QUOTES, 'UTF-8'); ?> · <?php echo htmlspecialchars($app_name, ENT_QUOTES, 'UTF-8'); ?></title>
     <link rel="stylesheet" href="<?php echo htmlspecialchars($css, ENT_QUOTES, 'UTF-8'); ?>">
 </head>
 <body>

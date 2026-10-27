@@ -1,8 +1,8 @@
 # Terms & Privacy
 
-**SomaJewel** · Last updated: [Oct 25, 2026]
+**[APP_NAME]** · Last updated: Oct 25, 2026
 
-SomaJewel is a small, independent practice app made by Unstruck Somatics, LLC ("I," "me") to support daily somatic practice and weekly self-reflection. It's currently in testing. This page explains how it works, what happens to what you write, and what you agree to by using it. I've kept it in plain language on purpose. If anything is unclear, ask: [CONTACT_EMAIL].
+[APP_NAME] is a small, independent practice app made by Unstruck Somatics, LLC ("I," "me") to support daily somatic practice and weekly self-reflection. It's currently in closed/private testing. This page explains how it works, what happens to what you write, and what you agree to by using it. I've kept it in plain language on purpose. If anything is unclear, ask: [CONTACT_EMAIL].
 
 ---
 
@@ -15,11 +15,12 @@ To work, the app saves the following on a private server I manage:
 - **Your account:** your name, email address, and login, through the website's account system (WordPress).
 - **Your practice:** your declarations (including earlier wordings as you refine one), the practices you log, the moods you choose, your morning clearings, gratitude entries, notes, and weekly reflection answers.
 - **Your progress:** days practiced, streaks, practice counts, and your timezone.
+- **Feedback you send:** if you use Share Feedback, what you write and any name vote, along with the screen you were on, your device and browser type, and the app version.
 
 ### Who can see it
 
 - **You.** Your entries are visible only to you in the app.
-- **Me, in a limited way.** I can see usage counts (for example, how many days someone practiced) to keep the app working and improve it. I don’t read your entries. Because I run the server, the database is technically accessible to me as its administrator. That’s true of most apps, whether or not their creators say so explicitly; I’m telling you so you can decide what to write.
+- **Me, in a limited way.** I can see usage counts (for example, how many days someone practiced) to keep the app working and improve it. I don’t read your entries. I do read feedback you send me; that's what it's for. Because I run the server, the database is technically accessible to me as its administrator. That’s true of most apps, whether or not their creators say so explicitly; I’m telling you so you can decide what to write.
 - **No one else.** I don't and won't sell, rent, share your information, or use it for advertising without your explicit consent.
 - **About AI:** I use AI tools to help write and review the app’s code. They work only with the code, which is public, and with made-up test data, never with your account or entries. Your entries live only in the app’s database on my server, which isn’t part of the public code and isn’t shared with AI tools or anyone reviewing the code.
 - [FUTURE: If friends or community sharing are added, only what you choose to share will be visible to others. If end-to-end encryption is added, then even the database administrator wouldn't be able to access your saved content. If an optional AI feature is added, it will be off unless you turn it on, and this page will explain exactly what it sends and where.]
@@ -50,13 +51,13 @@ Your data is stored on a server hosted by DigitalOcean in the United States. It'
 
 ### Not medical or mental health care
 
-SomaJewel supports a self-guided practice. It isn't medical care, therapy, counseling, or a crisis service, and it doesn't diagnose or treat any physical, mental, or emotional condition. Practices like breathwork and movement can bring up strong sensations or emotions; go at your own pace and stop if something doesn't feel right. Talk with a qualified professional about your health.
+[APP_NAME] supports a self-guided practice. It isn't medical care, therapy, counseling, or a crisis service, and it doesn't diagnose or treat any physical, mental, or emotional condition. Practices like breathwork and movement can bring up strong sensations or emotions; go at your own pace and stop if something doesn't feel right. Talk with a qualified professional about your health.
 
 **If you're in crisis or thinking about harming yourself,** call or text **988** (the Suicide & Crisis Lifeline, in the US) or call **911**. Outside the US, contact your local emergency number.
 
 ### Using the app
 
-- You need to be [18] or older to use SomaJewel.
+- You need to be [18] or older to use [APP_NAME].
 - Keep your login private; you're responsible for activity on your account.
 - Don't use the app to harm others, break the law, or interfere with how it works.
 - I may suspend accounts that misuse the app.
@@ -85,13 +86,13 @@ These terms are governed by the laws of the State of [ARKANSAS], USA.
 
 ## Open source
 
-SomaJewel is open source. Anyone can use, study, and build on it, as long as improvements are shared back and the original work is credited.
+[APP_NAME] is open source. Anyone can use, study, and build on it, as long as improvements are shared back and the original work is credited.
 
 - **App code:** GNU Affero General Public License v3.0 or later
 - **Practice content** (prompts, practices, and reflection questions): Creative Commons Attribution-ShareAlike 4.0
 - **Source code:** [SOURCE_URL]
 
-If you run a modified version of SomaJewel for others, the AGPL asks you to offer them your modified source code and keep the original attribution. See the NOTICE file in the source code.
+If you run a modified version of [APP_NAME] for others, the AGPL asks you to offer them your modified source code and keep the original attribution. See the NOTICE file in the source code.
 
 ---
 

@@ -24,8 +24,9 @@ Database tables (`{prefix}usp_*`) are created automatically on first visit.
 
 ## How it works
 
-- **Tabs:** Today, Progress, and History along the bottom; the cog at the top
-  shows who's signed in, with Log Out.
+- **Tabs:** Today, Progress, Reflect, and History along the bottom. At the
+  top, the compass opens Declarations and the cog shows who's signed in, with
+  Log Out.
 - **Today:** the counters (Days, Streak, Longest, Reps), a checklist of today's
   rituals with the practices named ("Centering ×3"), then the rituals
   themselves: morning clearing, practice (declaration + skill + mood check),
@@ -35,7 +36,17 @@ Database tables (`{prefix}usp_*`) are created automatically on first visit.
   Rest is a skill, so choosing rest with intention counts too.
 - **Moods:** twelve, in a 4×3 grid, from lifted to settled to heavy. "Other"
   pairs with the optional note.
-- **Progress:** the counters, then a ring per ritual and per skill.
+- **Progress:** the counters, a ring per ritual, each declaration with the
+  practices done under it (counted for that declaration only), retired
+  declarations with Reactivate, then a ring per skill.
+- **Reflect:** this week's reflection, one row per question with a check once
+  answered. On the days set in content (Friday–Sunday by default), Today shows
+  a Weekly Reflection line until something is answered.
+- **Declarations:** up to 3 active. A short "What's a declaration?" card, then
+  each declaration with its reps and a bar toward 300 (muscle memory), then
+  3,000 (embodiment); both celebrate. Refine keeps the earlier wording;
+  Retire takes it off the practice card and keeps its reps. New ones can also
+  be added from the practice card (+ New).
 - **Days, streak, longest, reps:** Days is every day you've practiced and only
   ever grows. Streak is consecutive days, and stays alive through today if you
   practiced yesterday. A missed day resets the streak but never Days or Reps.
@@ -46,34 +57,83 @@ Database tables (`{prefix}usp_*`) are created automatically on first visit.
   Ritual and skill counts each fill a ring toward their next milestone,
   celebrate, and start the next ring fresh. Days and streaks celebrate at the
   same milestones. Conscious Rest is counted (and counts toward the Practice
-  ring) but has no milestones of its own. Declaration reps are counted but not
-  shown yet.
+  ring) but has no milestones of its own. Declarations have their own goals
+  (300, then 3,000).
 - **Milestones:** 10, 20, 50, 100, 150, 300, 500, 750, 1,000, then every
   1,000. Set in `lib/entries.php` (`USP_MILESTONES`); a skill opts out with
   `'milestones' => false` in `content/prompts.php`.
 - **History:** a calendar of practice days (tap a day for a read-only summary)
   and a list of past weekly reflections.
-- **Weekly reflection:** seven questions, the last one optional.
+- **Settings** (cog → Settings): time zone (set from the device on first
+  visit; Today offers to switch if the device later shows a different zone),
+  week start (Sunday or Monday), and beta switches for the app name and icon
+  style.
+- **Weekly reflection timing:** each week's reflection opens Friday and stays
+  editable until the next one opens; Today nudges Friday through Monday. Then
+  it's read-only in History.
+- **Share Feedback** (Settings, or the footer): something that's off, an idea, or a vote in the
+  name poll. Saved with the screen, device, and version; read it in WordPress
+  admin under Practice stats → Feedback.
+- **Version:** the footer shows `v0.3.0 · a1b2c3d` (USP_VERSION in
+  `bootstrap.php`, plus the commit the deploy stamps into `build.json`).
+- **Icon style test (beta):** each person sees style A (lotus for Progress,
+  sparkle for Sacred) or B (footprints for Progress, lotus for Sacred), and
+  can switch in the settings menu.
 
 ## Editing content
 
-Everything people see lives in `content/prompts.php`. Once a key is in use,
-keep it; change the text freely.
+Everything people read lives in **`content/prompts.php`**; no code needed.
+Change any text freely. Keep the `'key'` values (they're stored with
+entries), and keep words in `{braces}`, which the app fills in.
+
+| To change… | Look in `content/prompts.php` under… |
+|---|---|
+| Moods (labels, icons, order) | `'moods'` |
+| Practices (names, descriptions, note prompts) | `'skills'` |
+| Morning clearing questions | `'clearing'` |
+| Evening gratitude steps | `'gratitude'` |
+| Weekly reflection questions | `'weekly'` |
+| Tab names, top bar, settings menu, footer links | `'ui'` → `'nav'` |
+| Greetings | `'ui'` → `'greeting'` |
+| Counter labels and the line under them | `'ui'` → `'counters'` |
+| Today's checklist, and which days the weekly line shows | `'ui'` → `'checklist'` |
+| Card labels and buttons (clearing, practice, gratitude) | `'ui'` → `'clearing'`, `'practice'`, `'gratitude'` |
+| The Today / Yesterday choice | `'ui'` → `'when'` |
+| Reflect tab | `'ui'` → `'reflect'` |
+| Declarations screen, including "What's a declaration?" | `'ui'` → `'declarations'` |
+| Progress tab | `'ui'` → `'progress'` |
+| History tab | `'ui'` → `'history'` |
+| Messages after saving | `'ui'` → `'toasts'` |
+| Milestone celebrations | `'ui'` → `'celebrations'` |
+| Error messages | `'ui'` → `'errors'`, `'mic'` |
+| App name, and the names to try (beta) | `'ui'` → `'app'` → `'name'`, and `'name_test'` |
+| Icon style test (A/B) | `'ui'` → `'icon_test'` |
+| Settings screen and the time zone prompt | `'ui'` → `'settings'`, `'timezone_prompt'` |
+| When the weekly reflection opens | `'ui'` → `'reflect'` → `'opens_on'` |
+| Share Feedback (the poll uses the names in `'name_test'`) | `'ui'` → `'feedback'` |
+
+Icons are named from `assets/icons.svg` (Phosphor). To use one that isn't
+there yet, add it to that file (see the note at its top).
+
+Numbers that shape the practice live in code: milestones (`USP_MILESTONES`)
+and declaration goals (`USP_DECLARATION_GOALS`) in `lib/entries.php`, the
+limit of 3 declarations in `lib/declarations.php`, and the noon grace window
+in `lib/streaks.php`.
 
 ## Files
 
 | File | What it does |
 |---|---|
-| `index.php` | Login gate and page shell (header, settings menu, tab bar) |
-| `api.php` | JSON endpoints: `state`, `entry`, `declaration`, `declaration_archive`, `weekly`, `history_month`, `history_day`, `history_weekly` |
+| `index.php` | Login gate and page shell (header, compass, settings menu, tab bar) |
+| `api.php` | JSON endpoints: `state`, `entry`, `declaration`, `declaration_retire`, `declaration_reactivate`, `weekly`, `history_month`, `history_day`, `history_weekly` |
 | `bootstrap.php` | Loads config, WordPress, and the libraries |
 | `lib/db.php` | Tables, migrations, user profiles |
 | `lib/streaks.php` | Days, streaks, and the grace window (user's timezone) |
 | `lib/entries.php` | Daily entries, reps, and milestone rings |
 | `lib/history.php` | Month calendar, day summaries, weekly reflections |
-| `lib/declarations.php` | Declarations (up to 3, with version history) |
+| `lib/declarations.php` | Declarations (up to 3 active, with version history; retire and reactivate) |
 | `lib/content.php` | Weekly questions and the page's state |
-| `content/prompts.php` | Moods (with icons), skills (Conscious Rest first), clearing, gratitude, weekly questions |
+| `content/prompts.php` | All content: moods, skills, clearing, gratitude, weekly questions, and every screen's text (`'ui'`) |
 | `assets/app.js` | Front end, including voice-to-text |
 | `assets/app.css` | Kaleidoscope theme (light and dark mode) |
 | `assets/icons.svg` | Phosphor icons (light, with a soft duotone tint; MIT) |
@@ -89,9 +149,8 @@ browser vendor (Google or Apple), not this server.
 
 - Settings: choose your timezone
 - Export your history (for reviewing patterns, or with AI)
-- Declaration milestones as an embodiment journey: 300 reps (muscle memory)
-  to 3,000 (embodied), or a check-in after 100 reps under one declaration,
-  possibly as a weekly reflection question
 - Friends: see each other's streaks, send nudges
 - Installable app (PWA) with daily push reminders
 - v2: community share space
+
+More ideas and plans are tracked as [GitHub issues](https://github.com/juellez/somajewel/issues).
