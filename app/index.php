@@ -52,7 +52,7 @@ header('Cache-Control: no-store');
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="robots" content="noindex">
     <meta name="theme-color" content="#a9623f">
-    <title>SomaJewel</title>
+    <title>SomaRosa</title>
     <?php if ($icon) : ?>
     <link rel="icon" href="<?php echo esc_url($icon); ?>">
     <link rel="apple-touch-icon" href="<?php echo esc_url($icon); ?>">
@@ -63,13 +63,13 @@ header('Cache-Control: no-store');
 <body>
     <header class="masthead">
         <div class="masthead__inner">
-            <a class="brand" href="#today" aria-label="SomaJewel, today">
+            <a class="brand" href="#today" aria-label="SomaRosa, today">
                 <?php if ($icon) : ?>
                 <img class="brand__icon" src="<?php echo esc_url($icon); ?>" alt="" width="30" height="30">
                 <?php else : ?>
                 <span class="brand__icon brand__icon--drawn" aria-hidden="true"><span></span></span>
                 <?php endif; ?>
-                <span class="brand__name">SomaJewel</span>
+                <span class="brand__name">SomaRosa</span>
             </a>
             <a class="masthead__icon" href="#declarations" data-view="declarations" aria-label="<?php echo esc_attr(usp_ui('nav.declarations')); ?>" title="<?php echo esc_attr(usp_ui('nav.declarations')); ?>"><?php echo $svg('compass'); ?></a>
             <details class="account">

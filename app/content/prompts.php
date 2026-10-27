@@ -71,7 +71,7 @@ return [
         [
             'key'       => 'reflection',
             'title'     => 'Weekly Reflection',
-            'intro'     => '"Follow effective action with quiet reflection. From the quiet reflection will come even more effective action." — Peter F. Drucker',
+            'intro'     => '',
             'questions' => [
                 ['key' => 'wins',      'text' => 'Wins',             'hint' => 'What am I proud of myself for, or celebrating?'],
                 ['key' => 'truth',     'text' => 'Truth',            'hint' => 'Something I know is true but don\'t want to admit.'],
@@ -192,7 +192,7 @@ return [
 
         'reflect' => [
             'title'       => 'Reflect',
-            'lede'        => 'The slower rhythm: your week, and what you\'re a stand for.',
+            'lede'        => '"Follow effective action with quiet reflection. From the quiet reflection will come even more effective action." — Peter F. Drucker',
             'this_week'   => 'This week · {date}',
             'answered'    => 'of {total}',
             'save'        => 'Save',
@@ -205,12 +205,13 @@ return [
         'declarations' => [
             'title'          => 'Declarations',
             'intro_title'    => 'What\'s a declaration?',
-            'intro'          => 'A declaration is a commitment to a future you bring into being: your North Star. You don\'t have a declaration; you are it, and you embody it through practice.',
+            'intro'          => 'A declaration is a commitment to a future you bring into being: your North Star. You don\'t *have* a declaration, you *are* a declaration. Most find this challenging at the beginning, because we\'re And you embody it through practice.',
             'intro_points'   => [
                 'Say it as "I am a commitment to…" or "I am a stand for…"',
-                'Every practice connects to it: intention, feeling, repetition.',
-                'About 300 reps builds muscle memory; about 3,000, embodiment.',
-                'It evolves. Refine the words as you grow.',
+                'Every practice connects to it: intention, noticing, repetition.',
+                '300 reps builds muscle memory; 3,000: embodiment.',
+                'It\'ll feel awkward when you start, more natural as you build muscle memory, and automatic as you embody it.',
+                'It evolves. You can refine the words as you grow.',
             ],
             'eyebrow'        => 'Your North Star',
             'count'          => '{n} of {max}',
