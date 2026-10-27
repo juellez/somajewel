@@ -18,6 +18,7 @@ $boot = [
     'api'   => $base . '/api.php',
     'icons' => $icons,
     'loadError' => usp_ui('app.load_error'),
+    'version'   => usp_build()['label'],
     'nonce' => wp_create_nonce('usp_api'),
 ];
 $asset = fn (string $file) => $base . '/assets/' . $file . '?v=' . filemtime(__DIR__ . '/assets/' . $file);
@@ -86,6 +87,7 @@ header('Cache-Control: no-store');
                         </span>
                     </div>
                     <?php endif; ?>
+                    <a href="#settings"><?php echo $svg('gear-six'); ?> <?php echo esc_html(usp_ui('nav.settings')); ?></a>
                     <a href="<?php echo esc_url(wp_logout_url(home_url('/'))); ?>"><?php echo $svg('sign-out'); ?> <?php echo esc_html(usp_ui('nav.log_out')); ?></a>
                 </div>
             </details>
@@ -102,6 +104,7 @@ header('Cache-Control: no-store');
             <span aria-hidden="true">·</span>
             <a href="<?php echo esc_url($feedback); ?>" target="_blank" rel="noopener"><?php echo esc_html(usp_ui('nav.feedback')); ?></a>
         <?php endif; ?>
+        <span class="footer__version" title="<?php echo esc_attr(usp_build()['date']); ?>"><?php echo esc_html(usp_build()['label']); ?></span>
     </footer>
 
     <nav class="tabbar" aria-label="Views">

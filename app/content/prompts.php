@@ -235,6 +235,27 @@ return [
             'full'           => 'You\'re holding {max}. Retire one to make room.',
         ],
 
+        // Settings screen (cog → Settings).
+        'settings' => [
+            'title'          => 'Settings',
+            'timezone_title' => 'Time zone',
+            'timezone_body'  => 'Your practice day starts at midnight in this time zone, and the noon cutoff for logging yesterday follows it too.',
+            'now'            => 'It\'s {time} there now.',
+            'use_device'     => 'Use this device\'s time zone ({zone})',
+            'save'           => 'Save',
+            'saved'          => 'Time zone saved.',
+            'about_title'    => 'About',
+            'version'        => 'Running {version}',
+        ],
+
+        // Shown on Today when this device's time zone differs from yours
+        // (traveling, or a new phone).
+        'timezone_prompt' => [
+            'text'   => 'This device is on {device}. Your practice days follow {current}.',
+            'switch' => 'Switch to {device}',
+            'keep'   => 'Keep {current}',
+        ],
+
         'progress' => [
             'rituals_eyebrow'      => 'Your Day',
             'time_clearing'        => 'Morning',

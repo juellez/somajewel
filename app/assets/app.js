@@ -832,6 +832,109 @@
     ];
   }
 
+  // ---------- time zone ----------
+
+  /** This device's time zone, e.g. "America/Los_Angeles" (or '' if unknown). */
+  function deviceZone() {
+    try { return Intl.DateTimeFormat().resolvedOptions().timeZone || ''; } catch (e) { return ''; }
+  }
+
+  /** A friendly name: "Pacific Time", or the city for zones without one. */
+  function zoneName(tz) {
+    for (const style of ['longGeneric', 'long']) {
+      try {
+        const part = new Intl.DateTimeFormat('en-US', { timeZone: tz, timeZoneName: style })
+          .formatToParts(new Date()).find((x) => x.type === 'timeZoneName');
+        if (part && !/^GMT[+-]/.test(part.value)) return part.value;
+      } catch (e) { /* unknown zone or option */ }
+    }
+    return tz.split('/').pop().replace(/_/g, ' ');
+  }
+
+  function timeIn(tz) {
+    try {
+      return new Date().toLocaleTimeString('en-US', { timeZone: tz, hour: 'numeric', minute: '2-digit' });
+    } catch (e) { return ''; }
+  }
+
+  async function saveTimezone(tz, message) {
+    try {
+      const res = await api('timezone', { method: 'POST', body: { timezone: tz } });
+      state = res.state;
+      hist.months = {}; hist.days = {}; hist.month = null; hist.selected = null; // "today" may have moved
+      render();
+      if (message) toast(message);
+    } catch (err) {
+      if (err.message !== 'auth') toast(errorText(err.message));
+    }
+  }
+
+  /**
+   * On Today, when this device is in a different zone than your practice days
+   * (traveling, a new phone): offer to switch. "Keep" is remembered per pair.
+   */
+  function timezonePrompt() {
+    const device = deviceZone();
+    if (!state.timezone_set || !device || device === state.timezone) return null;
+    const key = `${device}|${state.timezone}`;
+    try { if (localStorage.getItem('sj_tz_keep') === key) return null; } catch (e) { /* ignore */ }
+
+    const vars = { device: zoneName(device), current: zoneName(state.timezone) };
+    const box = el('div', { class: 'notice', role: 'status' });
+    const switchBtn = el('button', { class: 'btn btn--small', type: 'button', text: t('timezone_prompt.switch', vars) });
+    const keepBtn = el('button', { class: 'link', type: 'button', text: t('timezone_prompt.keep', vars) });
+    switchBtn.addEventListener('click', () => saveTimezone(device, t('settings.saved')));
+    keepBtn.addEventListener('click', () => {
+      try { localStorage.setItem('sj_tz_keep', key); } catch (e) { /* ignore */ }
+      box.remove();
+    });
+    box.append(
+      el('p', {}, icon('clock'), ` ${t('timezone_prompt.text', vars)}`),
+      el('div', { class: 'notice__actions' }, switchBtn, keepBtn));
+    return box;
+  }
+
+  // ---------- settings ----------
+
+  function settingsView() {
+    const device = deviceZone();
+    let zones = [];
+    try { zones = Intl.supportedValuesOf('timeZone'); } catch (e) { /* older browser */ }
+    for (const z of [state.timezone, device, 'UTC']) if (z && !zones.includes(z)) zones.push(z);
+    zones.sort();
+
+    const now = el('p', { class: 'card__body' });
+    const select = el('select', { class: 'field field--select', id: 'tz', 'aria-label': t('settings.timezone_title') },
+      zones.map((z) => el('option', { value: z, selected: z === state.timezone, text: z.replace(/_/g, ' ') })));
+    const showNow = () => { now.textContent = `${zoneName(select.value)}. ${t('settings.now', { time: timeIn(select.value) })}`; };
+    select.addEventListener('change', showNow);
+    showNow();
+
+    const save = el('button', { class: 'btn btn--primary', type: 'button', text: t('settings.save') });
+    save.addEventListener('click', () => saveTimezone(select.value, t('settings.saved')));
+    const useDevice = device && device !== state.timezone
+      ? el('button', { class: 'link', type: 'button', text: t('settings.use_device', { zone: zoneName(device) }) })
+      : null;
+    if (useDevice) useDevice.addEventListener('click', () => { select.value = device; showNow(); });
+
+    return [
+      el('a', { class: 'back-link', href: `#${backTo}` }, icon('arrow-left'), t('app.back')),
+      el('h1', { class: 'top__greeting', text: t('settings.title') }),
+      section({
+        eyebrow: t('settings.timezone_title'),
+        body: [
+          el('p', { class: 'card__body', text: t('settings.timezone_body') }),
+          select, now, useDevice,
+          el('div', {}, save),
+        ],
+      }),
+      section({
+        eyebrow: t('settings.about_title'),
+        body: el('p', { class: 'card__body', text: t('settings.version', { version: state.build.label }) }),
+      }),
+    ];
+  }
+
   // ---------- progress ----------
 
   function progressView() {
@@ -1084,6 +1187,7 @@
   function todayView() {
     return [
       el('h1', { class: 'top__greeting', text: greeting(state.user.name) }),
+      timezonePrompt(),
       counters(),
       ritualList(),
       clearingCard(),
@@ -1095,19 +1199,22 @@
   function render() {
     // Keep the scroll position steady across re-renders of the same view.
     const y = window.scrollY;
-    const views = { today: todayView, progress: progressView, reflect: reflectView, history: historyView, declarations: declarationsView };
+    const views = { today: todayView, progress: progressView, reflect: reflectView, history: historyView, declarations: declarationsView, settings: settingsView };
     root.replaceChildren(...views[view]());
     window.scrollTo(0, y);
   }
 
-  const VIEWS = ['today', 'progress', 'reflect', 'history', 'declarations'];
-  let backTo = 'today'; // where Back goes from Declarations
+  const VIEWS = ['today', 'progress', 'reflect', 'history', 'declarations', 'settings'];
+  const SCREENS = ['declarations', 'settings']; // opened from the top bar, with Back
+  let backTo = 'today'; // where Back goes from those screens
 
   function setView() {
     const hash = location.hash.slice(1);
     const next = VIEWS.includes(hash) ? hash : 'today';
     const changed = next !== view;
-    if (next === 'declarations' && view !== 'declarations') backTo = view;
+    if (SCREENS.includes(next) && !SCREENS.includes(view)) backTo = view;
+    const menu = document.querySelector('.account[open]');
+    if (menu) menu.open = false;
     view = next;
     document.querySelectorAll('.tabbar__tab, .masthead__icon').forEach((tab) => {
       if (tab.dataset.view === view) tab.setAttribute('aria-current', 'page');
@@ -1141,6 +1248,9 @@
       state = data;
       openCards.add('practice'); // open on arrival: the main thing you come to do
       render();
+      // First visit: practice days follow this device's time zone.
+      const device = deviceZone();
+      if (!state.timezone_set && device) saveTimezone(device);
     })
     .catch((err) => {
       if (err.message !== 'auth') {

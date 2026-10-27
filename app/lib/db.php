@@ -119,6 +119,12 @@ function usp_maybe_migrate(): void
         3 => [
             "UPDATE " . usp_table('entries') . " SET type = 'practice', skill_key = 'rest' WHERE type = 'rest'",
         ],
+
+        // Remember whether the timezone came from the person (or their device),
+        // rather than the site default.
+        4 => [
+            "ALTER TABLE " . usp_table('profiles') . " ADD COLUMN timezone_set TINYINT UNSIGNED NOT NULL DEFAULT 0 AFTER timezone",
+        ],
     ];
 
     foreach ($migrations as $version => $queries) {
@@ -156,4 +162,22 @@ function usp_get_profile(int $user_id): array
     }
 
     return $row ?: [];
+}
+
+/** Saves the person's timezone (an IANA name like America/Los_Angeles). */
+function usp_save_timezone(int $user_id, string $timezone): bool
+{
+    global $wpdb;
+
+    if (!in_array($timezone, DateTimeZone::listIdentifiers(), true)) {
+        return false;
+    }
+    usp_get_profile($user_id); // make sure the profile exists
+    return false !== $wpdb->update(
+        usp_table('profiles'),
+        ['timezone' => $timezone, 'timezone_set' => 1],
+        ['user_id' => $user_id],
+        ['%s', '%d'],
+        ['%d']
+    );
 }

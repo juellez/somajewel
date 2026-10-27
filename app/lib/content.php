@@ -214,6 +214,8 @@ function usp_build_state(int $user_id): array
         'user'             => ['name' => wp_get_current_user()->display_name],
         'today'            => $today->format('Y-m-d'),
         'timezone'         => $profile['timezone'],
+        'timezone_set'     => (bool) ($profile['timezone_set'] ?? false),
+        'build'            => usp_build(),
         'stats'            => usp_streak_stats($user_id) + ['reps' => array_sum($reps['types'])],
         'today_counts'     => usp_today_counts($user_id, $today->format('Y-m-d')),
         'today_skills'     => (object) $today_reps['skills'],

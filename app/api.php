@@ -6,6 +6,7 @@
  *                                               (for: "yesterday" logs it for yesterday, until noon)
  *   POST api.php?action=declaration          → { id?, text }  (create, or refine when id is given)
  *   POST api.php?action=declaration_retire   → { id }
+ *   POST api.php?action=timezone             → { timezone }  (IANA name)
  *   POST api.php?action=declaration_reactivate → { id }
  *   POST api.php?action=weekly               → { key, response }
  *   GET  api.php?action=history_month&month=Y-m   → entry counts per day
@@ -65,6 +66,11 @@ switch ("$method $action") {
         usp_retire_declaration($user_id, (int) ($input['id'] ?? 0))
             ? usp_json(['state' => usp_build_state($user_id)])
             : usp_json(['error' => 'not_found'], 404);
+
+    case 'POST timezone':
+        usp_save_timezone($user_id, (string) ($input['timezone'] ?? ''))
+            ? usp_json(['state' => usp_build_state($user_id)])
+            : usp_json(['error' => 'bad_timezone'], 400);
 
     case 'POST weekly':
         $ok = usp_save_weekly_response(

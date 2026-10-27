@@ -506,3 +506,19 @@ body {
 .bydecl__heading { margin-top: 12px; color: var(--muted); }
 .bydecl--retired .bydecl__text { color: var(--muted); }
 .bydecl--retired .link { justify-self: start; display: inline-flex; align-items: center; gap: 4px; }
+
+/* ---------- settings & time zone ---------- */
+.field--select { padding: 10px 12px; appearance: auto; }
+.notice {
+  display: grid; gap: 8px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--teal);
+  background: var(--teal-soft);
+  font-size: 0.92rem;
+}
+.notice p { margin: 0; }
+.notice .icon { color: var(--teal); }
+.notice__actions { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.btn--small { padding: 6px 14px; font-size: 0.8rem; }
+.footer__version { display: block; margin-top: 6px; font-size: 0.75rem; opacity: 0.8; font-variant-numeric: tabular-nums; }
