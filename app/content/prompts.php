@@ -121,7 +121,7 @@ return [
         // header and page title follow. Delete 'name_test' to end it.
         'name_test' => [
             'label'   => 'App name',
-            'options' => ['SomaRosa', 'Somazimuth', 'Somastrolabe'],
+            'options' => ['SomaJewel', 'SomaRosa', 'Embody'],
         ],
 
         'icon_test' => [
@@ -251,6 +251,7 @@ return [
         // Settings screen (cog → Settings).
         'settings' => [
             'title'          => 'Settings',
+            'account_title'  => 'Account',
             'week_title'     => 'Week',
             'week_body'      => 'Your week starts on this day, in History\'s calendar and for weekly reflections.',
             'week_start'     => 'Week starts on',
