@@ -125,6 +125,11 @@ function usp_maybe_migrate(): void
         4 => [
             "ALTER TABLE " . usp_table('profiles') . " ADD COLUMN timezone_set TINYINT UNSIGNED NOT NULL DEFAULT 0 AFTER timezone",
         ],
+
+        // Each person's first day of the week: 0 = Sunday, 1 = Monday.
+        5 => [
+            "ALTER TABLE " . usp_table('profiles') . " ADD COLUMN week_start TINYINT UNSIGNED NOT NULL DEFAULT 1 AFTER timezone_set",
+        ],
     ];
 
     foreach ($migrations as $version => $queries) {
@@ -164,20 +169,33 @@ function usp_get_profile(int $user_id): array
     return $row ?: [];
 }
 
-/** Saves the person's timezone (an IANA name like America/Los_Angeles). */
-function usp_save_timezone(int $user_id, string $timezone): bool
+/**
+ * Saves settings: 'timezone' (an IANA name like America/Los_Angeles) and/or
+ * 'week_start' (0 = Sunday, 1 = Monday). Returns an error code, or null.
+ */
+function usp_save_settings(int $user_id, array $in): ?string
 {
     global $wpdb;
 
-    if (!in_array($timezone, DateTimeZone::listIdentifiers(), true)) {
-        return false;
+    $data = [];
+    if (isset($in['timezone'])) {
+        if (!in_array((string) $in['timezone'], DateTimeZone::listIdentifiers(), true)) {
+            return 'bad_timezone';
+        }
+        $data['timezone']     = (string) $in['timezone'];
+        $data['timezone_set'] = 1;
     }
+    if (isset($in['week_start'])) {
+        if (!in_array((int) $in['week_start'], [0, 1], true)) {
+            return 'bad_week_start';
+        }
+        $data['week_start'] = (int) $in['week_start'];
+    }
+    if (!$data) {
+        return 'empty';
+    }
+
     usp_get_profile($user_id); // make sure the profile exists
-    return false !== $wpdb->update(
-        usp_table('profiles'),
-        ['timezone' => $timezone, 'timezone_set' => 1],
-        ['user_id' => $user_id],
-        ['%s', '%d'],
-        ['%d']
-    );
+    $ok = $wpdb->update(usp_table('profiles'), $data, ['user_id' => $user_id]);
+    return $ok === false ? 'save_failed' : null;
 }

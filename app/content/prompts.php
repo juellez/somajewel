@@ -91,6 +91,7 @@ return [
     'ui' => [
 
         'app' => [
+            'name'       => 'SomaRosa',
             'loading'    => 'Loading your practice…',
             'load_error' => 'Something went wrong loading your practice. Please refresh.',
             'back'       => 'Back',
@@ -116,6 +117,13 @@ return [
         // Beta: two icon styles to compare. Each person gets one; the
         // settings menu lets them switch. To end the test, put the winner
         // in 'a' and delete 'b' (the switch disappears).
+        // Beta: names to try on. Each person can switch in Settings; the
+        // header and page title follow. Delete 'name_test' to end it.
+        'name_test' => [
+            'label'   => 'App name',
+            'options' => ['SomaRosa', 'Somazimuth', 'Somastrolabe'],
+        ],
+
         'icon_test' => [
             'label' => 'Icon style',
             'a'     => ['progress' => 'flower-lotus', 'sacred' => 'sparkle'],
@@ -151,7 +159,7 @@ return [
             'weekly_progress' => '{n} of {total}',
             // Days the Weekly Reflection line shows on Today, until something
             // is answered. 0 = Sunday … 6 = Saturday.
-            'weekly_days'     => [5, 6, 0],
+            'weekly_days'     => [5, 6, 0, 1],
         ],
 
         'cards' => [
@@ -194,6 +202,11 @@ return [
             'title'       => 'Reflect',
             'lede'        => '"Follow effective action with quiet reflection. From the quiet reflection will come even more effective action." — Peter F. Drucker',
             'this_week'   => 'This week · {date}',
+            'last_week'   => 'Last week · {date}',
+            'open_until'  => 'Still open for edits until {day}, when the next reflection begins.',
+            // The day each week's reflection opens (0 = Sunday … 6 = Saturday).
+            // It stays open, and editable, until the next one opens.
+            'opens_on'    => 5,
             'answered'    => 'of {total}',
             'save'        => 'Save',
             'saved'       => 'Saved',
@@ -238,12 +251,19 @@ return [
         // Settings screen (cog → Settings).
         'settings' => [
             'title'          => 'Settings',
+            'week_title'     => 'Week',
+            'week_body'      => 'Your week starts on this day, in History\'s calendar and for weekly reflections.',
+            'week_start'     => 'Week starts on',
+            'sunday'         => 'Sunday',
+            'monday'         => 'Monday',
+            'beta_title'     => 'Beta',
+            'beta_body'      => 'Try these out and tell me what you think in Share Feedback.',
             'timezone_title' => 'Time zone',
             'timezone_body'  => 'Your practice day starts at midnight in this time zone, and the noon cutoff for logging yesterday follows it too.',
             'now'            => 'It\'s {time} there now.',
             'use_device'     => 'Use this device\'s time zone ({zone})',
             'save'           => 'Save',
-            'saved'          => 'Time zone saved.',
+            'saved'          => 'Settings saved.',
             'about_title'    => 'About',
             'version'        => 'Running {version}',
         ],
@@ -287,6 +307,7 @@ return [
             'previous_month' => 'Previous month',
             'next_month'     => 'Next month',
             'this_week'      => 'This week',
+            'last_week'      => 'Last week',
             'week_of'        => 'Week of {date}',
             'answers'        => '{n} answers',
             'one_answer'     => '1 answer',

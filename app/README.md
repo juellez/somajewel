@@ -64,6 +64,15 @@ Database tables (`{prefix}usp_*`) are created automatically on first visit.
   `'milestones' => false` in `content/prompts.php`.
 - **History:** a calendar of practice days (tap a day for a read-only summary)
   and a list of past weekly reflections.
+- **Settings** (cog → Settings): time zone (set from the device on first
+  visit; Today offers to switch if the device later shows a different zone),
+  week start (Sunday or Monday), and beta switches for the app name and icon
+  style.
+- **Weekly reflection timing:** each week's reflection opens Friday and stays
+  editable until the next one opens; Today nudges Friday through Monday. Then
+  it's read-only in History.
+- **Version:** the footer shows `v0.3.0 · a1b2c3d` (USP_VERSION in
+  `bootstrap.php`, plus the commit the deploy stamps into `build.json`).
 - **Icon style test (beta):** each person sees style A (lotus for Progress,
   sparkle for Sacred) or B (footprints for Progress, lotus for Sacred), and
   can switch in the settings menu.
@@ -94,7 +103,10 @@ entries), and keep words in `{braces}`, which the app fills in.
 | Messages after saving | `'ui'` → `'toasts'` |
 | Milestone celebrations | `'ui'` → `'celebrations'` |
 | Error messages | `'ui'` → `'errors'`, `'mic'` |
+| App name, and the names to try (beta) | `'ui'` → `'app'` → `'name'`, and `'name_test'` |
 | Icon style test (A/B) | `'ui'` → `'icon_test'` |
+| Settings screen and the time zone prompt | `'ui'` → `'settings'`, `'timezone_prompt'` |
+| When the weekly reflection opens | `'ui'` → `'reflect'` → `'opens_on'` |
 
 Icons are named from `assets/icons.svg` (Phosphor). To use one that isn't
 there yet, add it to that file (see the note at its top).

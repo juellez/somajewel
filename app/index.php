@@ -42,7 +42,7 @@ $tabs    = [
     'reflect'  => [usp_ui('nav.reflect'), 'notebook'],
     'history'  => [usp_ui('nav.history'), 'calendar-blank'],
 ];
-$icon_test = isset(usp_content()['ui']['icon_test']['b']);
+$app_name = usp_app_name();
 
 header('Cache-Control: no-store');
 ?>
@@ -53,7 +53,7 @@ header('Cache-Control: no-store');
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="robots" content="noindex">
     <meta name="theme-color" content="#a9623f">
-    <title>SomaRosa</title>
+    <title><?php echo esc_html($app_name); ?></title>
     <?php if ($icon) : ?>
     <link rel="icon" href="<?php echo esc_url($icon); ?>">
     <link rel="apple-touch-icon" href="<?php echo esc_url($icon); ?>">
@@ -64,29 +64,19 @@ header('Cache-Control: no-store');
 <body>
     <header class="masthead">
         <div class="masthead__inner">
-            <a class="brand" href="#today" aria-label="SomaRosa, today">
+            <a class="brand" href="#today" aria-label="<?php echo esc_attr($app_name); ?>, <?php echo esc_attr(usp_ui('nav.today')); ?>">
                 <?php if ($icon) : ?>
                 <img class="brand__icon" src="<?php echo esc_url($icon); ?>" alt="" width="30" height="30">
                 <?php else : ?>
                 <span class="brand__icon brand__icon--drawn" aria-hidden="true"><span></span></span>
                 <?php endif; ?>
-                <span class="brand__name">SomaRosa</span>
+                <span class="brand__name"><?php echo esc_html($app_name); ?></span>
             </a>
             <a class="masthead__icon" href="#declarations" data-view="declarations" aria-label="<?php echo esc_attr(usp_ui('nav.declarations')); ?>" title="<?php echo esc_attr(usp_ui('nav.declarations')); ?>"><?php echo $svg('compass'); ?></a>
             <details class="account">
                 <summary class="account__toggle" aria-label="<?php echo esc_attr(usp_ui('nav.settings')); ?>"><?php echo $svg('gear-six'); ?></summary>
                 <div class="account__menu">
                     <p class="account__name"><?php echo esc_html(usp_ui('nav.signed_in_as')); ?> <strong><?php echo esc_html(wp_get_current_user()->display_name); ?></strong></p>
-                    <?php if ($icon_test) : ?>
-                    <div class="account__test">
-                        <span><?php echo esc_html(usp_ui('icon_test.label')); ?></span>
-                        <span class="segmented" role="group" aria-label="<?php echo esc_attr(usp_ui('icon_test.label')); ?>">
-                            <?php foreach (['a', 'b'] as $v) : ?>
-                            <button type="button" data-icons="<?php echo $v; ?>" aria-pressed="<?php echo usp_icon_variant($user_id) === $v ? 'true' : 'false'; ?>"><?php echo strtoupper($v); ?></button>
-                            <?php endforeach; ?>
-                        </span>
-                    </div>
-                    <?php endif; ?>
                     <a href="#settings"><?php echo $svg('gear-six'); ?> <?php echo esc_html(usp_ui('nav.settings')); ?></a>
                     <a href="<?php echo esc_url(wp_logout_url(home_url('/'))); ?>"><?php echo $svg('sign-out'); ?> <?php echo esc_html(usp_ui('nav.log_out')); ?></a>
                 </div>
