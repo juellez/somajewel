@@ -130,6 +130,24 @@ function usp_maybe_migrate(): void
         5 => [
             "ALTER TABLE " . usp_table('profiles') . " ADD COLUMN week_start TINYINT UNSIGNED NOT NULL DEFAULT 1 AFTER timezone_set",
         ],
+
+        // Feedback from testers (cog → Share Feedback), read in WordPress admin.
+        6 => [
+            "CREATE TABLE IF NOT EXISTS " . usp_table('feedback') . " (
+                id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+                user_id BIGINT UNSIGNED NOT NULL,
+                kind VARCHAR(16) NOT NULL,
+                message TEXT NULL,
+                name_vote VARCHAR(64) NULL,
+                name_other VARCHAR(100) NULL,
+                screen VARCHAR(32) NULL,
+                device VARCHAR(255) NULL,
+                version VARCHAR(40) NULL,
+                created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (id),
+                KEY user_id (user_id)
+            ) $charset",
+        ],
     ];
 
     foreach ($migrations as $version => $queries) {

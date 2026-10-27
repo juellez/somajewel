@@ -276,6 +276,7 @@ function usp_build_state(int $user_id): array
         'week_start'       => (int) ($profile['week_start'] ?? 1),
         'app_name'         => usp_app_name(),
         'build'            => usp_build(),
+        'my_vote'          => usp_my_vote($user_id),
         'stats'            => usp_streak_stats($user_id) + ['reps' => array_sum($reps['types'])],
         'today_counts'     => usp_today_counts($user_id, $today->format('Y-m-d')),
         'today_skills'     => (object) $today_reps['skills'],

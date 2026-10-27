@@ -77,6 +77,7 @@ header('Cache-Control: no-store');
                 <summary class="account__toggle" aria-label="<?php echo esc_attr(usp_ui('nav.settings')); ?>"><?php echo $svg('gear-six'); ?></summary>
                 <div class="account__menu">
                     <p class="account__name"><?php echo esc_html(usp_ui('nav.signed_in_as')); ?> <strong><?php echo esc_html(wp_get_current_user()->display_name); ?></strong></p>
+                    <a href="#feedback"><?php echo $svg('chat-circle-dots'); ?> <?php echo esc_html(usp_ui('nav.feedback_form')); ?></a>
                     <a href="#settings"><?php echo $svg('gear-six'); ?> <?php echo esc_html(usp_ui('nav.settings')); ?></a>
                     <a href="<?php echo esc_url(wp_logout_url(home_url('/'))); ?>"><?php echo $svg('sign-out'); ?> <?php echo esc_html(usp_ui('nav.log_out')); ?></a>
                 </div>

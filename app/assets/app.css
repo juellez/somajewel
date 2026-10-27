@@ -525,3 +525,7 @@ body {
 .beta-row { display: grid; gap: 6px; }
 .beta-row__label { font-size: 0.9rem; color: var(--muted); }
 .beta-row .segmented button { text-transform: none; letter-spacing: 0.02em; font-size: 0.85rem; }
+
+/* ---------- feedback ---------- */
+.field--line { padding: 10px 14px; }
+.small { font-size: 0.85rem; margin: 0; }

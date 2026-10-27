@@ -1,8 +1,8 @@
 <?php
 /**
  * Plugin Name: SomaJewel Stats
- * Description: Usage stats for the SomaJewel practice app: streaks, counts, and activity. Never shows journal content, notes, answers, moods, or declaration text. Also sends non-admins to the app after login.
- * Version:     0.2.0
+ * Description: Usage stats for the SomaJewel practice app: streaks, counts, and activity. Never shows journal content, notes, answers, moods, or declaration text. Also: testers' feedback and the name poll, and sending non-admins to the app after login.
+ * Version:     0.3.0
  * Author:      Unstruck Somatics, LLC
  * License:     GPL-2.0-or-later
  * Requires PHP: 8.1
@@ -11,6 +11,7 @@
 defined('ABSPATH') || exit;
 
 require_once __DIR__ . '/login-redirect.php';
+require_once __DIR__ . '/feedback.php';
 
 const SJS_DAYS = 14; // width of the activity strip
 
@@ -27,7 +28,7 @@ add_action('admin_menu', function () {
 });
 
 add_action('admin_head', function () {
-    if (($_GET['page'] ?? '') !== 'somajewel-stats') {
+    if (!in_array($_GET['page'] ?? '', ['somajewel-stats', 'somajewel-feedback'], true)) {
         return;
     }
     ?>

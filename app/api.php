@@ -7,6 +7,7 @@
  *   POST api.php?action=declaration          → { id?, text }  (create, or refine when id is given)
  *   POST api.php?action=declaration_retire   → { id }
  *   POST api.php?action=settings             → { timezone?, week_start? }
+ *   POST api.php?action=feedback             → { kind, message?, vote?, other?, screen? }
  *   POST api.php?action=declaration_reactivate → { id }
  *   POST api.php?action=weekly               → { key, response }
  *   GET  api.php?action=history_month&month=Y-m   → entry counts per day
@@ -70,6 +71,10 @@ switch ("$method $action") {
     case 'POST settings':
         $error = usp_save_settings($user_id, $input);
         $error ? usp_json(['error' => $error], 400) : usp_json(['state' => usp_build_state($user_id)]);
+
+    case 'POST feedback':
+        $error = usp_save_feedback($user_id, $input);
+        $error ? usp_json(['error' => $error], 400) : usp_json(['saved' => true, 'my_vote' => usp_my_vote($user_id)]);
 
     case 'POST weekly':
         $ok = usp_save_weekly_response(
