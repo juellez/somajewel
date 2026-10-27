@@ -84,6 +84,13 @@ jobs:
             exit 1
           fi
 
+      # The footer shows "v0.3.0 · a1b2c3d" from this, so it's easy to tell
+      # which version is running and to include it in feedback.
+      - name: Stamp the build
+        run: |
+          printf '{"commit":"%s","date":"%s"}\n' "${GITHUB_SHA::7}" "$(date -u +%Y-%m-%dT%H:%MZ)" > app/build.json
+          cat app/build.json
+
       - name: Deploy app
         env:
           HOST: ${{ secrets.DEPLOY_HOST }}

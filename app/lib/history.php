@@ -24,7 +24,7 @@ function usp_first_month(int $user_id): ?string
         'SELECT MIN(d) FROM (
             SELECT MIN(entry_date) AS d FROM ' . usp_table('entries') . ' WHERE user_id = %d
             UNION ALL
-            SELECT MIN(week_start) FROM ' . usp_table('weekly_responses') . ' WHERE user_id = %d
+            SELECT MIN(week_key) FROM ' . usp_table('weekly_responses') . ' WHERE user_id = %d
          ) AS firsts',
         $user_id,
         $user_id
@@ -126,9 +126,9 @@ function usp_history_weekly(int $user_id): array
     global $wpdb;
 
     $rows = $wpdb->get_results($wpdb->prepare(
-        'SELECT week_start, prompt_key, response FROM ' . usp_table('weekly_responses') . "
+        'SELECT week_key, prompt_key, response FROM ' . usp_table('weekly_responses') . "
          WHERE user_id = %d AND TRIM(response) <> ''
-         ORDER BY week_start DESC, id",
+         ORDER BY week_key DESC, id",
         $user_id
     ), ARRAY_A) ?: [];
 
@@ -144,18 +144,21 @@ function usp_history_weekly(int $user_id): array
 
     $weeks = [];
     foreach ($rows as $row) {
-        $weeks[$row['week_start']][] = [
+        $weeks[$row['week_key']][] = [
             'question' => $labels[$row['prompt_key']] ?? $row['prompt_key'],
             'answer'   => $row['response'],
             '_order'   => $order[$row['prompt_key']] ?? 99,
         ];
     }
 
+    // Shown as "Week of …" from this person's own week start.
+    $dow = (int) (usp_get_profile($user_id)['week_start'] ?? 1);
     $out = [];
-    foreach (array_slice($weeks, 0, 52, true) as $week_start => $answers) {
+    foreach (array_slice($weeks, 0, 52, true) as $week_key => $answers) {
         usort($answers, fn ($a, $b) => $a['_order'] <=> $b['_order']);
         $out[] = [
-            'week_start' => $week_start,
+            'week_key'   => $week_key,
+            'week_start' => usp_week_start_from_key($week_key, $dow),
             'answers'    => array_map(fn ($a) => ['question' => $a['question'], 'answer' => $a['answer']], $answers),
         ];
     }

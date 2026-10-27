@@ -649,10 +649,12 @@
     updateTally();
 
     out.push(section({
-      eyebrow: t('reflect.this_week', { date: shortDate(w.week_start) }),
+      eyebrow: t(w.this_week ? 'reflect.this_week' : 'reflect.last_week', { date: shortDate(w.week_start) }),
       title: w.title,
       aside: tally,
       body: [
+        // Last week's stays editable until the next one opens.
+        w.this_week ? null : el('p', { class: 'card__body', text: t('reflect.open_until', { day: WEEKDAYS[weekday(w.next_opens)] }) }),
         w.intro ? el('p', { class: 'card__body card__quote', text: w.intro }) : null,
         el('div', { class: 'qrows' }, w.questions.map((q, i) => questionRow(q, i, updateTally))),
       ],
@@ -832,6 +834,162 @@
     ];
   }
 
+  // ---------- time zone ----------
+
+  /** This device's time zone, e.g. "America/Los_Angeles" (or '' if unknown). */
+  function deviceZone() {
+    try { return Intl.DateTimeFormat().resolvedOptions().timeZone || ''; } catch (e) { return ''; }
+  }
+
+  /** A friendly name: "Pacific Time", or the city for zones without one. */
+  function zoneName(tz) {
+    for (const style of ['longGeneric', 'long']) {
+      try {
+        const part = new Intl.DateTimeFormat('en-US', { timeZone: tz, timeZoneName: style })
+          .formatToParts(new Date()).find((x) => x.type === 'timeZoneName');
+        if (part && !/^GMT[+-]/.test(part.value)) return part.value;
+      } catch (e) { /* unknown zone or option */ }
+    }
+    return tz.split('/').pop().replace(/_/g, ' ');
+  }
+
+  function timeIn(tz) {
+    try {
+      return new Date().toLocaleTimeString('en-US', { timeZone: tz, hour: 'numeric', minute: '2-digit' });
+    } catch (e) { return ''; }
+  }
+
+  /** Saves settings ({ timezone, week_start }) and re-renders. */
+  async function saveSettings(body, message) {
+    try {
+      const res = await api('settings', { method: 'POST', body });
+      state = res.state;
+      hist.months = {}; hist.days = {}; hist.month = null; hist.selected = null; hist.weeks = null; // "today" and the week may have moved
+      render();
+      if (message) toast(message);
+    } catch (err) {
+      if (err.message !== 'auth') toast(errorText(err.message));
+    }
+  }
+
+  /**
+   * On Today, when this device is in a different zone than your practice days
+   * (traveling, a new phone): offer to switch. "Keep" is remembered per pair.
+   */
+  function timezonePrompt() {
+    const device = deviceZone();
+    if (!state.timezone_set || !device || device === state.timezone) return null;
+    const key = `${device}|${state.timezone}`;
+    try { if (localStorage.getItem('sj_tz_keep') === key) return null; } catch (e) { /* ignore */ }
+
+    const vars = { device: zoneName(device), current: zoneName(state.timezone) };
+    const box = el('div', { class: 'notice', role: 'status' });
+    const switchBtn = el('button', { class: 'btn btn--small', type: 'button', text: t('timezone_prompt.switch', vars) });
+    const keepBtn = el('button', { class: 'link', type: 'button', text: t('timezone_prompt.keep', vars) });
+    switchBtn.addEventListener('click', () => saveSettings({ timezone: device }, t('settings.saved')));
+    keepBtn.addEventListener('click', () => {
+      try { localStorage.setItem('sj_tz_keep', key); } catch (e) { /* ignore */ }
+      box.remove();
+    });
+    box.append(
+      el('p', {}, icon('clock'), ` ${t('timezone_prompt.text', vars)}`),
+      el('div', { class: 'notice__actions' }, switchBtn, keepBtn));
+    return box;
+  }
+
+  // ---------- settings ----------
+
+  /** Beta choices live in cookies, so the page header follows them too. */
+  function setBeta(name, value) {
+    document.cookie = `${name}=${encodeURIComponent(value)}; path=/; max-age=31536000; SameSite=Lax`;
+    window.location.reload();
+  }
+
+  function cookie(name) {
+    const m = document.cookie.match(new RegExp(`(?:^|; )${name}=([^;]*)`));
+    return m ? decodeURIComponent(m[1]) : '';
+  }
+
+  function settingsView() {
+    const device = deviceZone();
+    let zones = [];
+    try { zones = Intl.supportedValuesOf('timeZone'); } catch (e) { /* older browser */ }
+    for (const z of [state.timezone, device, 'UTC']) if (z && !zones.includes(z)) zones.push(z);
+    zones.sort();
+
+    // Time zone
+    const now = el('p', { class: 'card__body' });
+    const select = el('select', { class: 'field field--select', id: 'tz', 'aria-label': t('settings.timezone_title') },
+      zones.map((z) => el('option', { value: z, selected: z === state.timezone, text: z.replace(/_/g, ' ') })));
+    const showNow = () => { now.textContent = `${zoneName(select.value)}. ${t('settings.now', { time: timeIn(select.value) })}`; };
+    select.addEventListener('change', showNow);
+    showNow();
+    const useDevice = device && device !== state.timezone
+      ? el('button', { class: 'link', type: 'button', text: t('settings.use_device', { zone: zoneName(device) }) })
+      : null;
+    if (useDevice) useDevice.addEventListener('click', () => { select.value = device; showNow(); });
+
+    // Week start
+    let weekStart = state.week_start;
+    const weekButtons = [[0, t('settings.sunday')], [1, t('settings.monday')]].map(([v, label]) => {
+      const b = el('button', { type: 'button', 'aria-pressed': String(v === weekStart), text: label });
+      b.addEventListener('click', () => {
+        weekStart = v;
+        weekButtons.forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+      });
+      return b;
+    });
+
+    const save = el('button', { class: 'btn btn--primary', type: 'button', text: t('settings.save') });
+    save.addEventListener('click', () => saveSettings({ timezone: select.value, week_start: weekStart }, t('settings.saved')));
+
+    // Beta: try a name, and an icon style. Each applies right away.
+    const ui = state.ui;
+    const betaRow = (label, options, current, onPick) => el('div', { class: 'beta-row' },
+      el('span', { class: 'beta-row__label', text: label }),
+      el('div', { class: 'segmented', role: 'group', 'aria-label': label }, options.map(([value, text]) => {
+        const b = el('button', { type: 'button', 'aria-pressed': String(value === current), text });
+        b.addEventListener('click', () => onPick(value));
+        return b;
+      })));
+    const beta = [];
+    if (ui.name_test && ui.name_test.options && ui.name_test.options.length > 1) {
+      beta.push(betaRow(ui.name_test.label, ui.name_test.options.map((n) => [n, n]),
+        cookie('sj_name') || state.app_name, (v) => setBeta('sj_name', v)));
+    }
+    if (ui.icon_test && ui.icon_test.b) {
+      beta.push(betaRow(ui.icon_test.label, [['a', 'A'], ['b', 'B']], state.icon_variant, (v) => setBeta('sj_icons', v)));
+    }
+
+    return [
+      el('a', { class: 'back-link', href: `#${backTo}` }, icon('arrow-left'), t('app.back')),
+      el('h1', { class: 'top__greeting', text: t('settings.title') }),
+      section({
+        eyebrow: t('settings.account_title'),
+        body: el('div', { class: 'account-row' },
+          el('p', { class: 'card__body' }, `${t('nav.signed_in_as')} `, el('strong', { text: state.user.name })),
+          el('a', { class: 'account-row__out', href: USP.logout }, icon('sign-out'), ` ${t('nav.log_out')}`)),
+      }),
+      section({
+        eyebrow: t('settings.timezone_title'),
+        body: [el('p', { class: 'card__body', text: t('settings.timezone_body') }), select, now, useDevice],
+      }),
+      section({
+        eyebrow: t('settings.week_title'),
+        body: [
+          el('p', { class: 'card__body', text: t('settings.week_body') }),
+          el('div', { class: 'segmented', role: 'group', 'aria-label': t('settings.week_start') }, weekButtons),
+        ],
+      }),
+      save,
+      beta.length ? section({ eyebrow: t('settings.beta_title'), body: [el('p', { class: 'card__body', text: t('settings.beta_body') }), beta] }) : null,
+      section({
+        eyebrow: t('settings.about_title'),
+        body: el('p', { class: 'card__body', text: t('settings.version', { version: state.build.label }) }),
+      }),
+    ];
+  }
+
   // ---------- progress ----------
 
   function progressView() {
@@ -956,7 +1114,8 @@
 
   function calendar(data) {
     const [y, m] = data.month.split('-').map(Number);
-    const firstDow = (new Date(Date.UTC(y, m - 1, 1)).getUTCDay() + 6) % 7; // Monday first
+    const ws = state.week_start; // 0 = Sunday first, 1 = Monday first
+    const firstDow = (new Date(Date.UTC(y, m - 1, 1)).getUTCDay() - ws + 7) % 7;
     const daysInMonth = new Date(Date.UTC(y, m, 0)).getUTCDate();
 
     const prev = el('button', { class: 'calendar__nav', type: 'button', 'aria-label': t('history.previous_month'), text: '‹' });
@@ -967,7 +1126,7 @@
     next.addEventListener('click', () => { hist.month = shiftMonth(data.month, 1); render(); });
 
     const grid = el('div', { class: 'calendar__grid' },
-      ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((d) =>
+      [0, 1, 2, 3, 4, 5, 6].map((i) => WEEKDAYS[(i + ws) % 7]).map((d) =>
         el('div', { class: 'calendar__dow', 'aria-hidden': 'true', text: d.slice(0, 1) })
       ),
       Array.from({ length: firstDow }, () => el('div'))
@@ -1043,12 +1202,11 @@
     try {
       if (!hist.weeks) hist.weeks = (await api('history_weekly')).weeks;
 
-      // This week is always first, even before it has answers.
-      const current = state.weekly ? state.weekly.week_start : null;
-      const weeks = hist.weeks.slice();
-      if (current && !weeks.some((w) => w.week_start === current)) {
-        weeks.unshift({ week_start: current, answers: [] });
-      }
+      // The open reflection always comes first (even before it has answers),
+      // then the rest newest first. Weeks are matched by their Thursday key.
+      const current = state.weekly ? state.weekly.week_key : null;
+      const weeks = hist.weeks.filter((w) => w.week_key !== current);
+      if (current) weeks.unshift(hist.weeks.find((w) => w.week_key === current) || { week_key: current, week_start: state.weekly.week_start, answers: [] });
       if (!weeks.length) {
         body.replaceChildren(el('p', { class: 'daylog__empty', text: t('history.no_reflections') }));
         return;
@@ -1056,13 +1214,13 @@
 
       body.replaceChildren(...weeks.map((w) => {
         const [y, m, d] = w.week_start.split('-').map(Number);
-        const isCurrent = w.week_start === current;
+        const isCurrent = w.week_key === current;
         const n = w.answers.length;
         const total = isCurrent ? state.weekly.questions.length : 0;
         return el('details', { class: `week ${isCurrent ? 'week--current' : ''}`, open: isCurrent || weeks.length === 1 },
           el('summary', {},
             el('span', { class: 'week__heading' },
-              isCurrent ? el('span', { class: 'week__badge', text: t('history.this_week') }) : null,
+              isCurrent ? el('span', { class: 'week__badge', text: t(state.weekly.this_week ? 'history.this_week' : 'history.last_week') }) : null,
               el('span', { class: 'week__title', text: t('history.week_of', { date: `${MONTHS[m - 1]} ${d}, ${y}` }) })
             ),
             el('span', { class: 'week__count', text: isCurrent ? t('checklist.weekly_progress', { n, total }) : (n === 1 ? t('history.one_answer') : t('history.answers', { n })) })
@@ -1084,6 +1242,7 @@
   function todayView() {
     return [
       el('h1', { class: 'top__greeting', text: greeting(state.user.name) }),
+      timezonePrompt(),
       counters(),
       ritualList(),
       clearingCard(),
@@ -1095,19 +1254,21 @@
   function render() {
     // Keep the scroll position steady across re-renders of the same view.
     const y = window.scrollY;
-    const views = { today: todayView, progress: progressView, reflect: reflectView, history: historyView, declarations: declarationsView };
-    root.replaceChildren(...views[view]());
+    const views = { today: todayView, progress: progressView, reflect: reflectView, history: historyView, declarations: declarationsView, settings: settingsView };
+    // Skip empty slots (e.g. no time zone prompt today), which would otherwise show as "null".
+    root.replaceChildren(...views[view]().flat(Infinity).filter(Boolean));
     window.scrollTo(0, y);
   }
 
-  const VIEWS = ['today', 'progress', 'reflect', 'history', 'declarations'];
-  let backTo = 'today'; // where Back goes from Declarations
+  const VIEWS = ['today', 'progress', 'reflect', 'history', 'declarations', 'settings'];
+  const SCREENS = ['declarations', 'settings']; // opened from the top bar, with Back
+  let backTo = 'today'; // where Back goes from those screens
 
   function setView() {
     const hash = location.hash.slice(1);
     const next = VIEWS.includes(hash) ? hash : 'today';
     const changed = next !== view;
-    if (next === 'declarations' && view !== 'declarations') backTo = view;
+    if (SCREENS.includes(next) && !SCREENS.includes(view)) backTo = view;
     view = next;
     document.querySelectorAll('.tabbar__tab, .masthead__icon').forEach((tab) => {
       if (tab.dataset.view === view) tab.setAttribute('aria-current', 'page');
@@ -1121,19 +1282,6 @@
 
   window.addEventListener('hashchange', setView);
 
-  // Beta: switch icon styles (saved for a year on this device).
-  document.querySelectorAll('[data-icons]').forEach((b) => {
-    b.addEventListener('click', () => {
-      document.cookie = `sj_icons=${b.dataset.icons}; path=/; max-age=31536000; SameSite=Lax`;
-      window.location.reload();
-    });
-  });
-
-  // Close the settings menu when tapping anywhere else.
-  document.addEventListener('click', (e) => {
-    const menu = document.querySelector('.account[open]');
-    if (menu && !menu.contains(e.target)) menu.open = false;
-  });
   setView();
 
   api('state')
@@ -1141,6 +1289,9 @@
       state = data;
       openCards.add('practice'); // open on arrival: the main thing you come to do
       render();
+      // First visit: practice days follow this device's time zone.
+      const device = deviceZone();
+      if (!state.timezone_set && device) saveSettings({ timezone: device });
     })
     .catch((err) => {
       if (err.message !== 'auth') {
