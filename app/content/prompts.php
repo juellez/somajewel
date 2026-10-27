@@ -121,7 +121,7 @@ return [
         // header and page title follow. Delete 'name_test' to end it.
         'name_test' => [
             'label'   => 'App name',
-            'options' => ['SomaJewel', 'SomaRosa', 'Embody'],
+            'options' => ['SomaJewel', 'Melete', 'Soma Rosa'],
         ],
 
         'icon_test' => [
@@ -203,7 +203,7 @@ return [
             'lede'        => '"Follow effective action with quiet reflection. From the quiet reflection will come even more effective action." — Peter F. Drucker',
             'this_week'   => 'This week · {date}',
             'last_week'   => 'Last week · {date}',
-            'open_until'  => 'Still open for edits until {day}, when the next reflection begins.',
+            'open_until'  => 'Last week\'s reflection is available for editing until {day}, when the next reflection opens.',
             // The day each week's reflection opens (0 = Sunday … 6 = Saturday).
             // It stays open, and editable, until the next one opens.
             'opens_on'    => 5,
