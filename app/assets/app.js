@@ -1308,7 +1308,8 @@
     // Keep the scroll position steady across re-renders of the same view.
     const y = window.scrollY;
     const views = { today: todayView, progress: progressView, reflect: reflectView, history: historyView, declarations: declarationsView, settings: settingsView, feedback: feedbackView };
-    root.replaceChildren(...views[view]());
+    // Skip empty slots (e.g. no time zone prompt today), which would otherwise show as "null".
+    root.replaceChildren(...views[view]().flat(Infinity).filter(Boolean));
     window.scrollTo(0, y);
   }
 
