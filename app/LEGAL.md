@@ -1,8 +1,8 @@
 # Terms & Privacy
 
-**SomaJewel** · Last updated: [Oct 25, 2026]
+**SomaJewel** · Last updated: Oct 25, 2026
 
-SomaJewel is a small, independent practice app made by Unstruck Somatics, LLC ("I," "me") to support daily somatic practice and weekly self-reflection. It's currently in testing. This page explains how it works, what happens to what you write, and what you agree to by using it. I've kept it in plain language on purpose. If anything is unclear, ask: [CONTACT_EMAIL].
+SomaJewel is a small, independent practice app made by Unstruck Somatics, LLC ("I," "me") to support daily somatic practice and weekly self-reflection. It's currently in closed/private testing. This page explains how it works, what happens to what you write, and what you agree to by using it. I've kept it in plain language on purpose. If anything is unclear, ask: [CONTACT_EMAIL].
 
 ---
 

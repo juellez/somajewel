@@ -87,7 +87,7 @@ function usp_history_day(int $user_id, string $date): ?array
     $moods   = usp_moods_by_key();
     $titles  = [
         'clearing'  => $content['clearing']['title'],
-        'practice'  => 'Practice',
+        'practice'  => usp_ui('checklist.practice'),
         'gratitude' => $content['gratitude']['title'],
     ];
 
@@ -111,7 +111,7 @@ function usp_history_day(int $user_id, string $date): ?array
             'type'        => $row['type'],
             'title'       => $title,
             'declaration' => $row['declaration'] ? usp_snippet($row['declaration']) : null,
-            'mood'        => $mood ? ['icon' => $mood['icon'], 'label' => $mood['label']] : null,
+            'mood'        => $mood ? ['key' => $row['mood'], 'icon' => $mood['icon'], 'label' => $mood['label']] : null,
             'summary'     => usp_snippet($summary),
             'note'        => usp_snippet($row['note']),
         ];

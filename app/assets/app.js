@@ -62,10 +62,33 @@
     return el('span', { class: 'today-badge', text: String(n) });
   }
 
+  /**
+   * Screen text from content/prompts.php ('ui'), by dotted path, with
+   * {placeholders} filled in: t('counters.note_grace', { until: 'noon' }).
+   */
+  function t(path, vars = {}) {
+    let value = state && state.ui;
+    for (const key of path.split('.')) value = value && value[key];
+    if (typeof value !== 'string') return path;
+    return value.replace(/\{(\w+)\}/g, (m, k) => (k in vars ? String(vars[k]) : m));
+  }
+
   function greeting(name) {
     const hour = new Date().getHours();
-    const part = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
-    return `${part}, ${name}`;
+    const part = hour < 12 ? 'morning' : hour < 17 ? 'afternoon' : 'evening';
+    return t(`greeting.${part}`, { name });
+  }
+
+  /** A mood's icon in this person's icon style (falls back to the stored one). */
+  function moodIcon(mood) {
+    const m = state.moods.find((x) => x.key === mood.key);
+    return m ? m.icon : mood.icon;
+  }
+
+  /** Weekday (0 = Sunday) of a Y-m-d date. */
+  function weekday(key) {
+    const [y, m, d] = key.split('-').map(Number);
+    return new Date(Date.UTC(y, m - 1, d)).getUTCDay();
   }
 
   function toast(message) {
@@ -76,20 +99,17 @@
     setTimeout(() => node.remove(), 3600);
   }
 
-  const ERRORS = {
-    declaration_required: 'Choose a declaration first.',
-    skill_required: 'Choose what you practiced.',
-    mood_required: 'Tap how you feel now.',
-    empty: 'Write something in at least one box.',
-    limit: 'You can hold up to 3 declarations. Archive one to add another.',
-    grace_closed: 'It\'s past noon, so this can only be logged for today.',
-  };
+  /** An API error code as a sentence, or the general "not saved". */
+  function errorText(code) {
+    const text = t(`errors.${code}`, { max: state.max_declarations });
+    return text === `errors.${code}` ? t('app.save_error') : text;
+  }
 
   /** Disables a button while a request runs, and shows errors inline. */
   async function withButton(button, errorNode, task) {
     const label = button.textContent;
     button.disabled = true;
-    button.textContent = 'Saving…';
+    button.textContent = t('app.saving');
     if (errorNode) errorNode.textContent = '';
     try {
       await task();
@@ -97,7 +117,7 @@
       if (err.message === 'auth') return;
       button.disabled = false;
       button.textContent = label;
-      if (errorNode) errorNode.textContent = ERRORS[err.message] || 'Not saved. Please try again.';
+      if (errorNode) errorNode.textContent = errorText(err.message);
     }
   }
 
@@ -166,7 +186,7 @@
   /** 4×3 mood grid. Tap again to clear. Returns { node, value }. */
   function moodPad({ onChange } = {}) {
     let value = '';
-    const pad = el('div', { class: 'moods', role: 'radiogroup', 'aria-label': 'How do you feel now?' });
+    const pad = el('div', { class: 'moods', role: 'radiogroup', 'aria-label': t('practice.mood') });
     for (const mood of state.moods) {
       const btn = el('button', {
         type: 'button', class: 'mood', role: 'radio', 'aria-checked': 'false', 'aria-label': mood.label,
@@ -192,7 +212,7 @@
   function declarationChoices(opts) {
     return choiceGroup(
       state.declarations.map((d) => ({ value: d.id, text: d.text })),
-      { label: 'Declaration', ...opts }
+      { label: t('practice.declaration'), ...opts }
     );
   }
 
@@ -208,18 +228,12 @@
   }
   let activeMic = null; // only one field listens at a time
 
-  const MIC_ERRORS = {
-    'not-allowed': 'Microphone access is blocked. Allow it in your browser\'s settings for this site, or type instead.',
-    'service-not-allowed': 'Voice input is turned off for this browser. Check its settings, or type instead.',
-    'audio-capture': 'No microphone was found. Check that one is connected, or type instead.',
-    'network': 'Voice input needs an internet connection. Try again, or type instead.',
-    'no-speech': 'Didn\'t catch anything. Tap the mic and try again.',
-  };
+  const MIC_ERRORS = ['not-allowed', 'service-not-allowed', 'audio-capture', 'network', 'no-speech'];
 
   function micButton(field) {
     const btn = el('button', {
       class: 'mic', type: 'button', 'aria-pressed': 'false',
-      'aria-label': 'Speak your answer', title: 'Speak your answer',
+      'aria-label': t('mic.label'), title: t('mic.label'),
     }, el('span', { 'aria-hidden': 'true', text: '🎙' }));
 
     if (!SpeechRecognition) {
@@ -236,7 +250,7 @@
       btn.classList.toggle('is-starting', next === 'starting');
       btn.classList.toggle('is-listening', next === 'listening');
       btn.setAttribute('aria-pressed', String(next !== 'idle'));
-      btn.setAttribute('aria-label', next === 'idle' ? 'Speak your answer' : 'Stop listening');
+      btn.setAttribute('aria-label', next === 'idle' ? t('mic.label') : t('mic.stop'));
     }
 
     // Safe to call any number of times, from any state.
@@ -273,7 +287,7 @@
           micGranted = true;
         } catch (err) {
           reset();
-          toast(MIC_ERRORS['not-allowed']);
+          toast(t('mic.not-allowed'));
           return;
         }
         if (phase !== 'starting') return; // tapped again while the prompt was open
@@ -301,7 +315,7 @@
       };
 
       rec.onerror = (event) => {
-        if (event.error !== 'aborted' && MIC_ERRORS[event.error]) toast(MIC_ERRORS[event.error]);
+        if (MIC_ERRORS.includes(event.error)) toast(t(`mic.${event.error}`));
         if (event.error === 'not-allowed') micGranted = false;
       };
 
@@ -316,7 +330,7 @@
       watchdog = setTimeout(() => {
         if (phase === 'starting') {
           reset();
-          toast('Voice input didn\'t start. Tap the mic to try again.');
+          toast(t('mic.stalled'));
         }
       }, 8000);
 
@@ -325,7 +339,7 @@
       } catch (err) {
         // Some browsers only start from a direct tap; the permission is set now.
         reset();
-        toast('Microphone is ready. Tap the mic again to speak.');
+        toast(t('mic.ready'));
       }
     });
 
@@ -339,7 +353,7 @@
     let value = 'today';
     if (!state.grace.open) return { node: null, get value() { return value; } };
 
-    const buttons = [['today', 'Today'], ['yesterday', 'Yesterday']].map(([key, label]) => {
+    const buttons = [['today', t('when.today')], ['yesterday', t('when.yesterday')]].map(([key, label]) => {
       const b = el('button', { type: 'button', 'aria-pressed': String(key === value), text: label });
       b.addEventListener('click', () => {
         value = key;
@@ -350,8 +364,8 @@
 
     return {
       node: el('div', { class: 'when' },
-        el('div', { class: 'segmented', role: 'group', 'aria-label': 'Log this for' }, buttons),
-        el('p', { class: 'when__hint', text: `Late night or forgot to track? Until ${state.grace.until}, you can still log practice for yesterday.` })
+        el('div', { class: 'segmented', role: 'group', 'aria-label': t('when.label') }, buttons),
+        el('p', { class: 'when__hint', text: t('when.hint', { until: state.grace.until }) })
       ),
       get value() { return value; },
     };
@@ -372,11 +386,11 @@
     if (res.celebrations.length) {
       toast(`🎉 ${res.celebrations.join(' · ')}`);
     } else if (res.for_yesterday) {
-      toast(res.first_of_day ? `Logged for yesterday. Streak: ${s.streak}.` : 'Rep logged for yesterday.');
+      toast(res.first_of_day ? t('toasts.yesterday_first', { streak: s.streak }) : t('toasts.yesterday_rep'));
     } else if (res.first_of_day) {
-      toast(`Day ${s.days}. You showed up.`);
+      toast(t('toasts.first_of_day', { days: s.days }));
     } else {
-      toast('Rep logged. Nicely done.');
+      toast(t('toasts.rep'));
     }
   }
 
@@ -390,11 +404,11 @@
     const dayBeforeKey = dayBefore.toISOString().slice(0, 10);
 
     let note;
-    if (s.done_today) note = 'You showed up today.';
-    else if (state.grace.open && s.last_date === dayBeforeKey) note = `Missed yesterday? You can still log it until ${state.grace.until}.`;
-    else if (s.streak > 0) note = 'Any practice today keeps your streak. Even one breath.';
-    else if (s.days > 0) note = `${s.days} ${s.days === 1 ? 'day' : 'days'} of practice, and counting. Every streak starts with one breath.`;
-    else note = 'Every streak starts with one breath.';
+    if (s.done_today) note = t('counters.note_done');
+    else if (state.grace.open && s.last_date === dayBeforeKey) note = t('counters.note_grace', { until: state.grace.until });
+    else if (s.streak > 0) note = t('counters.note_streak');
+    else if (s.days > 0) note = s.days === 1 ? t('counters.note_one_day') : t('counters.note_days', { days: s.days });
+    else note = t('counters.note_start');
 
     const counter = (label, value, hero) =>
       el('div', { class: `counter ${hero ? 'counter--hero' : ''}` },
@@ -404,10 +418,10 @@
 
     return el('section', { class: 'counters', 'aria-label': 'Your practice' },
       el('div', { class: 'counters__row' },
-        counter('Days', s.days, true),
-        counter('Streak', s.streak, true),
-        counter('Longest', s.longest),
-        counter('Reps', s.reps)
+        counter(t('counters.days'), s.days, true),
+        counter(t('counters.streak'), s.streak, true),
+        counter(t('counters.longest'), s.longest),
+        counter(t('counters.reps'), s.reps)
       ),
       el('p', { class: 'counters__note', text: note })
     );
@@ -421,19 +435,40 @@
       .join(', ');
   }
 
-  /** Today's three rituals, one per line, with the practices named. */
+  /** Weekly questions answered so far. */
+  function weeklyAnswered() {
+    return state.weekly ? state.weekly.questions.filter((q) => q.response.trim()).length : 0;
+  }
+
+  /**
+   * Today's three rituals, one per line, with the practices named. On the
+   * days set in content (checklist.weekly_days), a fourth line nudges toward
+   * the weekly reflection until something is answered.
+   */
   function ritualList() {
-    const t = state.today_counts;
+    const c = state.today_counts;
     const row = (name, done, detail) =>
       el('li', { class: `ritual ${done ? 'is-done' : ''}` },
         icon(done ? 'check' : 'circle'),
         el('span', { text: name }),
         detail ? el('span', { class: 'ritual__detail', text: detail }) : null
       );
-    return el('ul', { class: 'rituals', 'aria-label': 'Today' },
-      row('Clearing', t.clearing),
-      row('Practice', t.practice, practicedToday()),
-      row('Gratitude', t.gratitude)
+
+    const days = (state.ui.checklist && state.ui.checklist.weekly_days) || [];
+    const nudge = state.weekly && !weeklyAnswered() && days.includes(weekday(state.today))
+      ? el('li', {},
+        el('a', { class: 'ritual ritual--weekly', href: '#reflect' },
+          icon('notebook'),
+          el('span', { text: t('checklist.weekly') }),
+          el('span', { class: 'ritual__detail', text: t('checklist.weekly_progress', { n: 0, total: state.weekly.questions.length }) }),
+          icon('arrow-right')))
+      : null;
+
+    return el('ul', { class: 'rituals', 'aria-label': t('nav.today') },
+      row(t('checklist.clearing'), c.clearing),
+      row(t('checklist.practice'), c.practice, practicedToday()),
+      row(t('checklist.gratitude'), c.gratitude),
+      nudge
     );
   }
 
@@ -448,7 +483,7 @@
     });
     const error = el('p', { class: 'form-error', 'aria-live': 'polite' });
     const when = whenPicker();
-    const save = el('button', { class: 'btn btn--primary', type: 'button', text: 'Save clearing' });
+    const save = el('button', { class: 'btn btn--primary', type: 'button', text: t('clearing.save') });
 
     save.addEventListener('click', () => withButton(save, error, () => {
       const answers = Object.fromEntries(fields.map((f) => [f.key, f.field.value]));
@@ -456,9 +491,9 @@
     }));
 
     return card('clearing', {
-      eyebrow: 'Morning',
+      eyebrow: t('clearing.eyebrow'),
       title: c.title,
-      done: state.today_counts.clearing ? [icon('check'), ' Done'] : '',
+      done: state.today_counts.clearing ? [icon('check'), ` ${t('cards.done')}`] : '',
       body: [
         el('p', { class: 'card__body', text: c.intro }),
         fields.map((f) => el('div', { class: 'question' }, f.label, f.node)),
@@ -472,39 +507,49 @@
   function practiceCard() {
     const n = state.today_counts.practice;
     const meta = {
-      eyebrow: 'Practice',
-      title: 'Log a practice',
-      done: n ? [todayBadge(n), 'today'] : '',
+      eyebrow: t('practice.eyebrow'),
+      title: t('practice.title'),
+      done: n ? [todayBadge(n), t('cards.today')] : '',
     };
 
     if (!state.declarations.length) {
       return card('practice', {
         ...meta,
         body: [
-          el('p', { class: 'card__body', text: 'Start with a declaration, in your own words. Every practice builds toward it, and you can refine it anytime.' }),
-          declarationForm(null, 'practice'),
+          el('p', { class: 'card__body', text: t('practice.first_declaration') }),
+          declarationForm(null),
         ],
       });
     }
 
     const error = el('p', { class: 'form-error', 'aria-live': 'polite' });
-    const save = el('button', { class: 'btn btn--primary', type: 'button', text: 'Log practice' });
+    const save = el('button', { class: 'btn btn--primary', type: 'button', text: t('practice.save') });
     const hint = el('p', { class: 'skill-hint', 'aria-live': 'polite' });
     const update = () => {
       save.disabled = !(decl.value && skill.value && mood.value);
       // The chosen skill's description, and its own note prompt (e.g. conscious rest).
       const chosen = state.skills.find((x) => x.key === skill.value);
       hint.textContent = chosen ? chosen.description : '';
-      note.field.placeholder = (chosen && chosen.note_placeholder) || 'Optional note';
+      note.field.placeholder = (chosen && chosen.note_placeholder) || t('practice.note');
     };
 
     const decl = declarationChoices({ selected: defaultDeclaration(), onChange: update });
     const skill = choiceGroup(
       state.skills.map((s) => ({ value: s.key, text: s.title, count: s.count, today: state.today_skills[s.key] || 0 })),
-      { label: 'Skill', onChange: update }
+      { label: t('practice.skill'), onChange: update }
     );
     const mood = moodPad({ onChange: update });
-    const note = textField({ rows: 2, placeholder: 'Optional note', label: 'Practice note' });
+    const note = textField({ rows: 2, placeholder: t('practice.note'), label: t('practice.note') });
+
+    // "+ New" next to the declarations, while there's room for another.
+    const declSlot = el('div', { class: 'decl-slot' }, decl.node);
+    if (state.declarations.length < state.max_declarations) {
+      const add = el('button', { type: 'button', class: 'choice choice--new' }, icon('plus-circle'), t('practice.new_declaration'));
+      add.addEventListener('click', () => {
+        declSlot.replaceChildren(declarationForm(null, { onCancel: () => declSlot.replaceChildren(decl.node) }));
+      });
+      decl.node.append(add);
+    }
     const when = whenPicker();
     update();
 
@@ -520,9 +565,9 @@
     return card('practice', {
       ...meta,
       body: [
-        el('p', { class: 'step', text: 'Declaration' }), decl.node,
-        el('p', { class: 'step', text: 'What are you practicing?' }), skill.node, hint,
-        el('p', { class: 'step', text: 'Mood check: What do you notice in your body now and how would you describe that in one word (or a few)?' }), mood.node,
+        el('p', { class: 'step', text: t('practice.declaration') }), declSlot,
+        el('p', { class: 'step', text: t('practice.skill') }), skill.node, hint,
+        el('p', { class: 'step', text: t('practice.mood') }), mood.node,
         note.node,
         when.node, save, error,
       ],
@@ -537,150 +582,254 @@
     const mood = moodPad();
     const note = textField({ rows: 2, placeholder: g.note_placeholder, label: 'Gratitude note' });
     const when = whenPicker();
-    const save = el('button', { class: 'btn btn--primary', type: 'button', text: 'I practiced gratitude' });
+    const save = el('button', { class: 'btn btn--primary', type: 'button', text: t('gratitude.save') });
 
     save.addEventListener('click', () => withButton(save, error, () => saveEntry('gratitude', {
       type: 'gratitude', mood: mood.value, note: note.field.value, for: when.value,
     })));
 
     return card('gratitude', {
-      eyebrow: 'Evening',
+      eyebrow: t('gratitude.eyebrow'),
       title: g.title,
-      done: state.today_counts.gratitude ? [icon('check'), ' Done'] : '',
+      done: state.today_counts.gratitude ? [icon('check'), ` ${t('cards.done')}`] : '',
       body: [
         el('p', { class: 'card__body', text: g.intro }),
         el('ol', { class: 'steps' }, g.steps.map((s) =>
           el('li', {}, el('strong', { text: s.title }), ' ', s.text)
         )),
-        el('p', { class: 'step', text: 'Mood check: What do you notice in your body after your practice?' }), mood.node,
+        el('p', { class: 'step', text: t('gratitude.mood') }), mood.node,
         note.node,
         when.node, save, error,
       ],
     });
   }
 
-  // ---------- weekly reflection ----------
+  // ---------- reflect ----------
 
-  function weeklyCard() {
-    const w = state.weekly;
-    if (!w) return null;
-    const answered = w.questions.filter((q) => q.response.trim()).length;
+  const openQuestions = new Set(); // weekly questions expanded, kept across re-renders
+  let questionsSeeded = false;
 
-    return card('weekly', {
-      eyebrow: 'This week',
-      title: w.title,
-      done: answered ? `${answered}/${w.questions.length}` : '',
-      body: [
-        w.intro ? el('p', { class: 'card__body card__quote', text: w.intro }) : null,
-        w.questions.map(questionBlock),
-      ],
-    });
+  /** A section card that doesn't fold (Reflect, Declarations, Progress). */
+  function section({ eyebrow, title, aside, body, cls = '' }) {
+    return el('section', { class: `card card--static ${cls}` },
+      el('div', { class: 'card__summary' },
+        el('span', { class: 'card__heading' },
+          eyebrow ? el('span', { class: 'card__eyebrow', text: eyebrow }) : null,
+          title ? el('span', { class: 'card__title', text: title }) : null),
+        aside ? el('span', { class: 'card__done' }, aside) : null),
+      el('div', { class: 'card__content' }, body));
   }
 
-  function questionBlock(q, i) {
+  function shortDate(key) {
+    const [, m, d] = key.split('-').map(Number);
+    return `${MONTHS[m - 1]} ${d}`;
+  }
+
+  function reflectView() {
+    const w = state.weekly;
+    const out = [
+      el('h1', { class: 'top__greeting', text: t('reflect.title') }),
+      el('p', { class: 'lede', text: t('reflect.lede') }),
+    ];
+    if (!w) return out;
+
+    // First visit: open the first unanswered question.
+    if (!questionsSeeded) {
+      const first = w.questions.find((q) => !q.response.trim());
+      if (first) openQuestions.add(first.key);
+      questionsSeeded = true;
+    }
+
+    // "② of 7", updated in place as answers save.
+    const tally = el('span', { class: 'reflect-tally' });
+    const updateTally = () => {
+      const n = weeklyAnswered();
+      tally.replaceChildren(...(n ? [todayBadge(n), ` ${t('reflect.answered', { total: w.questions.length })}`] : []));
+    };
+    updateTally();
+
+    out.push(section({
+      eyebrow: t('reflect.this_week', { date: shortDate(w.week_start) }),
+      title: w.title,
+      aside: tally,
+      body: [
+        w.intro ? el('p', { class: 'card__body card__quote', text: w.intro }) : null,
+        el('div', { class: 'qrows' }, w.questions.map((q, i) => questionRow(q, i, updateTally))),
+      ],
+    }));
+    out.push(el('a', { class: 'more-link', href: '#history', onclick: () => { hist.mode = 'weekly'; } },
+      icon('calendar-blank'), t('reflect.past')));
+    return out;
+  }
+
+  /** One weekly question: a row with a check once answered; tap to write. */
+  function questionRow(q, i, onSaved) {
     const id = `weekly-${i}`;
     const { node, field } = textField({ rows: 3, id });
     field.value = q.response;
 
     const status = el('span', { class: 'save-status', 'aria-live': 'polite' });
-    const save = el('button', { class: 'btn', type: 'button', text: 'Save' });
+    const save = el('button', { class: 'btn', type: 'button', text: t('reflect.save') });
     let lastSaved = q.response;
+
+    const row = el('details', { class: 'qrow', open: openQuestions.has(q.key) });
+    row.addEventListener('toggle', () => {
+      if (row.open) openQuestions.add(q.key);
+      else openQuestions.delete(q.key);
+    });
+    const mark = el('span', { class: 'qrow__mark' }, icon(q.response.trim() ? 'check-circle' : 'circle'));
 
     async function doSave() {
       if (field.value === lastSaved) return;
       save.disabled = true;
-      status.textContent = 'Saving…';
+      status.textContent = t('app.saving');
       try {
         await api('weekly', { method: 'POST', body: { key: q.key, response: field.value } });
         lastSaved = field.value;
         q.response = field.value;
         hist.weeks = null; // History reloads with this answer
-        status.textContent = 'Saved';
+        status.textContent = t('reflect.saved');
+        row.classList.toggle('is-answered', !!q.response.trim());
+        mark.replaceChildren(icon(q.response.trim() ? 'check-circle' : 'circle'));
+        if (onSaved) onSaved();
         // Saved as you left the box for the History tab? Refresh what it shows.
         if (view === 'history' && hist.mode === 'weekly') render();
       } catch (err) {
-        status.textContent = 'Not saved. Try again.';
+        status.textContent = t('reflect.save_failed');
       } finally {
         save.disabled = false;
       }
     }
 
-    field.addEventListener('input', () => { status.textContent = field.value === lastSaved ? '' : 'Unsaved'; });
+    field.addEventListener('input', () => { status.textContent = field.value === lastSaved ? '' : t('reflect.unsaved'); });
     field.addEventListener('blur', doSave);
     save.addEventListener('click', doSave);
 
-    return el('div', { class: 'question' },
-      el('label', { class: 'question__text', for: id },
-        q.text, q.optional ? el('span', { class: 'optional', text: ' · optional' }) : null),
-      q.hint ? el('p', { class: 'question__hint', text: q.hint }) : null,
-      node,
-      el('div', { class: 'question__actions' }, save, status)
+    if (q.response.trim()) row.classList.add('is-answered');
+    row.append(
+      el('summary', { class: 'qrow__summary' },
+        mark,
+        el('span', { class: 'qrow__text' },
+          q.text, q.optional ? el('span', { class: 'optional', text: ` · ${t('app.optional')}` }) : null,
+          q.hint ? el('span', { class: 'qrow__hint', text: q.hint }) : null),
+        icon('caret-down')),
+      el('div', { class: 'qrow__body' },
+        el('label', { class: 'sr-only', for: id, text: q.text }),
+        node,
+        el('div', { class: 'question__actions' }, save, status))
     );
+    return row;
   }
 
   // ---------- declarations ----------
 
-  function declarationForm(decl, cardId) {
+  /**
+   * New declaration (no decl) or refine one. options.onCancel shows a Cancel
+   * button; after saving, the whole page re-renders from the new state.
+   */
+  function declarationForm(decl, { onCancel } = {}) {
     const { node, field } = textField({
       rows: 2,
-      placeholder: 'I am a stand for…  /  I declare…',
-      label: decl ? 'Refine declaration' : 'New declaration',
+      placeholder: t('declarations.placeholder'),
+      label: decl ? t('declarations.refine') : t('declarations.add'),
     });
     if (decl) field.value = decl.text;
     const error = el('p', { class: 'form-error', 'aria-live': 'polite' });
-    const save = el('button', { class: 'btn btn--primary', type: 'button', text: decl ? 'Save' : 'Save declaration' });
+    const save = el('button', { class: 'btn btn--primary', type: 'button', text: decl ? t('declarations.save_refined') : t('declarations.save') });
+    const cancel = onCancel ? el('button', { class: 'link', type: 'button', text: t('declarations.cancel') }) : null;
+    if (cancel) cancel.addEventListener('click', onCancel);
 
     save.addEventListener('click', () => withButton(save, error, async () => {
       const res = await api('declaration', { method: 'POST', body: { id: decl ? decl.id : null, text: field.value } });
       state = res.state;
-      if (cardId) openCards.add(cardId);
       render();
-      toast(decl ? 'Declaration refined.' : 'Declaration saved.');
+      toast(decl ? t('declarations.refined') : t('declarations.saved'));
     }));
 
-    return el('div', { class: 'decl-form' }, node, save, error);
+    setTimeout(() => field.focus(), 0);
+    return el('div', { class: 'decl-form' }, node, el('div', { class: 'decl-form__actions' }, save, cancel), error);
   }
 
-  function declarationsCard() {
-    const items = state.declarations.map((d) => {
+  /** "47 reps" and a bar toward 300 (then 3,000), or "Embodied". */
+  function declarationMeter(p) {
+    const reps = p.count === 1 ? t('declarations.one_rep') : t('declarations.reps', { n: p.count.toLocaleString() });
+    if (p.embodied) {
+      return el('div', { class: 'meter' }, el('span', { text: reps }), el('span', { class: 'meter__done', text: t('declarations.embodied') }));
+    }
+    return el('div', { class: 'meter' },
+      el('span', { text: reps }),
+      el('span', { class: 'meter__bar', role: 'img', 'aria-label': `${p.count} / ${p.goal}` },
+        el('span', { style: `width:${Math.max(p.pct, p.count ? 2 : 0)}%` })),
+      el('span', { text: p.goal.toLocaleString() }));
+  }
+
+  async function declarationAction(action, id, message) {
+    try {
+      const res = await api(action, { method: 'POST', body: { id } });
+      state = res.state;
+      render();
+      toast(message);
+    } catch (err) {
+      if (err.message !== 'auth') toast(errorText(err.message));
+    }
+  }
+
+  function declarationsView() {
+    const decls = state.declarations;
+    const max = state.max_declarations;
+
+    // The explainer starts open until there's a declaration; after that it
+    // remembers whether you last left it open (on this device).
+    let introOpen = !decls.length;
+    try {
+      const saved = localStorage.getItem('sj_decl_intro');
+      if (saved && decls.length) introOpen = saved === 'open';
+    } catch (e) { /* storage unavailable */ }
+    const intro = el('details', { class: 'card intro', open: introOpen },
+      el('summary', { class: 'card__summary' },
+        el('span', { class: 'intro__icon' }, icon('compass')),
+        el('span', { class: 'card__title', text: t('declarations.intro_title') })),
+      el('div', { class: 'card__content' },
+        el('p', { class: 'intro__text', text: t('declarations.intro') }),
+        el('ul', { class: 'intro__points' }, (state.ui.declarations.intro_points || []).map((x) => el('li', { text: x })))));
+    intro.addEventListener('toggle', () => {
+      try { localStorage.setItem('sj_decl_intro', intro.open ? 'open' : 'closed'); } catch (e) { /* ignore */ }
+    });
+
+    const items = decls.map((d) => {
       const row = el('li', { class: 'decl' });
       const show = () => {
-        const refine = el('button', { class: 'link', type: 'button', text: 'Refine' });
-        const archive = el('button', { class: 'link', type: 'button', text: 'Archive' });
-        refine.addEventListener('click', () => {
-          row.replaceChildren(declarationForm(d, 'declarations'));
-        });
-        archive.addEventListener('click', async () => {
-          if (!confirm('Archive this declaration? Its history and reps are kept.')) return;
-          try {
-            const res = await api('declaration_archive', { method: 'POST', body: { id: d.id } });
-            state = res.state;
-            render();
-          } catch (err) {
-            if (err.message !== 'auth') toast('Could not archive. Please try again.');
-          }
+        const refine = el('button', { class: 'link', type: 'button', text: t('declarations.refine') });
+        const retire = el('button', { class: 'link', type: 'button', text: t('declarations.retire') });
+        refine.addEventListener('click', () => row.replaceChildren(declarationForm(d, { onCancel: show })));
+        retire.addEventListener('click', () => {
+          if (confirm(t('declarations.retire_confirm'))) declarationAction('declaration_retire', d.id, t('declarations.retired'));
         });
         row.replaceChildren(
-          el('div', { class: 'decl__body' },
-            el('p', { class: 'decl__text', text: d.text }),
-            el('div', { class: 'decl__actions' }, refine, archive)
-          )
-        );
+          el('p', { class: 'decl__text', text: d.text }),
+          declarationMeter(d.progress),
+          el('div', { class: 'decl__actions' }, refine, retire));
       };
       show();
       return row;
     });
 
-    const canAdd = state.declarations.length < state.max_declarations;
-
-    return card('declarations', {
-      eyebrow: 'Your declarations',
-      title: state.declarations.length ? `${state.declarations.length} of ${state.max_declarations}` : 'Write your first',
-      body: [
-        items.length ? el('ul', { class: 'decls' }, items) : null,
-        canAdd ? [el('p', { class: 'step', text: 'Add a declaration' }), declarationForm(null, 'declarations')] : null,
-      ],
-    });
+    const canAdd = decls.length < max;
+    return [
+      el('a', { class: 'back-link', href: `#${backTo}` }, icon('arrow-left'), t('app.back')),
+      el('h1', { class: 'top__greeting', text: t('declarations.title') }),
+      intro,
+      section({
+        eyebrow: t('declarations.eyebrow'),
+        aside: el('span', { class: 'muted', text: t('declarations.count', { n: decls.length, max }) }),
+        body: [
+          items.length ? el('ul', { class: 'decls' }, items) : el('p', { class: 'card__body', text: t('declarations.empty') }),
+          canAdd
+            ? [el('p', { class: 'step', text: t('declarations.add') }), declarationForm(null)]
+            : el('p', { class: 'card__body', text: t('declarations.full', { max }) }),
+        ],
+      }),
+    ];
   }
 
   // ---------- progress ----------
@@ -695,24 +844,58 @@
     );
 
     const rituals = Object.entries(state.rituals).map(([type, r]) =>
-      tile({ label: r.name, time: r.time, r: r.ring, today: state.today_counts[type] }));
+      tile({ label: t(`checklist.${type}`), time: t(`progress.time_${type}`), r: r.ring, today: state.today_counts[type] }));
     const skills = state.skills.map((s) =>
       tile({ label: s.title, r: s.ring, count: s.count, today: state.today_skills[s.key] }));
 
-    const section = (eyebrow, title, body) => el('section', { class: 'card card--static' },
-      el('div', { class: 'card__summary' },
-        el('span', { class: 'card__heading' },
-          el('span', { class: 'card__eyebrow', text: eyebrow }),
-          el('span', { class: 'card__title', text: title }))),
-      el('div', { class: 'card__content' }, body));
+    // Each declaration with the practices done under it (this declaration only).
+    const toward = (p) => (p.embodied
+      ? t('progress.embodied', { n: p.count.toLocaleString() })
+      : t('progress.toward', { n: p.count.toLocaleString(), goal: p.goal.toLocaleString() }));
+    const byDecl = (d, retired) => el('div', { class: `bydecl ${retired ? 'bydecl--retired' : ''}` },
+      el('p', { class: 'bydecl__text', text: d.text }),
+      // Active: the bar says it all. Retired or embodied: a line of text.
+      !retired && !d.progress.embodied ? declarationMeter(d.progress) : el('p', { class: 'bydecl__toward', text: toward(d.progress) }),
+      d.skills.length
+        ? el('ul', { class: 'bydecl__skills' }, d.skills.map((s) =>
+          el('li', {}, el('span', { text: s.title }), s.today ? todayBadge(s.today) : null, el('b', { text: String(s.count) }))))
+        : el('p', { class: 'card__body', text: t('progress.no_reps') }),
+      retired ? reactivateButton(d) : null);
+
+    function reactivateButton(d) {
+      const b = el('button', { class: 'link', type: 'button' }, icon('arrow-counter-clockwise'), ` ${t('declarations.reactivate')}`);
+      b.addEventListener('click', () => {
+        if (state.declarations.length >= state.max_declarations) {
+          toast(t('declarations.full', { max: state.max_declarations }));
+          return;
+        }
+        declarationAction('declaration_reactivate', d.id, t('declarations.reactivated'));
+      });
+      return b;
+    }
+
+    const declSection = state.declarations.length || state.retired.length
+      ? section({
+        eyebrow: t('progress.declarations_eyebrow'),
+        title: t('progress.declarations_title'),
+        body: [
+          state.declarations.map((d) => byDecl(d, false)),
+          state.retired.length
+            ? [el('p', { class: 'step bydecl__heading', text: t('progress.retired') }), state.retired.map((d) => byDecl(d, true))]
+            : null,
+        ],
+      })
+      : null;
 
     return [
       counters(),
-      section('Your Day', 'Rituals', el('div', { class: 'reps reps--rituals' }, rituals)),
-      section('Your Skills', 'Practices', [
-        el('p', { class: 'card__body', text: 'Every rep builds muscle memory.' }),
-        el('div', { class: 'reps' }, skills),
-      ]),
+      section({ eyebrow: t('progress.rituals_eyebrow'), title: t('progress.rituals_title'), body: el('div', { class: 'reps reps--rituals' }, rituals) }),
+      declSection,
+      section({
+        eyebrow: t('progress.skills_eyebrow'),
+        title: t('progress.skills_title'),
+        body: [el('p', { class: 'card__body', text: t('progress.skills_body') }), el('div', { class: 'reps' }, skills)],
+      }),
     ];
   }
 
@@ -744,14 +927,14 @@
   }
 
   function historyView() {
-    const toggle = el('div', { class: 'segmented', role: 'group', 'aria-label': 'History view' },
-      [['daily', 'Daily practice'], ['weekly', 'Weekly reflections']].map(([key, label]) => {
+    const toggle = el('div', { class: 'segmented', role: 'group', 'aria-label': t('nav.history') },
+      [['daily', t('history.daily')], ['weekly', t('history.weekly')]].map(([key, label]) => {
         const b = el('button', { type: 'button', 'aria-pressed': String(hist.mode === key), text: label });
         b.addEventListener('click', () => { hist.mode = key; render(); });
         return b;
       })
     );
-    const body = el('div', { class: 'weeks' }, el('p', { class: 'loading', text: 'Loading…' }));
+    const body = el('div', { class: 'weeks' }, el('p', { class: 'loading', text: t('history.loading') }));
 
     if (hist.mode === 'daily') fillDaily(body);
     else fillWeekly(body);
@@ -767,7 +950,7 @@
       if (!hist.selected) hist.selected = state.today;
       body.replaceChildren(calendar(data), dayLog());
     } catch (err) {
-      if (err.message !== 'auth') body.replaceChildren(el('p', { class: 'daylog__empty', text: 'Couldn\'t load your history. Please refresh.' }));
+      if (err.message !== 'auth') body.replaceChildren(el('p', { class: 'daylog__empty', text: t('history.load_error') }));
     }
   }
 
@@ -776,8 +959,8 @@
     const firstDow = (new Date(Date.UTC(y, m - 1, 1)).getUTCDay() + 6) % 7; // Monday first
     const daysInMonth = new Date(Date.UTC(y, m, 0)).getUTCDate();
 
-    const prev = el('button', { class: 'calendar__nav', type: 'button', 'aria-label': 'Previous month', text: '‹' });
-    const next = el('button', { class: 'calendar__nav', type: 'button', 'aria-label': 'Next month', text: '›' });
+    const prev = el('button', { class: 'calendar__nav', type: 'button', 'aria-label': t('history.previous_month'), text: '‹' });
+    const next = el('button', { class: 'calendar__nav', type: 'button', 'aria-label': t('history.next_month'), text: '›' });
     prev.disabled = data.month <= data.first_month;
     next.disabled = data.month >= data.current_month;
     prev.addEventListener('click', () => { hist.month = shiftMonth(data.month, -1); render(); });
@@ -799,7 +982,7 @@
         type: 'button',
         class: `day ${level} ${key === data.today ? 'day--today' : ''} ${future ? 'day--future' : ''}`,
         'aria-pressed': String(key === hist.selected),
-        'aria-label': `${longDate(key)}: ${n ? `${n} ${n === 1 ? 'rep' : 'reps'}` : 'no entries'}`,
+        'aria-label': `${longDate(key)}: ${n === 1 ? t('history.one_rep') : n ? t('history.reps', { n }) : t('history.no_entries')}`,
         text: String(d),
       });
       if (future) btn.disabled = true;
@@ -817,10 +1000,10 @@
       ),
       grid,
       el('div', { class: 'legend' },
-        swatch('border:1.5px solid var(--rasp)', '1 rep'),
-        swatch('background:var(--rasp-soft)', '2–3'),
-        swatch('background:var(--rasp)', '4+'),
-        swatch('outline:1.5px solid var(--teal);outline-offset:1px', 'Today')
+        swatch('border:1.5px solid var(--rasp)', t('history.one_rep')),
+        swatch('background:var(--rasp-soft)', t('history.legend_some')),
+        swatch('background:var(--rasp)', t('history.legend_more')),
+        swatch('outline:1.5px solid var(--teal);outline-offset:1px', t('history.legend_today'))
       )
     );
   }
@@ -829,20 +1012,20 @@
     const date = hist.selected;
     const box = el('section', { class: 'daylog', 'aria-live': 'polite' },
       el('h2', { class: 'daylog__title', text: date === state.today ? 'Today' : longDate(date) }),
-      el('p', { class: 'daylog__empty', text: 'Loading…' })
+      el('p', { class: 'daylog__empty', text: t('history.loading') })
     );
 
     loadDay(date).then((day) => {
       const title = box.firstChild;
       if (!day.items.length) {
-        box.replaceChildren(title, el('p', { class: 'daylog__empty', text: 'No entries. Rest counts too.' }));
+        box.replaceChildren(title, el('p', { class: 'daylog__empty', text: t('history.no_entries') }));
         return;
       }
       box.replaceChildren(title, ...day.items.map((item) =>
         el('div', { class: 'daylog__item' },
           el('div', { class: 'daylog__name' },
             el('span', { text: item.title }),
-            item.mood ? el('span', { class: 'daylog__mood' }, icon(item.mood.icon), item.mood.label) : null
+            item.mood ? el('span', { class: 'daylog__mood' }, icon(moodIcon(item.mood)), item.mood.label) : null
           ),
           item.declaration ? el('p', { class: 'daylog__line', text: item.declaration }) : null,
           item.summary ? el('p', { class: 'daylog__line', text: item.summary }) : null,
@@ -850,7 +1033,7 @@
         )
       ));
     }).catch((err) => {
-      if (err.message !== 'auth') box.replaceChildren(box.firstChild, el('p', { class: 'daylog__empty', text: 'Couldn\'t load this day.' }));
+      if (err.message !== 'auth') box.replaceChildren(box.firstChild, el('p', { class: 'daylog__empty', text: t('history.day_error') }));
     });
 
     return box;
@@ -867,7 +1050,7 @@
         weeks.unshift({ week_start: current, answers: [] });
       }
       if (!weeks.length) {
-        body.replaceChildren(el('p', { class: 'daylog__empty', text: 'Your weekly reflections will collect here.' }));
+        body.replaceChildren(el('p', { class: 'daylog__empty', text: t('history.no_reflections') }));
         return;
       }
 
@@ -879,20 +1062,20 @@
         return el('details', { class: `week ${isCurrent ? 'week--current' : ''}`, open: isCurrent || weeks.length === 1 },
           el('summary', {},
             el('span', { class: 'week__heading' },
-              isCurrent ? el('span', { class: 'week__badge', text: 'This week' }) : null,
-              el('span', { class: 'week__title', text: `Week of ${MONTHS[m - 1]} ${d}, ${y}` })
+              isCurrent ? el('span', { class: 'week__badge', text: t('history.this_week') }) : null,
+              el('span', { class: 'week__title', text: t('history.week_of', { date: `${MONTHS[m - 1]} ${d}, ${y}` }) })
             ),
-            el('span', { class: 'week__count', text: isCurrent ? `${n} of ${total}` : `${n} ${n === 1 ? 'answer' : 'answers'}` })
+            el('span', { class: 'week__count', text: isCurrent ? t('checklist.weekly_progress', { n, total }) : (n === 1 ? t('history.one_answer') : t('history.answers', { n })) })
           ),
           el('div', { class: 'week__answers' },
             n
               ? w.answers.map((a) => el('div', {}, el('p', { class: 'week__q', text: a.question }), el('p', { class: 'week__a', text: a.answer })))
-              : el('p', { class: 'daylog__empty' }, 'Not answered yet. ', el('a', { href: '#today', text: 'Reflect on the Today tab' }), '.')
+              : el('p', { class: 'daylog__empty' }, `${t('history.not_answered')} `, el('a', { href: '#reflect', text: t('history.go_reflect') }))
           )
         );
       }));
     } catch (err) {
-      if (err.message !== 'auth') body.replaceChildren(el('p', { class: 'daylog__empty', text: 'Couldn\'t load your reflections. Please refresh.' }));
+      if (err.message !== 'auth') body.replaceChildren(el('p', { class: 'daylog__empty', text: t('history.load_error') }));
     }
   }
 
@@ -906,24 +1089,27 @@
       clearingCard(),
       practiceCard(),
       gratitudeCard(),
-      weeklyCard(),
-      declarationsCard(),
     ];
   }
 
   function render() {
     // Keep the scroll position steady across re-renders of the same view.
     const y = window.scrollY;
-    const views = { today: todayView, progress: progressView, history: historyView };
+    const views = { today: todayView, progress: progressView, reflect: reflectView, history: historyView, declarations: declarationsView };
     root.replaceChildren(...views[view]());
     window.scrollTo(0, y);
   }
 
+  const VIEWS = ['today', 'progress', 'reflect', 'history', 'declarations'];
+  let backTo = 'today'; // where Back goes from Declarations
+
   function setView() {
-    const next = ['#progress', '#history'].includes(location.hash) ? location.hash.slice(1) : 'today';
+    const hash = location.hash.slice(1);
+    const next = VIEWS.includes(hash) ? hash : 'today';
     const changed = next !== view;
+    if (next === 'declarations' && view !== 'declarations') backTo = view;
     view = next;
-    document.querySelectorAll('.tabbar__tab').forEach((tab) => {
+    document.querySelectorAll('.tabbar__tab, .masthead__icon').forEach((tab) => {
       if (tab.dataset.view === view) tab.setAttribute('aria-current', 'page');
       else tab.removeAttribute('aria-current');
     });
@@ -934,6 +1120,14 @@
   }
 
   window.addEventListener('hashchange', setView);
+
+  // Beta: switch icon styles (saved for a year on this device).
+  document.querySelectorAll('[data-icons]').forEach((b) => {
+    b.addEventListener('click', () => {
+      document.cookie = `sj_icons=${b.dataset.icons}; path=/; max-age=31536000; SameSite=Lax`;
+      window.location.reload();
+    });
+  });
 
   // Close the settings menu when tapping anywhere else.
   document.addEventListener('click', (e) => {
@@ -950,7 +1144,7 @@
     })
     .catch((err) => {
       if (err.message !== 'auth') {
-        root.replaceChildren(el('p', { class: 'loading', text: 'Something went wrong loading your practice. Please refresh.' }));
+        root.replaceChildren(el('p', { class: 'loading', text: USP.loadError }));
       }
     });
 })();
