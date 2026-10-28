@@ -57,7 +57,7 @@ return [
     ],
 
     'gratitude' => [
-        'title' => 'Generative Gratitude',
+        'title' => 'Generative Gratitude & Reflection',
         'intro' => 'We can practice gratitude through physical extension, creating space to explore what naturally wells up (or doesn\'t).',
         'steps' => [
             ['title' => 'Ground', 'text' => 'Extend down into the ground.'],
@@ -115,7 +115,8 @@ return [
             'signed_in_as' => 'Signed in as',
             'log_out'      => 'Log Out',
             'terms'        => 'Terms of Use & Privacy',
-            'feedback'     => 'Roadmap & Feature Requests',
+            'feedback'     => 'Roadmap',
+            'welcome'       => 'Welcome',
         ],
 
         // Beta: two icon styles to compare. Each person gets one; the
@@ -177,8 +178,8 @@ return [
         ],
 
         'practice' => [
-            'eyebrow'           => 'Practice',
-            'title'             => 'Log a practice',
+            'eyebrow'           => 'Log a Practice',
+            'title'             => 'Somatic Practice',
             'first_declaration' => 'Start with a declaration, in your own words. Every practice builds toward it, and you can refine it anytime.',
             'declaration'       => 'Declaration',
             'new_declaration'   => 'New',
@@ -337,6 +338,39 @@ return [
             'deleted'       => 'Practice deleted.',
         ],
 
+        // The public welcome page (/app/welcome) to share with friends and
+        // clients. No login needed. "Join" goes to WordPress registration;
+        // if registration is turned off, 'closed' shows instead.
+        // For a line break in the tagline, use double quotes and \n:
+        //   'tagline' => "A daily somatic practice,\none rep at a time.",
+        'welcome' => [
+            'tagline'      => "Welcome to emdodiment. \nOne rep at a time.",
+            'sub'          => 'Small rituals, honest reflection, and a North Star that\'s yours.',
+            'badge'        => 'Beta',
+            'why'          => 'Practice is how we become who we say we are. This is a simple place to do it daily, notice what shifts, and keep going.',
+            'what_title'   => 'What you\'ll do',
+            'what'         => [
+                ['icon' => 'sun-horizon', 'title' => 'Daily Rituals', 'text' => 'Morning clearing and intention setting, somatic practices, evening gratitude and reflection. Any one keeps your streak. Even one awareness-breath counts.'],
+                ['icon' => 'compass',     'title' => 'Declarations', 'text' => 'A commitment to the future you\'re bringing into being. Every practice is a rep toward it: 300 to muscle memory, 3,000 to embodiment (give or take a few).'],
+                ['icon' => 'notebook',    'title' => 'Weekly Reflections', 'text' => 'Wins, truth, release, progress. A few quiet minutes to honor each week.'],
+                ['icon' => 'footprints',  'title' => 'Progress', 'text' => 'Watch your declaration grow as you practice and notice your felt experience shift. Days, streaks, and reps. Intentional rest counts, too.'],
+            ],
+            'quote'        => 'Be a human BEing over a human DOing.',
+            'join_title'   => 'Join the beta',
+            'join_body'    => 'Testing takes a few minutes a day, for a week or more. Make an account, then share what you notice from inside the app.',
+            'join'         => 'Join the beta',
+            'login'        => 'I have an account · Log in',
+            'open'         => 'Open the app',
+            'closed'       => 'The beta is invitation-only right now.',
+            'private'      => 'Private by design: your entries are yours. No ads, no selling data. Works in your phone\'s browser. Add to your homescreen for an app-like experience.',
+            'share_title'  => 'Invite a friend',
+            'share_body'   => 'Know someone who\'d like a daily practice? Send them the welcome page.',
+            'share'        => 'Share',
+            'copied'       => 'Link copied.',
+            'share_text'   => 'A daily somatic practice I\'m trying. Want to join the beta?',
+            'preview'      => 'See the welcome page',
+        ],
+
         // Shown on Today when this device's time zone differs from yours
         // (traveling, or a new phone).
         'timezone_prompt' => [
@@ -360,14 +394,19 @@ return [
             'embodied'             => '{n} reps · embodied',
             'no_reps'              => 'No practices logged with this one yet.',
             'retired'              => 'Retired',
+            // Under the declarations on Progress; opens History.
+            'notes_link'           => 'Your notes are in History',
         ],
 
         'history' => [
             'daily'          => 'Daily practice',
             'weekly'         => 'Weekly reflections',
             'today'          => 'Today',
+            // Section headers in a day's summary.
+            'section_rituals'   => 'Rituals',
+            'section_practices' => 'Practices',
             'loading'        => 'Loading…',
-            'no_entries'     => 'No entries. Intional rest counts, too.',
+            'no_entries'     => 'No entries. Intentional rest counts, too.',
             'one_rep'        => '1 rep',
             'reps'           => '{n} reps',
             'legend_more'    => '4+',
@@ -418,6 +457,7 @@ return [
             'empty'                => 'Write something in at least one box.',
             'limit'                => 'You can hold up to {max} declarations. Retire one to add another.',
             'grace_closed'         => 'It\'s past noon, so this can only be logged for today.',
+            'already_logged'       => 'Yesterday already has this one. Log it for today instead.',
             'feedback_empty'       => 'Write a note or pick a name first.',
             'practice_name'        => 'Give your practice a name.',
         ],

@@ -348,10 +348,15 @@
 
   // ---------- grace window: log for yesterday until noon ----------
 
-  /** "Today | Yesterday" choice, shown only before noon. Returns { node, value }. */
-  function whenPicker() {
+  /**
+   * "Today | Yesterday" choice, shown only before noon. Rituals (clearing,
+   * gratitude) are once a day, so the choice is left out when that ritual is
+   * already logged for yesterday. Returns { node, value }.
+   */
+  function whenPicker(ritual) {
     let value = 'today';
-    if (!state.grace.open) return { node: null, get value() { return value; } };
+    const done = ritual && (state.grace.logged || []).includes(ritual);
+    if (!state.grace.open || done) return { node: null, get value() { return value; } };
 
     const buttons = [['today', t('when.today')], ['yesterday', t('when.yesterday')]].map(([key, label]) => {
       const b = el('button', { type: 'button', 'aria-pressed': String(key === value), text: label });
@@ -482,7 +487,7 @@
       return { key: q.key, ...f, label: el('label', { class: 'question__text', for: id, text: q.text }) };
     });
     const error = el('p', { class: 'form-error', 'aria-live': 'polite' });
-    const when = whenPicker();
+    const when = whenPicker('clearing');
     const save = el('button', { class: 'btn btn--primary', type: 'button', text: t('clearing.save') });
 
     save.addEventListener('click', () => withButton(save, error, () => {
@@ -584,7 +589,7 @@
     const error = el('p', { class: 'form-error', 'aria-live': 'polite' });
     const mood = moodPad();
     const note = textField({ rows: 2, placeholder: g.note_placeholder, label: 'Gratitude note' });
-    const when = whenPicker();
+    const when = whenPicker('gratitude');
     const save = el('button', { class: 'btn btn--primary', type: 'button', text: t('gratitude.save') });
 
     save.addEventListener('click', () => withButton(save, error, () => saveEntry('gratitude', {
@@ -902,6 +907,32 @@
 
   // ---------- settings ----------
 
+  /**
+   * Invite a friend: the public welcome page. On phones, Share opens the
+   * share sheet (Messages, email…); elsewhere it copies the link.
+   */
+  function inviteCard() {
+    const url = USP.welcome;
+    if (!url) return null; // turned off in config (show_invite)
+    const share = el('button', { class: 'btn', type: 'button' }, icon('share-network'), ` ${t('welcome.share')}`);
+    share.addEventListener('click', async () => {
+      if (navigator.share) {
+        try { await navigator.share({ title: state.app_name, text: t('welcome.share_text'), url }); return; } catch (e) {
+          if (e && e.name === 'AbortError') return; // closed the share sheet
+        }
+      }
+      try { await navigator.clipboard.writeText(url); toast(t('welcome.copied')); } catch (e) { window.prompt('', url); }
+    });
+    return section({
+      eyebrow: t('welcome.share_title'),
+      body: [
+        el('p', { class: 'card__body', text: t('welcome.share_body') }),
+        el('div', { class: 'invite-row' }, el('code', { text: url.replace(/^https?:\/\//, '') }), share),
+        el('a', { class: 'more-link', href: url, target: '_blank', rel: 'noopener' }, t('welcome.preview')),
+      ],
+    });
+  }
+
   /** Beta choices live in cookies, so the page header follows them too. */
   function setBeta(name, value) {
     document.cookie = `${name}=${encodeURIComponent(value)}; path=/; max-age=31536000; SameSite=Lax`;
@@ -974,6 +1005,7 @@
           el('a', { class: 'account-row__out', href: USP.logout }, icon('sign-out'), ` ${t('nav.log_out')}`)),
       }),
       el('a', { class: 'btn btn--feedback', href: '#feedback' }, icon('chat-circle-dots'), ` ${t('nav.feedback_form')}`),
+      inviteCard(),
       section({
         eyebrow: t('settings.timezone_title'),
         body: [el('p', { class: 'card__body', text: t('settings.timezone_body') }), select, now, useDevice],
@@ -1192,12 +1224,18 @@
       return b;
     }
 
+    // Notes live in History; linked under the active declarations (or at the
+    // bottom of the page when there are none yet).
+    const notesLink = el('a', { class: 'more-link', href: '#history', onclick: () => { hist.mode = 'daily'; } },
+      icon('calendar-blank'), ` ${t('progress.notes_link')}`);
+
     const declSection = state.declarations.length || state.retired.length
       ? section({
         eyebrow: t('progress.declarations_eyebrow'),
         title: t('progress.declarations_title'),
         body: [
           state.declarations.map((d) => byDecl(d, false)),
+          notesLink,
           state.retired.length
             ? [el('p', { class: 'step bydecl__heading', text: t('progress.retired') }), state.retired.map((d) => byDecl(d, true))]
             : null,
@@ -1214,6 +1252,7 @@
         title: t('progress.skills_title'),
         body: [el('p', { class: 'card__body', text: t('progress.skills_body') }), el('div', { class: 'reps' }, skills)],
       }),
+      declSection ? null : notesLink,
     ];
   }
 
@@ -1327,10 +1366,50 @@
     );
   }
 
+  /** A mood chip: icon and label. */
+  function moodTag(mood) {
+    return mood ? el('span', { class: 'daylog__mood' }, icon(moodIcon(mood)), mood.label) : null;
+  }
+
+  /**
+   * A day in two parts. Rituals: clearing, then gratitude. Practices: grouped
+   * by declaration, each rep on its own line in the order it was logged, so
+   * the flow of the day shows. Empty parts are left out.
+   */
+  function daySections(items) {
+    const quote = (text) => (text ? el('p', { class: 'daylog__line', text: `“${text}”` }) : null);
+    const row = (name, item, ...lines) => el('div', { class: 'daylog__item' },
+      el('div', { class: 'daylog__name' }, el('span', { text: name }), moodTag(item.mood)),
+      lines);
+
+    const rituals = ['clearing', 'gratitude'].flatMap((type) => items.filter((i) => i.type === type))
+      .map((i) => row(i.title, i, i.summary ? el('p', { class: 'daylog__line', text: i.summary }) : null, quote(i.note)));
+
+    // Declarations in the order first practiced under; reps in logged order.
+    const groups = new Map();
+    for (const item of items.filter((i) => i.type === 'practice')) {
+      const key = item.decl_id || 0;
+      if (!groups.has(key)) groups.set(key, { text: item.decl_text, reps: [] });
+      groups.get(key).reps.push(item);
+    }
+    const practices = [...groups.values()].map((g) => el('div', { class: 'daylog__group' },
+      g.text ? el('p', { class: 'daylog__decl', text: g.text }) : null,
+      g.reps.map((r) => row(r.skill || r.title, r, quote(r.note)))));
+
+    const section = (label, body) => (body.length
+      ? el('div', { class: 'daylog__section' }, el('h3', { class: 'daylog__heading', text: label }), body)
+      : null);
+
+    return [
+      section(t('history.section_rituals'), rituals),
+      section(t('history.section_practices'), practices),
+    ].filter(Boolean);
+  }
+
   function dayLog() {
     const date = hist.selected;
     const box = el('section', { class: 'daylog', 'aria-live': 'polite' },
-      el('h2', { class: 'daylog__title', text: date === state.today ? 'Today' : longDate(date) }),
+      el('h2', { class: 'daylog__title', text: date === state.today ? t('history.today') : longDate(date) }),
       el('p', { class: 'daylog__empty', text: t('history.loading') })
     );
 
@@ -1340,17 +1419,7 @@
         box.replaceChildren(title, el('p', { class: 'daylog__empty', text: t('history.no_entries') }));
         return;
       }
-      box.replaceChildren(title, ...day.items.map((item) =>
-        el('div', { class: 'daylog__item' },
-          el('div', { class: 'daylog__name' },
-            el('span', { text: item.title }),
-            item.mood ? el('span', { class: 'daylog__mood' }, icon(moodIcon(item.mood)), item.mood.label) : null
-          ),
-          item.declaration ? el('p', { class: 'daylog__line', text: item.declaration }) : null,
-          item.summary ? el('p', { class: 'daylog__line', text: item.summary }) : null,
-          item.note ? el('p', { class: 'daylog__line', text: `“${item.note}”` }) : null
-        )
-      ));
+      box.replaceChildren(title, ...daySections(day.items));
     }).catch((err) => {
       if (err.message !== 'auth') box.replaceChildren(box.firstChild, el('p', { class: 'daylog__empty', text: t('history.day_error') }));
     });
