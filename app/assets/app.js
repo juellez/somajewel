@@ -904,6 +904,32 @@
 
   // ---------- settings ----------
 
+  /**
+   * Invite a friend: the public welcome page. On phones, Share opens the
+   * share sheet (Messages, email…); elsewhere it copies the link.
+   */
+  function inviteCard() {
+    const url = USP.welcome;
+    if (!url) return null; // turned off in config (show_invite)
+    const share = el('button', { class: 'btn', type: 'button' }, icon('share-network'), ` ${t('welcome.share')}`);
+    share.addEventListener('click', async () => {
+      if (navigator.share) {
+        try { await navigator.share({ title: state.app_name, text: t('welcome.share_text'), url }); return; } catch (e) {
+          if (e && e.name === 'AbortError') return; // closed the share sheet
+        }
+      }
+      try { await navigator.clipboard.writeText(url); toast(t('welcome.copied')); } catch (e) { window.prompt('', url); }
+    });
+    return section({
+      eyebrow: t('welcome.share_title'),
+      body: [
+        el('p', { class: 'card__body', text: t('welcome.share_body') }),
+        el('div', { class: 'invite-row' }, el('code', { text: url.replace(/^https?:\/\//, '') }), share),
+        el('a', { class: 'more-link', href: url, target: '_blank', rel: 'noopener' }, t('welcome.preview')),
+      ],
+    });
+  }
+
   /** Beta choices live in cookies, so the page header follows them too. */
   function setBeta(name, value) {
     document.cookie = `${name}=${encodeURIComponent(value)}; path=/; max-age=31536000; SameSite=Lax`;
@@ -976,6 +1002,7 @@
           el('a', { class: 'account-row__out', href: USP.logout }, icon('sign-out'), ` ${t('nav.log_out')}`)),
       }),
       el('a', { class: 'btn btn--feedback', href: '#feedback' }, icon('chat-circle-dots'), ` ${t('nav.feedback_form')}`),
+      inviteCard(),
       section({
         eyebrow: t('settings.timezone_title'),
         body: [el('p', { class: 'card__body', text: t('settings.timezone_body') }), select, now, useDevice],

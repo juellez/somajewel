@@ -63,7 +63,7 @@ function usp_app_name(): string
     $ui      = usp_content()['ui'] ?? [];
     $options = (array) ($ui['name_test']['options'] ?? []);
     $chosen  = (string) ($_COOKIE['sj_name'] ?? '');
-    return in_array($chosen, $options, true) ? $chosen : (string) ($ui['app']['name'] ?? 'SomaRosa');
+    return in_array($chosen, $options, true) ? $chosen : (string) ($ui['app']['name'] ?? 'Soma Rosa');
 }
 
 /** Icons for this person's style: ['progress' => …, 'sacred' => …]. */
