@@ -206,14 +206,7 @@ function usp_create_entry(int $user_id, array $in): array
     }
 
     if ($type === 'clearing') {
-        $given   = (array) ($in['answers'] ?? []);
-        $answers = [];
-        foreach (usp_content()['clearing']['questions'] as $q) {
-            $value = trim((string) ($given[$q['key']] ?? ''));
-            if ($value !== '') {
-                $answers[$q['key']] = mb_substr($value, 0, 5000);
-            }
-        }
+        $answers = usp_clearing_answers($in['answers'] ?? []);
         if (!$answers) {
             return ['error' => 'empty'];
         }
@@ -229,9 +222,10 @@ function usp_create_entry(int $user_id, array $in): array
     }
     $date = ($for_yesterday ? $today->modify('-1 day') : $today)->format('Y-m-d');
 
-    // A ritual logged late for yesterday can't add a second one to that day.
-    if ($for_yesterday && in_array($type, USP_DAILY_RITUALS, true) && in_array($type, usp_rituals_logged($user_id, $date), true)) {
-        return ['error' => 'already_logged'];
+    // Rituals are once a day: today's is edited (usp_update_ritual), and a
+    // late one for yesterday can't add a second.
+    if (in_array($type, USP_DAILY_RITUALS, true) && in_array($type, usp_rituals_logged($user_id, $date), true)) {
+        return ['error' => $for_yesterday ? 'already_logged' : 'already_today'];
     }
 
     $first = !$wpdb->get_var($wpdb->prepare(
@@ -270,6 +264,85 @@ function usp_create_entry(int $user_id, array $in): array
         'date'          => $date,
         'for_yesterday' => $for_yesterday,
     ];
+}
+
+/** Clearing answers by question key, trimmed; empty ones left out. */
+function usp_clearing_answers($given): array
+{
+    $given   = (array) $given;
+    $answers = [];
+    foreach (usp_content()['clearing']['questions'] as $q) {
+        $value = trim((string) ($given[$q['key']] ?? ''));
+        if ($value !== '') {
+            $answers[$q['key']] = mb_substr($value, 0, 5000);
+        }
+    }
+    return $answers;
+}
+
+/**
+ * Today's clearing and gratitude, if logged: ['clearing' => [id, answers,
+ * mood, note] or null, 'gratitude' => ...]. If an older day somehow has two,
+ * the latest is the one shown and edited.
+ */
+function usp_today_rituals(int $user_id, string $today): array
+{
+    global $wpdb;
+
+    $out = array_fill_keys(USP_DAILY_RITUALS, null);
+    $rows = $wpdb->get_results($wpdb->prepare(
+        'SELECT id, type, answers, mood, note FROM ' . usp_table('entries') . "
+         WHERE user_id = %d AND entry_date = %s AND type IN ('clearing', 'gratitude')
+         ORDER BY id",
+        $user_id,
+        $today
+    ), ARRAY_A) ?: [];
+    foreach ($rows as $row) {
+        $out[$row['type']] = [
+            'id'      => (int) $row['id'],
+            'answers' => $row['answers'] ? (object) (json_decode($row['answers'], true) ?: []) : (object) [],
+            'mood'    => $row['mood'] ?: '',
+            'note'    => (string) $row['note'],
+        ];
+    }
+    return $out;
+}
+
+/**
+ * Edits today's clearing or gratitude: $in = ['id', 'answers'? (clearing),
+ * 'mood'?, 'note'?]. Only your own, and only today's. Returns an error code, or null.
+ */
+function usp_update_ritual(int $user_id, array $in): ?string
+{
+    global $wpdb;
+
+    $today = usp_today(usp_get_profile($user_id)['timezone'])->format('Y-m-d');
+    $entry = $wpdb->get_row($wpdb->prepare(
+        'SELECT id, type FROM ' . usp_table('entries') . ' WHERE id = %d AND user_id = %d AND entry_date = %s',
+        (int) ($in['id'] ?? 0),
+        $user_id,
+        $today
+    ), ARRAY_A);
+    if (!$entry || !in_array($entry['type'], USP_DAILY_RITUALS, true)) {
+        return 'not_found';
+    }
+
+    $mood = (string) ($in['mood'] ?? '');
+    if ($mood !== '' && !isset(usp_moods_by_key()[$mood])) {
+        return 'bad_mood';
+    }
+    $note = mb_substr(trim((string) ($in['note'] ?? '')), 0, 5000);
+    $data = ['mood' => $mood ?: null, 'note' => $note !== '' ? $note : null];
+
+    if ($entry['type'] === 'clearing') {
+        $answers = usp_clearing_answers($in['answers'] ?? []);
+        if (!$answers) {
+            return 'empty';
+        }
+        $data['answers'] = wp_json_encode($answers);
+    }
+
+    return $wpdb->update(usp_table('entries'), $data, ['id' => (int) $entry['id']]) === false ? 'save_failed' : null;
 }
 
 /** Messages for any milestone this entry just reached. */
