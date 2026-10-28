@@ -1117,12 +1117,18 @@
       return b;
     }
 
+    // Notes live in History; linked under the active declarations (or at the
+    // bottom of the page when there are none yet).
+    const notesLink = el('a', { class: 'more-link', href: '#history', onclick: () => { hist.mode = 'daily'; } },
+      icon('calendar-blank'), ` ${t('progress.notes_link')}`);
+
     const declSection = state.declarations.length || state.retired.length
       ? section({
         eyebrow: t('progress.declarations_eyebrow'),
         title: t('progress.declarations_title'),
         body: [
           state.declarations.map((d) => byDecl(d, false)),
+          notesLink,
           state.retired.length
             ? [el('p', { class: 'step bydecl__heading', text: t('progress.retired') }), state.retired.map((d) => byDecl(d, true))]
             : null,
@@ -1139,8 +1145,7 @@
         title: t('progress.skills_title'),
         body: [el('p', { class: 'card__body', text: t('progress.skills_body') }), el('div', { class: 'reps' }, skills)],
       }),
-      el('a', { class: 'more-link', href: '#history', onclick: () => { hist.mode = 'daily'; } },
-        icon('calendar-blank'), ` ${t('progress.notes_link')}`),
+      declSection ? null : notesLink,
     ];
   }
 
