@@ -54,7 +54,7 @@ return [
     ],
 
     'gratitude' => [
-        'title' => 'Generative Gratitude',
+        'title' => 'Generative Gratitude & Reflection',
         'intro' => 'We can practice gratitude through physical extension, creating space to explore what naturally wells up (or doesn\'t).',
         'steps' => [
             ['title' => 'Ground', 'text' => 'Extend down into the ground.'],
@@ -175,8 +175,8 @@ return [
         ],
 
         'practice' => [
-            'eyebrow'           => 'Practice',
-            'title'             => 'Log a practice',
+            'eyebrow'           => 'Log a Practice',
+            'title'             => 'Somatic Practice',
             'first_declaration' => 'Start with a declaration, in your own words. Every practice builds toward it, and you can refine it anytime.',
             'declaration'       => 'Declaration',
             'new_declaration'   => 'New',
