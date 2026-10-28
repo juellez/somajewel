@@ -344,7 +344,7 @@ return [
         // For a line break in the tagline, use double quotes and \n:
         //   'tagline' => "A daily somatic practice,\none rep at a time.",
         'welcome' => [
-            'tagline'      => "Welcome to emdodiment. \nOne rep at a time.",
+            'tagline'      => "Welcome to embodiment. \nOne rep at a time.",
             'sub'          => 'Small rituals, honest reflection, and a North Star that\'s yours.',
             'badge'        => 'Beta',
             'why'          => 'Practice is how we become who we say we are. This is a simple place to do it daily, notice what shifts, and keep going.',
