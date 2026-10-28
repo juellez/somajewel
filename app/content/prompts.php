@@ -169,8 +169,11 @@ return [
         ],
 
         'cards' => [
-            'done'  => 'Done',
-            'today' => 'today',
+            'done'    => 'Done',
+            'today'   => 'today',
+            // Clearing and gratitude are once a day: logged ones open for editing.
+            'editing' => 'Logged today. Change anything and save.',
+            'update'  => 'Save changes',
         ],
 
         'clearing' => [
@@ -472,6 +475,7 @@ return [
             'rep'              => 'Rep logged. Nicely done.',
             'yesterday_first'  => 'Logged for yesterday. Streak: {streak}.',
             'yesterday_rep'    => 'Rep logged for yesterday.',
+            'updated'          => 'Saved.',
         ],
 
         // Milestone messages. {n} is the count; {name} the skill or ritual.
@@ -499,6 +503,7 @@ return [
             'limit'                => 'You can hold up to {max} declarations. Retire one to add another.',
             'grace_closed'         => 'It\'s past noon, so this can only be logged for today.',
             'already_logged'       => 'Yesterday already has this one. Log it for today instead.',
+            'already_today'        => 'Today already has this one. Refresh to edit it.',
             'feedback_empty'       => 'Write a note or pick a name first.',
             'practice_name'        => 'Give your practice a name.',
         ],

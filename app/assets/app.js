@@ -153,11 +153,12 @@
   }
 
   /** Textarea with a mic button. Returns { node, field }. */
-  function textField({ placeholder = '', rows = 3, label, id } = {}) {
+  function textField({ placeholder = '', rows = 3, label, id, value = '' } = {}) {
     const field = el('textarea', {
       class: 'field', rows, placeholder, id,
       'aria-label': label && !id ? label : null,
     });
+    field.value = value;
     return { node: el('div', { class: 'answer' }, field, micButton(field)), field };
   }
 
@@ -184,12 +185,12 @@
   }
 
   /** 4×3 mood grid. Tap again to clear. Returns { node, value }. */
-  function moodPad({ onChange } = {}) {
-    let value = '';
+  function moodPad({ onChange, selected = '' } = {}) {
+    let value = selected;
     const pad = el('div', { class: 'moods', role: 'radiogroup', 'aria-label': t('practice.mood') });
     for (const mood of state.moods) {
       const btn = el('button', {
-        type: 'button', class: 'mood', role: 'radio', 'aria-checked': 'false', 'aria-label': mood.label,
+        type: 'button', class: 'mood', role: 'radio', 'aria-checked': String(mood.key === value), 'aria-label': mood.label,
       }, icon(mood.icon), el('span', { class: 'mood__label', text: mood.label }));
       btn.addEventListener('click', () => {
         value = value === mood.key ? '' : mood.key;
@@ -378,6 +379,17 @@
 
   // ---------- saving entries ----------
 
+  /** Saves changes to today's clearing or gratitude. */
+  async function updateRitual(cardId, payload) {
+    const res = await api('entry_update', { method: 'POST', body: payload });
+    state = res.state;
+    openCards.delete(cardId);
+    hist.months = {};
+    hist.days = {};
+    render();
+    toast(t('toasts.updated'));
+  }
+
   async function saveEntry(cardId, payload) {
     const res = await api('entry', { method: 'POST', body: payload });
     state = res.state;
@@ -481,18 +493,21 @@
 
   function clearingCard() {
     const c = state.clearing;
+    const logged = state.today_rituals.clearing; // once a day: today's opens for editing
     const fields = c.questions.map((q, i) => {
       const id = `clear-${i}`;
-      const f = textField({ rows: 2, id });
+      const f = textField({ rows: 2, id, value: logged ? logged.answers[q.key] || '' : '' });
       return { key: q.key, ...f, label: el('label', { class: 'question__text', for: id, text: q.text }) };
     });
     const error = el('p', { class: 'form-error', 'aria-live': 'polite' });
-    const when = whenPicker('clearing');
-    const save = el('button', { class: 'btn btn--primary', type: 'button', text: t('clearing.save') });
+    const when = logged ? { node: null, value: 'today' } : whenPicker('clearing');
+    const save = el('button', { class: 'btn btn--primary', type: 'button', text: logged ? t('cards.update') : t('clearing.save') });
 
     save.addEventListener('click', () => withButton(save, error, () => {
       const answers = Object.fromEntries(fields.map((f) => [f.key, f.field.value]));
-      return saveEntry('clearing', { type: 'clearing', answers, for: when.value });
+      return logged
+        ? updateRitual('clearing', { id: logged.id, answers })
+        : saveEntry('clearing', { type: 'clearing', answers, for: when.value });
     }));
 
     return card('clearing', {
@@ -501,6 +516,7 @@
       done: state.today_counts.clearing ? [icon('check'), ` ${t('cards.done')}`] : '',
       body: [
         el('p', { class: 'card__body', text: c.intro }),
+        logged ? el('p', { class: 'card__editing', text: t('cards.editing') }) : null,
         fields.map((f) => el('div', { class: 'question' }, f.label, f.node)),
         when.node, save, error,
       ],
@@ -586,15 +602,16 @@
 
   function gratitudeCard() {
     const g = state.gratitude;
+    const logged = state.today_rituals.gratitude; // once a day: today's opens for editing
     const error = el('p', { class: 'form-error', 'aria-live': 'polite' });
-    const mood = moodPad();
-    const note = textField({ rows: 2, placeholder: g.note_placeholder, label: 'Gratitude note' });
-    const when = whenPicker('gratitude');
-    const save = el('button', { class: 'btn btn--primary', type: 'button', text: t('gratitude.save') });
+    const mood = moodPad({ selected: logged ? logged.mood : '' });
+    const note = textField({ rows: 2, placeholder: g.note_placeholder, label: 'Gratitude note', value: logged ? logged.note : '' });
+    const when = logged ? { node: null, value: 'today' } : whenPicker('gratitude');
+    const save = el('button', { class: 'btn btn--primary', type: 'button', text: logged ? t('cards.update') : t('gratitude.save') });
 
-    save.addEventListener('click', () => withButton(save, error, () => saveEntry('gratitude', {
-      type: 'gratitude', mood: mood.value, note: note.field.value, for: when.value,
-    })));
+    save.addEventListener('click', () => withButton(save, error, () => (logged
+      ? updateRitual('gratitude', { id: logged.id, mood: mood.value, note: note.field.value })
+      : saveEntry('gratitude', { type: 'gratitude', mood: mood.value, note: note.field.value, for: when.value }))));
 
     return card('gratitude', {
       eyebrow: t('gratitude.eyebrow'),
@@ -602,6 +619,7 @@
       done: state.today_counts.gratitude ? [icon('check'), ` ${t('cards.done')}`] : '',
       body: [
         el('p', { class: 'card__body', text: g.intro }),
+        logged ? el('p', { class: 'card__editing', text: t('cards.editing') }) : null,
         el('ol', { class: 'steps' }, g.steps.map((s) =>
           el('li', {}, el('strong', { text: s.title }), ' ', s.text)
         )),
