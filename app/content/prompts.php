@@ -326,6 +326,10 @@ return [
             'daily'          => 'Daily practice',
             'weekly'         => 'Weekly reflections',
             'today'          => 'Today',
+            // Section headers in a day's summary, in the order of the day.
+            'section_morning'  => 'Morning',
+            'section_practice' => 'Practice',
+            'section_evening'  => 'Evening',
             'loading'        => 'Loading…',
             'no_entries'     => 'No entries. Intional rest counts, too.',
             'one_rep'        => '1 rep',

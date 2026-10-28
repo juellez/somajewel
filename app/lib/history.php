@@ -73,7 +73,7 @@ function usp_history_day(int $user_id, string $date): ?array
     }
 
     $rows = $wpdb->get_results($wpdb->prepare(
-        'SELECT e.type, e.skill_key, e.mood, e.answers, e.note, d.text AS declaration
+        'SELECT e.type, e.skill_key, e.mood, e.answers, e.note, e.declaration_id, d.text AS declaration
          FROM ' . usp_table('entries') . ' e
          LEFT JOIN ' . usp_table('declarations') . ' d ON d.id = e.declaration_id AND d.user_id = e.user_id
          WHERE e.user_id = %d AND e.entry_date = %s
@@ -110,6 +110,10 @@ function usp_history_day(int $user_id, string $date): ?array
         $items[] = [
             'type'        => $row['type'],
             'title'       => $title,
+            // For grouping a day's practices by declaration, then by skill.
+            'skill'       => $skills[$row['skill_key']]['title'] ?? null,
+            'decl_id'     => $row['declaration_id'] ? (int) $row['declaration_id'] : null,
+            'decl_text'   => $row['declaration'] ?: null,
             'declaration' => $row['declaration'] ? usp_snippet($row['declaration']) : null,
             'mood'        => $mood ? ['key' => $row['mood'], 'icon' => $mood['icon'], 'label' => $mood['label']] : null,
             'summary'     => usp_snippet($summary),
