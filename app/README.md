@@ -71,7 +71,7 @@ Database tables (`{prefix}usp_*`) are created automatically on first visit.
 - **Weekly reflection timing:** each week's reflection opens Friday and stays
   editable until the next one opens; Today nudges Friday through Monday. Then
   it's read-only in History.
-- **Welcome page** (`welcome.php`, public): what the app is and how to join,
+- **Welcome page** (`/app/welcome`, public; served by `welcome.php` via `.htaccess`): what the app is and how to join,
   to share with friends and clients. "Join the beta" goes to WordPress
   registration while it's on (Settings → General → Membership); otherwise the
   page says it's invitation-only. Testers share it from Settings → Invite a

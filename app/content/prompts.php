@@ -298,9 +298,11 @@ return [
             'privacy'      => 'Sent with your name, this screen, your device type, and the app version ({version}), so I can follow up.',
         ],
 
-        // The public welcome page (/app/welcome.php) to share with friends and
+        // The public welcome page (/app/welcome) to share with friends and
         // clients. No login needed. "Join" goes to WordPress registration;
         // if registration is turned off, 'closed' shows instead.
+        // For a line break in the tagline, use double quotes and \n:
+        //   'tagline' => "A daily somatic practice,\none rep at a time.",
         'welcome' => [
             'tagline'      => "Welcome to emdodiment. \nOne rep at a time.",
             'sub'          => 'Small rituals, honest reflection, and a North Star that\'s yours.',
