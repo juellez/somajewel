@@ -6,7 +6,7 @@
  */
 
 const USP_VERSION    = '0.3.0'; // bump when a release changes what people see
-const USP_DB_VERSION = 8;
+const USP_DB_VERSION = 9;
 
 // Default config values live in lib/settings.php; set or override them in config.php.
 require_once __DIR__ . '/lib/settings.php';
@@ -30,6 +30,7 @@ require_once __DIR__ . '/lib/entries.php';
 require_once __DIR__ . '/lib/history.php';
 require_once __DIR__ . '/lib/feedback.php';
 require_once __DIR__ . '/lib/practices.php';
+require_once __DIR__ . '/lib/community.php';
 
 usp_maybe_migrate();
 

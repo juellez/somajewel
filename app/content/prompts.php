@@ -110,6 +110,7 @@ return [
             'reflect'      => 'Reflect',
             'history'      => 'History',
             'declarations' => 'Declarations',
+            'community'    => 'Community',
             'settings'     => 'Settings',
             'feedback_form' => 'Share Feedback',
             'signed_in_as' => 'Signed in as',
@@ -338,6 +339,45 @@ return [
             'deleted'       => 'Practice deleted.',
         ],
 
+        // Community (people icon, top bar): highlights from people who share.
+        // Each person chooses what to share; nothing is shared until they do.
+        'community' => [
+            'title'          => 'Community',
+            'lede'           => 'Practicing together. Highlights from people who share theirs.',
+            'you'            => 'you',
+            'today'          => 'Today',
+            'yesterday'      => 'Yesterday',
+            'last'           => 'Last practiced {date}',
+            'not_yet'        => 'No practice yet',
+            'no_decls'       => 'No active declarations yet.',
+            'days'           => 'Days',
+            'streak'         => 'Streak',
+            'longest'        => 'Longest',
+            'reps'           => 'Reps',
+            'only_sharers'   => 'Only people who share can see this.',
+            'change'         => 'Change what you share',
+            'alone'          => 'No one else is sharing yet. When they do, they\'ll show up here.',
+            'join_title'     => 'Join in',
+            'join_body'      => 'Choose a display name, then share to see others who share.',
+            'settings_title' => 'What you share',
+            'private'        => 'You can change your name or turn off sharing anytime.',
+            'share_progress'      => 'Share my progress',
+            'share_progress_hint' => 'Days, streak, longest, reps, and when you last practiced',
+            'share_decls'         => 'Share my declarations',
+            'share_decls_hint'    => 'Active ones only',
+            'name_label'     => 'Display name',
+            'name_hint'      => 'What others see. It doesn\'t have to be unique.',
+            'name_first'     => 'What others see. It doesn\'t have to be unique. Sharing unlocks once it\'s saved.',
+            'name_placeholder' => 'e.g. {name}',
+            'save'           => 'Save',
+            'saved'          => 'Saved.',
+            'loading'        => 'Loading…',
+            'load_error'     => 'Couldn\'t load Community. Please refresh.',
+            // The link in Settings.
+            'settings_link'  => 'Community sharing',
+            'settings_body'  => 'Choose what others see, if anything.',
+        ],
+
         // The public welcome page (/app/welcome) to share with friends and
         // clients. No login needed. "Join" goes to WordPress registration;
         // if registration is turned off, 'closed' shows instead.
@@ -451,6 +491,7 @@ return [
         ],
 
         'errors' => [
+            'name_required'        => 'Choose a display name first.',
             'declaration_required' => 'Choose a declaration first.',
             'skill_required'       => 'Choose what you practiced.',
             'mood_required'        => 'Tap how you feel now.',

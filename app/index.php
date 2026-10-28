@@ -75,6 +75,7 @@ header('Cache-Control: no-store');
                 <?php endif; ?>
                 <span class="brand__name"><?php echo esc_html($app_name); ?></span>
             </a>
+            <a class="masthead__icon" href="#community" data-view="community" aria-label="<?php echo esc_attr(usp_ui('nav.community')); ?>" title="<?php echo esc_attr(usp_ui('nav.community')); ?>"><?php echo $svg('users-three'); ?></a>
             <a class="masthead__icon" href="#declarations" data-view="declarations" aria-label="<?php echo esc_attr(usp_ui('nav.declarations')); ?>" title="<?php echo esc_attr(usp_ui('nav.declarations')); ?>"><?php echo $svg('compass'); ?></a>
             <a class="masthead__icon" href="#settings" data-view="settings" aria-label="<?php echo esc_attr(usp_ui('nav.settings')); ?>" title="<?php echo esc_attr(usp_ui('nav.settings')); ?>"><?php echo $svg('gear-six'); ?></a>
         </div>
