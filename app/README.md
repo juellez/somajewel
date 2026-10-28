@@ -87,9 +87,10 @@ Database tables (`{prefix}usp_*`) are created automatically on first visit.
   friend, or the footer.
 - **Community** (people icon, top bar): opt-in highlights. Two separate
   switches, both off by default: share progress (Days, Streak, Longest, Reps,
-  and when you last practiced) and share declarations (active ones). Either
-  one shows you on the board under your display name (your WordPress name
-  unless you choose one) and lets you see everyone else who shares. Never
+  and when you last practiced) and share declarations (active ones). Nothing
+  shares until you save a display name (clearing it stops sharing). Either
+  switch then shows you on the board under that name and lets you see everyone
+  else who shares. Never
   shared: notes, moods, answers, or which practices. The switches live on the
   Community screen; Settings links there. WordPress admin shows who shares.
 - **Share Feedback** (Settings, or the footer): something that's off, an idea, or a vote in the

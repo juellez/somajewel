@@ -358,7 +358,7 @@ return [
             'change'         => 'Change what you share',
             'alone'          => 'No one else is sharing yet. When they do, they\'ll show up here.',
             'join_title'     => 'Join in',
-            'join_body'      => 'Share either one to appear here and see others who share. Turn it off anytime.',
+            'join_body'      => 'Choose a display name, then share either one to appear here and see others who share. Turn it off anytime.',
             'settings_title' => 'What you share',
             'private'        => 'Never shared: your notes, moods, answers, or which practices you do.',
             'share_progress'      => 'Share my progress',
@@ -367,6 +367,8 @@ return [
             'share_decls_hint'    => 'Active ones only',
             'name_label'     => 'Display name',
             'name_hint'      => 'What others see. It doesn\'t have to be unique.',
+            'name_first'     => 'What others see. It doesn\'t have to be unique. Sharing unlocks once it\'s saved.',
+            'name_placeholder' => 'e.g. {name}',
             'save'           => 'Save',
             'saved'          => 'Saved.',
             'loading'        => 'Loading…',
@@ -489,6 +491,7 @@ return [
         ],
 
         'errors' => [
+            'name_required'        => 'Choose a display name first.',
             'declaration_required' => 'Choose a declaration first.',
             'skill_required'       => 'Choose what you practiced.',
             'mood_required'        => 'Tap how you feel now.',

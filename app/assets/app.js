@@ -1211,15 +1211,17 @@
   /** "What you share": two switches and a display name. */
   function sharingCard(c, joining) {
     const mine = state.community;
+    const named = mine.display_name.trim() !== '';
     const sw = (key, label, hint) => {
       const on = mine[key];
-      const b = el('button', { class: `switch ${on ? 'is-on' : ''}`, type: 'button', role: 'switch', 'aria-checked': String(on), 'aria-label': label });
+      // Nothing shares until there's a display name.
+      const b = el('button', { class: `switch ${on ? 'is-on' : ''}`, type: 'button', role: 'switch', 'aria-checked': String(on), 'aria-label': label, disabled: !named });
       b.addEventListener('click', () => saveCommunity({ [key]: !on }).catch((err) => { if (err.message !== 'auth') toast(errorText(err.message)); }));
       return el('div', { class: 'share-row' },
         el('span', { class: 'share-row__text' }, label, el('small', { text: hint })), b);
     };
 
-    const name = el('input', { class: 'field field--line', type: 'text', maxlength: 40, value: mine.display_name, placeholder: mine.default_name, 'aria-label': c.name_label });
+    const name = el('input', { class: 'field field--line', type: 'text', maxlength: 40, value: mine.display_name, placeholder: mine.default_name ? t('community.name_placeholder', { name: mine.default_name }) : '', 'aria-label': c.name_label });
     const error = el('p', { class: 'form-error', 'aria-live': 'polite' });
     const save = el('button', { class: 'btn btn--small', type: 'button', text: c.save });
     save.addEventListener('click', () => withButton(save, error, () => saveCommunity({ display_name: name.value }, c.saved)));
@@ -1229,12 +1231,12 @@
       cls: 'sharing',
       body: [
         el('p', { class: 'card__body', text: joining ? c.join_body : c.private }),
-        sw('share_progress', c.share_progress, c.share_progress_hint),
-        sw('share_declarations', c.share_decls, c.share_decls_hint),
         el('label', { class: 'prow__label', text: c.name_label }),
         el('div', { class: 'share-name' }, name, save),
-        el('p', { class: 'muted small', text: c.name_hint }),
+        el('p', { class: 'muted small', text: named ? c.name_hint : c.name_first }),
         error,
+        sw('share_progress', c.share_progress, c.share_progress_hint),
+        sw('share_declarations', c.share_decls, c.share_decls_hint),
         joining ? el('p', { class: 'muted small', text: c.private }) : null,
       ],
     });
