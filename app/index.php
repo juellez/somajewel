@@ -20,6 +20,7 @@ $boot = [
     'loadError' => usp_ui('app.load_error'),
     'version'   => usp_build()['label'],
     'logout'    => wp_logout_url(home_url('/')),
+    'welcome'   => set_url_scheme('//' . $_SERVER['HTTP_HOST'] . $base . '/welcome.php'),
     'nonce' => wp_create_nonce('usp_api'),
 ];
 $asset = fn (string $file) => $base . '/assets/' . $file . '?v=' . filemtime(__DIR__ . '/assets/' . $file);
@@ -83,6 +84,8 @@ header('Cache-Control: no-store');
     </main>
 
     <footer class="footer">
+        <a href="<?php echo esc_url($base . '/welcome.php'); ?>"><?php echo esc_html(usp_ui('nav.invite')); ?></a>
+        <span aria-hidden="true">·</span>
         <a href="#feedback"><?php echo esc_html(usp_ui('nav.feedback_form')); ?></a>
         <span aria-hidden="true">·</span>
         <a href="<?php echo esc_url($legal); ?>"><?php echo esc_html(usp_ui('nav.terms')); ?></a>

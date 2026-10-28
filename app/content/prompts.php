@@ -113,6 +113,7 @@ return [
             'log_out'      => 'Log Out',
             'terms'        => 'Terms of Use & Privacy',
             'feedback'     => 'Roadmap & Feature Requests',
+            'invite'       => 'Invite a Friend',
         ],
 
         // Beta: two icon styles to compare. Each person gets one; the
@@ -295,6 +296,37 @@ return [
             'send'         => 'Send',
             'sent'         => 'Thank you! Your note is on its way.',
             'privacy'      => 'Sent with your name, this screen, your device type, and the app version ({version}), so I can follow up.',
+        ],
+
+        // The public welcome page (/app/welcome.php) to share with friends and
+        // clients. No login needed. "Join" goes to WordPress registration;
+        // if registration is turned off, 'closed' shows instead.
+        'welcome' => [
+            'tagline'      => 'A daily somatic practice, one rep at a time.',
+            'sub'          => 'Small rituals, honest reflection, and a North Star that\'s yours.',
+            'badge'        => 'Beta',
+            'why'          => 'Practice is how we become who we say we are. This is a simple place to do it daily, notice what shifts, and keep going.',
+            'what_title'   => 'What you\'ll do',
+            'what'         => [
+                ['icon' => 'sun-horizon', 'title' => 'Daily rituals', 'text' => 'Morning clearing, a practice anytime, evening gratitude. Any one keeps your streak. Even one breath counts.'],
+                ['icon' => 'compass',     'title' => 'A declaration', 'text' => 'A commitment to the future you\'re bringing into being. Every practice is a rep toward it: about 300 for muscle memory, 3,000 to embody it.'],
+                ['icon' => 'notebook',    'title' => 'Weekly reflection', 'text' => 'Wins, truth, release, intention. A few quiet minutes at the end of each week.'],
+                ['icon' => 'footprints',  'title' => 'Your progress', 'text' => 'Days, streaks, and reps for each practice. Rest counts too.'],
+            ],
+            'quote'        => 'It\'s not about what I do, but how I do it.',
+            'join_title'   => 'Join the beta',
+            'join_body'    => 'Testing takes a few minutes a day, for a week or more. Make an account, then share what you notice from inside the app.',
+            'join'         => 'Join the beta',
+            'login'        => 'I have an account · Log in',
+            'open'         => 'Open the app',
+            'closed'       => 'The beta is invitation-only right now. Ask whoever shared this with you.',
+            'private'      => 'Private by design: your entries are yours. No ads, no selling data. Works in your phone\'s browser; no app store needed.',
+            'share_title'  => 'Invite a friend',
+            'share_body'   => 'Know someone who\'d like a daily practice? Send them the welcome page.',
+            'share'        => 'Share',
+            'copied'       => 'Link copied.',
+            'share_text'   => 'A daily somatic practice I\'m trying. Want to join the beta?',
+            'preview'      => 'See the welcome page',
         ],
 
         // Shown on Today when this device's time zone differs from yours
