@@ -75,7 +75,8 @@
 
   function greeting(name) {
     const hour = new Date().getHours();
-    const part = hour < 12 ? 'morning' : hour < 17 ? 'afternoon' : 'evening';
+    // Before the practice day starts (3am) it's still last night.
+    const part = hour < state.day_start_hour ? 'evening' : hour < 12 ? 'morning' : hour < 17 ? 'afternoon' : 'evening';
     return t(`greeting.${part}`, { name });
   }
 

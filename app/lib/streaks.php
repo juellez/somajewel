@@ -2,8 +2,9 @@
 /**
  * Days, streaks, and the grace window.
  *
- * All dates are in each user's own timezone, so "today" flips at their local
- * midnight, not the server's. A day counts when it has at least one daily
+ * All dates are in each user's own timezone, and a practice day starts at
+ * 3am (USP_DAY_START_HOUR), not midnight: 2:30am Wednesday is still Tuesday
+ * night, the way people actually live it. A day counts when it has at least one daily
  * entry: a clearing, a practice (conscious rest included), or gratitude.
  *
  * Streaks are recalculated from the days actually logged, rather than nudged
@@ -14,7 +15,8 @@
  * happen; practice includes being kind to yourself about that.
  */
 
-const USP_GRACE_HOUR = 12; // entries for yesterday are allowed before this local hour
+const USP_GRACE_HOUR     = 12; // entries for yesterday are allowed before this local hour
+const USP_DAY_START_HOUR = 3;  // a new practice day starts at this local hour (0 = midnight)
 
 function usp_zone(string $timezone): DateTimeZone
 {
@@ -25,9 +27,11 @@ function usp_zone(string $timezone): DateTimeZone
     }
 }
 
-function usp_today(string $timezone): DateTimeImmutable
+/** This person's practice day, as midnight of that date. Before 3am it's still yesterday. */
+function usp_today(string $timezone, ?DateTimeImmutable $now = null): DateTimeImmutable
 {
-    return new DateTimeImmutable('today', usp_zone($timezone));
+    $now ??= new DateTimeImmutable('now', usp_zone($timezone));
+    return $now->modify('-' . USP_DAY_START_HOUR . ' hours')->setTime(0, 0);
 }
 
 /** Whole days from $from to $to (both Y-m-d). 0 = same day, 1 = next day. */

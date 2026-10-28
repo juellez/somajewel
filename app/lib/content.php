@@ -263,6 +263,7 @@ function usp_build_state(int $user_id): array
     return [
         'user'             => ['name' => wp_get_current_user()->display_name],
         'today'            => $today->format('Y-m-d'),
+        'day_start_hour'   => USP_DAY_START_HOUR,
         'timezone'         => $profile['timezone'],
         'timezone_set'     => (bool) ($profile['timezone_set'] ?? false),
         'week_start'       => (int) ($profile['week_start'] ?? 1),
