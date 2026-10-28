@@ -278,6 +278,8 @@ function usp_build_state(int $user_id): array
         'grace'            => [
             'open'      => usp_can_log_yesterday($profile['timezone']),
             'yesterday' => $today->modify('-1 day')->format('Y-m-d'),
+            // Rituals already logged for yesterday: no second one for that day.
+            'logged'    => usp_rituals_logged($user_id, $today->modify('-1 day')->format('Y-m-d')),
             'until'     => USP_GRACE_HOUR === 12 ? 'noon' : sprintf('%d:00', USP_GRACE_HOUR),
         ],
         'moods'            => $moods,
