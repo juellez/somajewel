@@ -343,7 +343,7 @@ return [
         // Each person chooses what to share; nothing is shared until they do.
         'community' => [
             'title'          => 'Community',
-            'lede'           => 'Practicing together. Highlights from people who share theirs: stats, not specifics.',
+            'lede'           => 'Practicing together. Highlights from people who share theirs.',
             'you'            => 'you',
             'today'          => 'Today',
             'yesterday'      => 'Yesterday',
@@ -358,9 +358,9 @@ return [
             'change'         => 'Change what you share',
             'alone'          => 'No one else is sharing yet. When they do, they\'ll show up here.',
             'join_title'     => 'Join in',
-            'join_body'      => 'Choose a display name, then share either one to appear here and see others who share. Turn it off anytime.',
+            'join_body'      => 'Choose a display name, then share to see others who share.',
             'settings_title' => 'What you share',
-            'private'        => 'Never shared: your notes, moods, answers, or which practices you do.',
+            'private'        => 'You can change your name or turn off sharing anytime.',
             'share_progress'      => 'Share my progress',
             'share_progress_hint' => 'Days, streak, longest, reps, and when you last practiced',
             'share_decls'         => 'Share my declarations',
