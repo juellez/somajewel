@@ -71,6 +71,10 @@ Database tables (`{prefix}usp_*`) are created automatically on first visit.
 - **Weekly reflection timing:** each week's reflection opens Friday and stays
   editable until the next one opens; Today nudges Friday through Monday. Then
   it's read-only in History.
+- **Practices** (practice card → Edit practices): show or hide practices on
+  your card, rename one (your name shows everywhere), and add your own with how
+  you'll practice it. Hidden and deleted practices keep their history. Names of
+  added practices appear in WordPress admin (Practice stats → Feedback).
 - **Share Feedback** (Settings, or the footer): something that's off, an idea, or a vote in the
   name poll. Saved with the screen, device, and version; read it in WordPress
   admin under Practice stats → Feedback.
@@ -110,6 +114,7 @@ entries), and keep words in `{braces}`, which the app fills in.
 | Icon style test (A/B) | `'ui'` → `'icon_test'` |
 | Settings screen and the time zone prompt | `'ui'` → `'settings'`, `'timezone_prompt'` |
 | When the weekly reflection opens | `'ui'` → `'reflect'` → `'opens_on'` |
+| Practices screen, including "What makes it a practice?" | `'ui'` → `'practices'` |
 | Share Feedback (the poll uses the names in `'name_test'`) | `'ui'` → `'feedback'` |
 
 Icons are named from `assets/icons.svg` (Phosphor). To use one that isn't
@@ -131,6 +136,7 @@ in `lib/streaks.php`.
 | `lib/streaks.php` | Days, streaks, and the grace window (user's timezone) |
 | `lib/entries.php` | Daily entries, reps, and milestone rings |
 | `lib/history.php` | Month calendar, day summaries, weekly reflections |
+| `lib/practices.php` | Each person's practice list: show/hide, renames, their own practices |
 | `lib/declarations.php` | Declarations (up to 3 active, with version history; retire and reactivate) |
 | `lib/content.php` | Weekly questions and the page's state |
 | `content/prompts.php` | All content: moods, skills, clearing, gratitude, weekly questions, and every screen's text (`'ui'`) |

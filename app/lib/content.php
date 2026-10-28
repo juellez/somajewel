@@ -15,10 +15,6 @@ function usp_moods_by_key(): array
     return array_column(usp_content()['moods'], null, 'key');
 }
 
-function usp_skills_by_key(): array
-{
-    return array_column(usp_content()['skills'], null, 'key');
-}
 
 // ---------- screen text ----------
 
@@ -213,20 +209,21 @@ function usp_build_state(int $user_id): array
     $today   = usp_today($profile['timezone']);
     $reps    = usp_rep_counts($user_id);
 
-    // Skills without milestones get a plain count and no ring.
+    // This person's practices (their names, hidden ones flagged, their own
+    // added at the end). Skills without milestones get a plain count, no ring.
     $skills = array_map(function ($s) use ($reps) {
         $count = $reps['skills'][$s['key']] ?? 0;
         return $s + [
             'count' => $count,
             'ring'  => ($s['milestones'] ?? true) ? usp_ring($count) : null,
         ];
-    }, $content['skills']);
+    }, usp_user_skills($user_id));
 
     $today_reps = usp_today_skill_counts($user_id, $today->format('Y-m-d'));
 
     // Each declaration with its progress toward 300 / 3,000 and the skills
     // practiced under it (most reps first), counted for this declaration only.
-    $titles  = array_column($content['skills'], 'title', 'key');
+    $titles  = array_column(usp_user_skills($user_id, true), 'title', 'key');
     $declare = function (array $d) use ($reps, $today_reps, $titles) {
         $id     = (int) $d['id'];
         $skills = [];

@@ -535,7 +535,7 @@
 
     const decl = declarationChoices({ selected: defaultDeclaration(), onChange: update });
     const skill = choiceGroup(
-      state.skills.map((s) => ({ value: s.key, text: s.title, count: s.count, today: state.today_skills[s.key] || 0 })),
+      state.skills.filter((s) => !s.hidden).map((s) => ({ value: s.key, text: s.title, count: s.count, today: state.today_skills[s.key] || 0 })),
       { label: t('practice.skill'), onChange: update }
     );
     const mood = moodPad({ onChange: update });
@@ -566,7 +566,10 @@
       ...meta,
       body: [
         el('p', { class: 'step', text: t('practice.declaration') }), declSlot,
-        el('p', { class: 'step', text: t('practice.skill') }), skill.node, hint,
+        el('div', { class: 'step step--with-link' },
+          el('span', { text: t('practice.skill') }),
+          el('a', { class: 'step__link', href: '#practices' }, t('practices.edit'))),
+        skill.node, hint,
         el('p', { class: 'step', text: t('practice.mood') }), mood.node,
         note.node,
         when.node, save, error,
@@ -1043,6 +1046,109 @@
     ];
   }
 
+  // ---------- practices (show/hide, rename, add your own) ----------
+
+  let openPractice = null; // which practice row is expanded
+
+  async function practiceAction(action, body, message) {
+    const res = await api(action, { method: 'POST', body });
+    state = res.state;
+    render();
+    if (message) toast(message);
+  }
+
+  function practicesView() {
+    const p = state.ui.practices;
+
+    // "What makes it a practice?" starts open the first time, then remembers.
+    let introOpen = true;
+    try { const v = localStorage.getItem('sj_practice_intro'); if (v) introOpen = v === 'open'; } catch (e) { /* ignore */ }
+    const intro = el('details', { class: 'card intro', open: introOpen },
+      el('summary', { class: 'card__summary' },
+        el('span', { class: 'intro__icon' }, icon('compass')),
+        el('span', { class: 'card__title', text: p.intro_title })),
+      el('div', { class: 'card__content' },
+        el('p', { class: 'intro__text', text: p.intro }),
+        el('ul', { class: 'intro__points' }, (p.intro_points || []).map((x) => el('li', { text: x })))));
+    intro.addEventListener('toggle', () => {
+      try { localStorage.setItem('sj_practice_intro', intro.open ? 'open' : 'closed'); } catch (e) { /* ignore */ }
+    });
+
+    const shown = state.skills.filter((s) => !s.hidden).length;
+    const rows = state.skills.map((s) => {
+      const isOpen = openPractice === s.key;
+      const reps = s.count === 1 ? t('practices.one_rep') : t('practices.reps', { n: s.count });
+      const renamed = !s.custom && s.title !== s.base_title;
+
+      const toggle = el('button', {
+        class: `switch ${s.hidden ? '' : 'is-on'}`, type: 'button', role: 'switch',
+        'aria-checked': String(!s.hidden),
+        'aria-label': t(s.hidden ? 'practices.show' : 'practices.hide', { name: s.title }),
+      });
+      toggle.addEventListener('click', (e) => {
+        e.stopPropagation();
+        practiceAction('practice', { key: s.key, hidden: !s.hidden }).catch((err) => { if (err.message !== 'auth') toast(errorText(err.message)); });
+      });
+
+      const head = el('div', { class: 'prow__head', role: 'button', tabindex: 0, 'aria-expanded': String(isOpen) },
+        el('span', { class: 'prow__name' },
+          s.title,
+          s.custom ? el('span', { class: 'prow__tag', text: p.yours }) : null,
+          el('small', { text: renamed ? `${t('practices.renamed', { name: s.base_title })} · ${reps}` : reps })),
+        icon('caret-down'),
+        toggle);
+      const flip = () => { openPractice = isOpen ? null : s.key; render(); };
+      head.addEventListener('click', flip);
+      head.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); flip(); } });
+
+      let body = null;
+      if (isOpen) {
+        const input = el('input', { class: 'field field--line', type: 'text', maxlength: 60, value: s.title, 'aria-label': p.name_label });
+        const error = el('p', { class: 'form-error', 'aria-live': 'polite' });
+        const save = el('button', { class: 'btn btn--small', type: 'button', text: p.save });
+        save.addEventListener('click', () => withButton(save, error,
+          () => practiceAction('practice', { key: s.key, label: input.value }, p.saved)));
+        const reset = renamed ? el('button', { class: 'link', type: 'button', text: t('practices.reset', { name: s.base_title }) }) : null;
+        if (reset) reset.addEventListener('click', () => practiceAction('practice', { key: s.key, label: '' }, p.saved));
+        const del = s.custom ? el('button', { class: 'link link--danger', type: 'button', text: p.delete }) : null;
+        if (del) del.addEventListener('click', () => {
+          if (confirm(p.delete_confirm)) { openPractice = null; practiceAction('practice_delete', { key: s.key }, p.deleted); }
+        });
+        body = el('div', { class: 'prow__body' },
+          s.description ? el('p', { class: 'prow__desc', text: s.description }) : null,
+          el('label', { class: 'prow__label', text: p.name_label }),
+          input,
+          el('div', { class: 'prow__actions' }, save, reset, del),
+          error);
+      }
+      return el('li', { class: `prow ${s.hidden ? 'is-hidden' : ''} ${isOpen ? 'is-open' : ''}` }, head, body);
+    });
+
+    // Add your own
+    const name = el('input', { class: 'field field--line', type: 'text', maxlength: 60, placeholder: p.add_name, 'aria-label': p.add_name });
+    const how = el('textarea', { class: 'field', rows: 2, maxlength: 300, placeholder: p.add_how, 'aria-label': p.add_how });
+    const addError = el('p', { class: 'form-error', 'aria-live': 'polite' });
+    const add = el('button', { class: 'btn btn--primary', type: 'button', text: p.add });
+    add.addEventListener('click', () => withButton(add, addError,
+      () => practiceAction('practice_add', { title: name.value, description: how.value }, p.added)));
+
+    return [
+      el('a', { class: 'back-link', href: `#${backTo}` }, icon('arrow-left'), t('app.back')),
+      el('h1', { class: 'top__greeting', text: p.title }),
+      el('p', { class: 'lede', text: p.lede }),
+      intro,
+      section({
+        eyebrow: p.list_title,
+        aside: el('span', { class: 'muted', text: t('practices.on_card', { n: shown }) }),
+        body: el('ul', { class: 'prows' }, rows),
+      }),
+      section({
+        eyebrow: p.add_title,
+        body: [el('p', { class: 'card__body', text: p.add_body }), name, how, add, addError],
+      }),
+    ];
+  }
+
   // ---------- progress ----------
 
   function progressView() {
@@ -1056,7 +1162,8 @@
 
     const rituals = Object.entries(state.rituals).map(([type, r]) =>
       tile({ label: t(`checklist.${type}`), time: t(`progress.time_${type}`), r: r.ring, today: state.today_counts[type] }));
-    const skills = state.skills.map((s) =>
+    // Practices on your card, plus hidden ones you've already practiced.
+    const skills = state.skills.filter((s) => !s.hidden || s.count > 0).map((s) =>
       tile({ label: s.title, r: s.ring, count: s.count, today: state.today_skills[s.key] }));
 
     // Each declaration with the practices done under it (this declaration only).
@@ -1307,14 +1414,14 @@
   function render() {
     // Keep the scroll position steady across re-renders of the same view.
     const y = window.scrollY;
-    const views = { today: todayView, progress: progressView, reflect: reflectView, history: historyView, declarations: declarationsView, settings: settingsView, feedback: feedbackView };
+    const views = { today: todayView, progress: progressView, reflect: reflectView, history: historyView, declarations: declarationsView, settings: settingsView, feedback: feedbackView, practices: practicesView };
     // Skip empty slots (e.g. no time zone prompt today), which would otherwise show as "null".
     root.replaceChildren(...views[view]().flat(Infinity).filter(Boolean));
     window.scrollTo(0, y);
   }
 
-  const VIEWS = ['today', 'progress', 'reflect', 'history', 'declarations', 'settings', 'feedback'];
-  const SCREENS = ['declarations', 'settings', 'feedback']; // opened from the top bar, with Back
+  const VIEWS = ['today', 'progress', 'reflect', 'history', 'declarations', 'settings', 'feedback', 'practices'];
+  const SCREENS = ['declarations', 'settings', 'feedback', 'practices']; // opened from the top bar or a card, with Back
   let backTo = 'today'; // where Back goes from those screens
 
   function setView() {

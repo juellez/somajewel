@@ -36,7 +36,10 @@ return [
         ['key' => 'mindful-minute', 'title' => 'Mindful Minute', 'description' => 'One minute of full attention.'],
         ['key' => 'breath',         'title' => 'Breathwork',         'description' => 'Coherence Breath. Any breathwork.'],
         ['key' => 'meditation',     'title' => 'Meditation',     'description' => 'Any style, any length.'],
-        ['key' => 'jo',             'title' => 'Jo',             'description' => 'Kata, partner practice, or any jo work.'],
+        ['key' => 'yoga',           'title' => 'Yoga',           'description' => 'Any style, any length. Let each pose be a rep of your declaration.'],
+        ['key' => 'movement',       'title' => 'Movement',       'description' => 'Walking, running, dancing: any movement, with intention. Notice what it feels like to move as your declaration.'],
+        // Key stays 'jo' so earlier Jo reps carry over.
+        ['key' => 'jo',             'title' => 'Martial Arts',   'description' => 'Jo, aikido, tai chi, or any martial practice.'],
         ['key' => 'mutual-connection',             'title' => 'Hand on Heart',             'description' => 'Mutual Connection with Self, Spirit, or another person.'],
         ['key' => 'relational',             'title' => 'Relational',             'description' => 'Centered request or yes/no/maybe. Any practice for the sake of building your capacity to be in Right Relation with self and others.'],
         ['key' => 'prayer',             'title' => 'Prayer',             'description' => 'Daily prayer, devotions, intentions.'],
@@ -297,6 +300,43 @@ return [
             'privacy'      => 'Sent with your name, this screen, your device type, and the app version ({version}), so I can follow up.',
         ],
 
+        // Practices screen (practice card → Edit practices): show/hide,
+        // rename, and add your own.
+        'practices' => [
+            'edit'          => 'Edit practices',
+            'title'         => 'Practices',
+            'lede'          => 'Choose what\'s on your practice card. Tap a practice to read about it or rename it. Hidden practices keep their reps and history.',
+            'intro_title'   => 'What makes it a practice?',
+            'intro'         => 'Almost anything can be a somatic practice when you bring an intention to it and pay attention to your body while you do it.',
+            'intro_points'  => [
+                'Intention: connect it to your declaration before you begin.',
+                'Attention: notice your sensations as you go, especially when you want to stop.',
+                'Repetition: what you repeat, you embody.',
+                'Then the mood check: what do you notice in your body now?',
+            ],
+            'list_title'    => 'Your practices',
+            'on_card'       => '{n} on your card',
+            'reps'          => '{n} reps',
+            'one_rep'       => '1 rep',
+            'renamed'       => 'Renamed from {name}',
+            'yours'         => 'Yours',
+            'show'          => 'Show {name}',
+            'hide'          => 'Hide {name}',
+            'name_label'    => 'Name on your card',
+            'save'          => 'Save',
+            'reset'         => 'Reset to "{name}"',
+            'delete'        => 'Delete',
+            'delete_confirm' => 'Delete this practice? It leaves your list; reps you\'ve logged stay in History.',
+            'add_title'     => 'Add your own',
+            'add_body'      => 'Turn something you already do into a practice: a run, morning pages, washing dishes. It\'s yours alone, and it counts like any other.',
+            'add_name'      => 'Name, e.g. Commitment run',
+            'add_how'       => 'How you\'ll practice it, e.g. Each step is a step into my commitment; I notice the tired and keep choosing.',
+            'add'           => 'Add practice',
+            'added'         => 'Practice added to your card.',
+            'saved'         => 'Saved.',
+            'deleted'       => 'Practice deleted.',
+        ],
+
         // Shown on Today when this device's time zone differs from yours
         // (traveling, or a new phone).
         'timezone_prompt' => [
@@ -379,6 +419,7 @@ return [
             'limit'                => 'You can hold up to {max} declarations. Retire one to add another.',
             'grace_closed'         => 'It\'s past noon, so this can only be logged for today.',
             'feedback_empty'       => 'Write a note or pick a name first.',
+            'practice_name'        => 'Give your practice a name.',
         ],
 
         'mic' => [

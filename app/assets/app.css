@@ -512,3 +512,28 @@ body {
 .account-row strong { color: var(--text); font-weight: 500; }
 .account-row__out { color: var(--rasp); display: inline-flex; align-items: center; gap: 6px; }
 .btn--feedback { display: inline-flex; align-items: center; justify-content: center; gap: 6px; text-decoration: none; }
+
+/* ---------- practices screen ---------- */
+.step--with-link { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.step__link { font-weight: 400; font-size: 0.85rem; color: var(--rasp); }
+.prows { list-style: none; margin: 0; padding: 0; }
+.prow { border-top: 1px solid var(--line); }
+.prow:first-child { border-top: 0; }
+.prow__head { display: flex; align-items: center; gap: 10px; padding: 10px 0; cursor: pointer; }
+.prow__head:focus-visible { outline: 2px solid var(--rasp); outline-offset: 2px; border-radius: 8px; }
+.prow__head > .icon { color: var(--muted); transition: transform .2s; }
+.prow.is-open .prow__head > .icon { transform: rotate(180deg); }
+.prow__name { flex: 1; min-width: 0; }
+.prow__name small { display: block; font-size: 0.8rem; color: var(--muted); }
+.prow.is-hidden .prow__name { color: var(--muted); }
+.prow__tag { margin-left: 8px; font-size: 0.65rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--teal); border: 1px solid var(--teal); border-radius: 999px; padding: 1px 7px; vertical-align: 2px; }
+.prow__body { display: grid; gap: 8px; padding: 0 0 14px; }
+.prow__desc { margin: 0; color: var(--muted); font-size: 0.92rem; }
+.prow__label { font-size: 0.8rem; color: var(--muted); }
+.prow__actions { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.link--danger { color: var(--rasp); }
+.switch { flex: none; width: 42px; height: 26px; border-radius: 999px; border: 0; background: var(--track); position: relative; cursor: pointer; }
+.switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; transition: left .15s; box-shadow: 0 1px 2px rgb(0 0 0 / 0.2); }
+.switch.is-on { background: var(--teal); }
+.switch.is-on::after { left: 19px; }
+.switch:focus-visible { outline: 2px solid var(--rasp); outline-offset: 2px; }
