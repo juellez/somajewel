@@ -354,7 +354,7 @@ return [
             'embodied'             => '{n} reps · embodied',
             'no_reps'              => 'No practices logged with this one yet.',
             'retired'              => 'Retired',
-            // At the bottom of Progress; opens History.
+            // Under the declarations on Progress; opens History.
             'notes_link'           => 'Your notes are in History',
         ],
 
