@@ -85,6 +85,13 @@ Database tables (`{prefix}usp_*`) are created automatically on first visit.
   registration while it's on (Settings → General → Membership); otherwise the
   page says it's invitation-only. Testers share it from Settings → Invite a
   friend, or the footer.
+- **Community** (people icon, top bar): opt-in highlights. Two separate
+  switches, both off by default: share progress (Days, Streak, Longest, Reps,
+  and when you last practiced) and share declarations (active ones). Either
+  one shows you on the board under your display name (your WordPress name
+  unless you choose one) and lets you see everyone else who shares. Never
+  shared: notes, moods, answers, or which practices. The switches live on the
+  Community screen; Settings links there. WordPress admin shows who shares.
 - **Share Feedback** (Settings, or the footer): something that's off, an idea, or a vote in the
   name poll. Saved with the screen, device, and version; read it in WordPress
   admin under Practice stats → Feedback.
@@ -125,6 +132,7 @@ entries), and keep words in `{braces}`, which the app fills in.
 | Settings screen and the time zone prompt | `'ui'` → `'settings'`, `'timezone_prompt'` |
 | When the weekly reflection opens | `'ui'` → `'reflect'` → `'opens_on'` |
 | Practices screen, including "What makes it a practice?" | `'ui'` → `'practices'` |
+| Community screen and sharing switches | `'ui'` → `'community'` |
 | Welcome page and Invite a friend | `'ui'` → `'welcome'` |
 | Share Feedback (the poll uses the names in `'name_test'`) | `'ui'` → `'feedback'` |
 
@@ -148,6 +156,7 @@ in `lib/streaks.php`.
 | `lib/streaks.php` | Days, streaks, and the grace window (user's timezone) |
 | `lib/entries.php` | Daily entries, reps, and milestone rings |
 | `lib/history.php` | Month calendar, day summaries, weekly reflections |
+| `lib/community.php` | Community: what each person shares, and the board of people who share |
 | `lib/practices.php` | Each person's practice list: show/hide, renames, their own practices |
 | `lib/declarations.php` | Declarations (up to 3 active, with version history; retire and reactivate) |
 | `lib/content.php` | Weekly questions and the page's state |

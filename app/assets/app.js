@@ -1007,6 +1007,11 @@
       el('a', { class: 'btn btn--feedback', href: '#feedback' }, icon('chat-circle-dots'), ` ${t('nav.feedback_form')}`),
       inviteCard(),
       section({
+        eyebrow: t('community.settings_link'),
+        body: el('a', { class: 'settings-link', href: '#community' },
+          el('span', { class: 'card__body', text: t('community.settings_body') }), icon('arrow-right')),
+      }),
+      section({
         eyebrow: t('settings.timezone_title'),
         body: [el('p', { class: 'card__body', text: t('settings.timezone_body') }), select, now, useDevice],
       }),
@@ -1178,6 +1183,111 @@
         eyebrow: p.add_title,
         body: [el('p', { class: 'card__body', text: p.add_body }), name, how, add, addError],
       }),
+    ];
+  }
+
+  // ---------- community ----------
+
+  let board = null; // { sharing, people } from the server; null = not loaded yet
+  let boardLoading = false;
+
+  function loadBoard() {
+    if (boardLoading) return;
+    boardLoading = true;
+    api('community')
+      .then((data) => { board = data; })
+      .catch((err) => { if (err.message !== 'auth') board = { error: true }; })
+      .finally(() => { boardLoading = false; if (view === 'community') render(); });
+  }
+
+  async function saveCommunity(changes, message) {
+    const res = await api('community', { method: 'POST', body: changes });
+    state = res.state;
+    board = res.board;
+    if (message) toast(message);
+    render();
+  }
+
+  /** "What you share": two switches and a display name. */
+  function sharingCard(c, joining) {
+    const mine = state.community;
+    const sw = (key, label, hint) => {
+      const on = mine[key];
+      const b = el('button', { class: `switch ${on ? 'is-on' : ''}`, type: 'button', role: 'switch', 'aria-checked': String(on), 'aria-label': label });
+      b.addEventListener('click', () => saveCommunity({ [key]: !on }).catch((err) => { if (err.message !== 'auth') toast(errorText(err.message)); }));
+      return el('div', { class: 'share-row' },
+        el('span', { class: 'share-row__text' }, label, el('small', { text: hint })), b);
+    };
+
+    const name = el('input', { class: 'field field--line', type: 'text', maxlength: 40, value: mine.display_name, placeholder: mine.default_name, 'aria-label': c.name_label });
+    const error = el('p', { class: 'form-error', 'aria-live': 'polite' });
+    const save = el('button', { class: 'btn btn--small', type: 'button', text: c.save });
+    save.addEventListener('click', () => withButton(save, error, () => saveCommunity({ display_name: name.value }, c.saved)));
+
+    return section({
+      eyebrow: joining ? c.join_title : c.settings_title,
+      cls: 'sharing',
+      body: [
+        el('p', { class: 'card__body', text: joining ? c.join_body : c.private }),
+        sw('share_progress', c.share_progress, c.share_progress_hint),
+        sw('share_declarations', c.share_decls, c.share_decls_hint),
+        el('label', { class: 'prow__label', text: c.name_label }),
+        el('div', { class: 'share-name' }, name, save),
+        el('p', { class: 'muted small', text: c.name_hint }),
+        error,
+        joining ? el('p', { class: 'muted small', text: c.private }) : null,
+      ],
+    });
+  }
+
+  function personCard(p, c) {
+    const s = p.stats;
+    let when = null;
+    if (s) {
+      const label = s.last === 'today' ? c.today
+        : s.last === 'yesterday' ? c.yesterday
+          : s.last_date ? t('community.last', { date: shortDate(s.last_date) }) : c.not_yet;
+      when = el('span', { class: `person__when ${s.last === 'today' ? 'is-today' : ''}` }, s.last === 'today' ? icon('check-circle') : null, label);
+    }
+    const num = (label, value) => el('div', {}, el('b', { text: Number(value).toLocaleString() }), el('span', { text: label }));
+    return el('section', { class: `card card--static person ${p.you ? 'person--you' : ''}` },
+      el('div', { class: 'person__head' },
+        el('span', { class: 'person__name' }, p.name, p.you ? el('small', { text: ` (${c.you})` }) : null),
+        when),
+      (p.declarations || []).map((d) => el('p', { class: 'person__decl', text: d })),
+      p.declarations && !p.declarations.length && !s ? el('p', { class: 'person__decl', text: c.no_decls }) : null,
+      s ? el('div', { class: 'person__nums' }, num(c.days, s.days), num(c.streak, s.streak), num(c.longest, s.longest), num(c.reps, s.reps)) : null);
+  }
+
+  function communityView() {
+    const c = state.ui.community;
+    const mine = state.community;
+    const sharing = mine.share_progress || mine.share_declarations;
+    const top = [
+      el('a', { class: 'back-link', href: `#${backTo}` }, icon('arrow-left'), t('app.back')),
+      el('h1', { class: 'top__greeting', text: c.title }),
+      el('p', { class: 'lede', text: c.lede }),
+    ];
+
+    // Not sharing: just the way in. The board is only for people who share.
+    if (!sharing) return [top, sharingCard(c, true)];
+
+    if (!board || board.sharing === false) {
+      loadBoard();
+      return [top, el('p', { class: 'muted', text: c.loading }), sharingCard(c, false)];
+    }
+    if (board.error) return [top, el('p', { class: 'muted', text: c.load_error }), sharingCard(c, false)];
+
+    const card = sharingCard(c, false);
+    const jump = el('button', { class: 'link', type: 'button', text: c.change });
+    jump.addEventListener('click', () => card.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+
+    return [
+      top,
+      board.people.map((p) => personCard(p, c)),
+      board.people.length <= 1 ? el('p', { class: 'muted community__note', text: c.alone }) : null,
+      el('p', { class: 'muted small community__note' }, `${c.only_sharers} `, jump),
+      card,
     ];
   }
 
@@ -1483,14 +1593,14 @@
   function render() {
     // Keep the scroll position steady across re-renders of the same view.
     const y = window.scrollY;
-    const views = { today: todayView, progress: progressView, reflect: reflectView, history: historyView, declarations: declarationsView, settings: settingsView, feedback: feedbackView, practices: practicesView };
+    const views = { today: todayView, progress: progressView, reflect: reflectView, history: historyView, declarations: declarationsView, settings: settingsView, feedback: feedbackView, practices: practicesView, community: communityView };
     // Skip empty slots (e.g. no time zone prompt today), which would otherwise show as "null".
     root.replaceChildren(...views[view]().flat(Infinity).filter(Boolean));
     window.scrollTo(0, y);
   }
 
-  const VIEWS = ['today', 'progress', 'reflect', 'history', 'declarations', 'settings', 'feedback', 'practices'];
-  const SCREENS = ['declarations', 'settings', 'feedback', 'practices']; // opened from the top bar or a card, with Back
+  const VIEWS = ['today', 'progress', 'reflect', 'history', 'declarations', 'settings', 'feedback', 'practices', 'community'];
+  const SCREENS = ['declarations', 'settings', 'feedback', 'practices', 'community']; // opened from the top bar or a card, with Back
   let backTo = 'today'; // where Back goes from those screens
 
   function setView() {
@@ -1498,6 +1608,7 @@
     const next = VIEWS.includes(hash) ? hash : 'today';
     const changed = next !== view;
     if (SCREENS.includes(next) && !SCREENS.includes(view)) backTo = view;
+    if (next === 'community' && changed) board = null; // fresh numbers each visit
     view = next;
     document.querySelectorAll('.tabbar__tab, .masthead__icon').forEach((tab) => {
       if (tab.dataset.view === view) tab.setAttribute('aria-current', 'page');

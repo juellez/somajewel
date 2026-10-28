@@ -91,6 +91,14 @@ switch ("$method $action") {
         $error = usp_delete_practice($user_id, (string) ($input['key'] ?? ''));
         $error ? usp_json(['error' => $error], 400) : usp_json(['state' => usp_build_state($user_id)]);
 
+    case 'GET community':
+        usp_json(usp_community_board($user_id));
+
+    case 'POST community':
+        $error = usp_save_community($user_id, $input);
+        $error ? usp_json(['error' => $error], 400)
+            : usp_json(['state' => usp_build_state($user_id), 'board' => usp_community_board($user_id)]);
+
     case 'POST weekly':
         $ok = usp_save_weekly_response(
             $user_id,

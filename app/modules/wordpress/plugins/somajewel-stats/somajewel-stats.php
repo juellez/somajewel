@@ -97,8 +97,11 @@ function sjs_render_page(): void
     $today = end($days);
     $since = $days[0];
 
+    // Community name: only once the app has added the column (it does on next open).
+    $community_name = $wpdb->get_var("SHOW COLUMNS FROM $profiles LIKE 'display_name'") ? 'p.display_name AS community_name,' : '';
+
     $users = $wpdb->get_results("
-        SELECT p.*, u.user_login, u.display_name,
+        SELECT p.*, $community_name u.user_login, u.display_name,
             (SELECT COUNT(*) FROM $entries e WHERE e.user_id = p.user_id) AS total,
             (SELECT COUNT(DISTINCT e.entry_date) FROM $entries e WHERE e.user_id = p.user_id) AS days,
             (SELECT COUNT(*) FROM $entries e WHERE e.user_id = p.user_id AND e.type = 'clearing')  AS clearing,
@@ -198,9 +201,20 @@ function sjs_render_page(): void
             }
 
             $name = $u['display_name'] ?: '(deleted user)';
+
+            // Community: what they share, and the name others see.
+            $shares = array_keys(array_filter([
+                'progress'     => !empty($u['share_progress']),
+                'declarations' => !empty($u['share_declarations']),
+            ]));
+            $sharing = $shares
+                ? sprintf('<br><span class="sjs-badge">Community: %s</span>%s', esc_html(implode(' + ', $shares)),
+                    !empty($u['community_name']) ? ' <span class="sjs-muted">as “' . esc_html($u['community_name']) . '”</span>' : '')
+                : '';
+
             printf(
                 '<tr>
-                    <td><strong>%s</strong><br><span class="sjs-muted">%s · ID %d · %s</span></td>
+                    <td><strong>%s</strong><br><span class="sjs-muted">%s · ID %d · %s</span>%s</td>
                     <td><div class="sjs-strip">%s</div></td>
                     <td class="sjs-num">%d</td>
                     <td class="sjs-num">%d</td>
@@ -218,6 +232,7 @@ function sjs_render_page(): void
                 esc_html($u['user_login'] ?? ''),
                 $uid,
                 esc_html($u['timezone']),
+                $sharing,
                 $strip,
                 (int) $u['days'],
                 (int) $u['current_streak'],

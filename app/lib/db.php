@@ -180,6 +180,15 @@ function usp_maybe_migrate(): void
                 KEY user_id (user_id)
             ) $charset",
         ],
+
+        // Community: what each person shares (both off until they choose),
+        // and the name others see.
+        9 => [
+            "ALTER TABLE " . usp_table('profiles') . "
+                ADD COLUMN share_progress TINYINT UNSIGNED NOT NULL DEFAULT 0,
+                ADD COLUMN share_declarations TINYINT UNSIGNED NOT NULL DEFAULT 0,
+                ADD COLUMN display_name VARCHAR(40) NULL",
+        ],
     ];
 
     foreach ($migrations as $version => $queries) {
