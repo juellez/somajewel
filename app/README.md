@@ -53,7 +53,8 @@ Database tables (`{prefix}usp_*`) are created automatically on first visit.
   practiced yesterday. A missed day resets the streak but never Days or Reps.
 - **Grace window:** until noon, anything can be logged for yesterday, for late
   nights. Streaks are recalculated from the days you actually logged, so a
-  late entry fills its gap. Clearing and gratitude are once a day: Yesterday
+  late entry fills its gap. Clearing and gratitude are once a day: once today's is logged, its card
+  opens it for editing instead of a new one. Yesterday
   only appears on their cards if yesterday doesn't have one yet. Practices can
   always be logged for yesterday during the window.
 - **Reps:** every entry adds to its ritual, its skill, and its declaration.

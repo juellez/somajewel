@@ -272,6 +272,7 @@ function usp_build_state(int $user_id): array
         'community'        => usp_community_settings($user_id),
         'stats'            => usp_streak_stats($user_id) + ['reps' => array_sum($reps['types'])],
         'today_counts'     => usp_today_counts($user_id, $today->format('Y-m-d')),
+        'today_rituals'    => usp_today_rituals($user_id, $today->format('Y-m-d')), // to edit, not repeat
         'today_skills'     => (object) $today_reps['skills'],
         'grace'            => [
             'open'      => usp_can_log_yesterday($profile['timezone']),

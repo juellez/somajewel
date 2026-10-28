@@ -57,6 +57,10 @@ switch ("$method $action") {
         }
         usp_json($result + ['state' => usp_build_state($user_id)]);
 
+    case 'POST entry_update':
+        $error = usp_update_ritual($user_id, $input);
+        $error ? usp_json(['error' => $error], 400) : usp_json(['state' => usp_build_state($user_id)]);
+
     case 'POST declaration':
         $error = usp_save_declaration($user_id, (int) ($input['id'] ?? 0) ?: null, (string) ($input['text'] ?? ''));
         $error ? usp_json(['error' => $error], 400) : usp_json(['state' => usp_build_state($user_id)]);
