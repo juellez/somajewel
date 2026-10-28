@@ -378,6 +378,7 @@ return [
             'empty'                => 'Write something in at least one box.',
             'limit'                => 'You can hold up to {max} declarations. Retire one to add another.',
             'grace_closed'         => 'It\'s past noon, so this can only be logged for today.',
+            'already_logged'       => 'Yesterday already has this one. Log it for today instead.',
             'feedback_empty'       => 'Write a note or pick a name first.',
         ],
 
