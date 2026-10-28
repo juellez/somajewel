@@ -311,10 +311,10 @@ return [
             'intro_title'   => 'What makes it a practice?',
             'intro'         => 'Almost anything can be a somatic practice when you bring an intention to it and pay attention to your body while you do it.',
             'intro_points'  => [
-                'Intention: connect it to your declaration before you begin.',
-                'Attention: notice your sensations as you go, especially when you want to stop.',
-                'Repetition: what you repeat, you embody.',
-                'Then the mood check: what do you notice in your body now?',
+                'Intention: connect it to your declaration before you begin. You\'re Why',
+                'Attention: notice your sensations as you go, especially as you wrap',
+                'Repetition: what you repeat, you embody',
+                "Reflection: what do you notice in your body now and how does that differ from when you began? There's no wrong or right and nothing may be perceptible for a while. There's only your truth."
             ],
             'list_title'    => 'Your practices',
             'on_card'       => '{n} on your card',
@@ -330,9 +330,9 @@ return [
             'delete'        => 'Delete',
             'delete_confirm' => 'Delete this practice? It leaves your list; reps you\'ve logged stay in History.',
             'add_title'     => 'Add your own',
-            'add_body'      => 'Turn something you already do into a practice: a run, morning pages, washing dishes. It\'s yours alone, and it counts like any other.',
+            'add_body'      => "Turn something you already do into a practice: a walk, morning pages, washing dishes. It's yours alone, and it counts like any other when you do it with intention and awareness. E.g. if your declaration requires you to be able to commit, focusing your attention on every step being you inside the action of commiting to another step, you'll build muscle memory and eventually embody your capability to commit",
             'add_name'      => 'Name, e.g. Commitment run',
-            'add_how'       => 'How you\'ll practice it, e.g. Each step is a step into my commitment; I notice the tired and keep choosing.',
+            'add_how'       => 'How you\'ll practice or examples',
             'add'           => 'Add practice',
             'added'         => 'Practice added to your card.',
             'saved'         => 'Saved.',
@@ -382,7 +382,7 @@ return [
         // For a line break in the tagline, use double quotes and \n:
         //   'tagline' => "A daily somatic practice,\none rep at a time.",
         'welcome' => [
-            'tagline'      => "Welcome to emdodiment. \nOne rep at a time.",
+            'tagline'      => "Welcome to embodiment. \nOne rep at a time.",
             'sub'          => 'Small rituals, honest reflection, and a North Star that\'s yours.',
             'badge'        => 'Beta',
             'why'          => 'Practice is how we become who we say we are. This is a simple place to do it daily, notice what shifts, and keep going.',
