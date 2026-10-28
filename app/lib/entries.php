@@ -15,6 +15,7 @@
 
 // Conscious rest is a practice skill ('rest'), not its own type.
 const USP_ENTRY_TYPES = ['clearing', 'practice', 'gratitude'];
+const USP_DAILY_RITUALS = ['clearing', 'gratitude']; // once per day when logged late (practices have no limit)
 const USP_MILESTONES  = [10, 20, 50, 100, 150, 300, 500, 750, 1000];
 const USP_MILESTONE_STEP = 1000; // after the last one, every 1,000
 
@@ -125,6 +126,13 @@ function usp_today_counts(int $user_id, string $today): array
     return $counts;
 }
 
+/** Which once-a-day rituals already have an entry on a date: ['clearing', ...] */
+function usp_rituals_logged(int $user_id, string $date): array
+{
+    $counts = usp_today_counts($user_id, $date);
+    return array_values(array_filter(USP_DAILY_RITUALS, fn ($type) => $counts[$type] > 0));
+}
+
 /**
  * Practices logged today: by skill, and by skill under each declaration.
  * ['skills' => ['centering' => 3], 'declarations' => [12 => ['centering' => 2]]]
@@ -185,7 +193,8 @@ function usp_create_entry(int $user_id, array $in): array
 
     if ($type === 'practice') {
         $skill = (string) ($in['skill_key'] ?? '');
-        if (!isset(usp_skills_by_key()[$skill])) {
+        $info = usp_user_skills_by_key($user_id)[$skill] ?? null;
+        if (!$info || !empty($info['deleted'])) {
             return ['error' => 'skill_required'];
         }
         if (!$declaration_id) {
@@ -220,6 +229,11 @@ function usp_create_entry(int $user_id, array $in): array
     }
     $date = ($for_yesterday ? $today->modify('-1 day') : $today)->format('Y-m-d');
 
+    // A ritual logged late for yesterday can't add a second one to that day.
+    if ($for_yesterday && in_array($type, USP_DAILY_RITUALS, true) && in_array($type, usp_rituals_logged($user_id, $date), true)) {
+        return ['error' => 'already_logged'];
+    }
+
     $first = !$wpdb->get_var($wpdb->prepare(
         'SELECT 1 FROM ' . usp_table('entries') . ' WHERE user_id = %d AND entry_date = %s LIMIT 1',
         $user_id,
@@ -251,7 +265,7 @@ function usp_create_entry(int $user_id, array $in): array
     $days_after = usp_streak_stats($user_id);
 
     return [
-        'celebrations'  => usp_celebrations($before, $after, $type, $skill, $declaration_id, $days_before, $days_after),
+        'celebrations'  => usp_celebrations($user_id, $before, $after, $type, $skill, $declaration_id, $days_before, $days_after),
         'first_of_day'  => $first,
         'date'          => $date,
         'for_yesterday' => $for_yesterday,
@@ -259,13 +273,13 @@ function usp_create_entry(int $user_id, array $in): array
 }
 
 /** Messages for any milestone this entry just reached. */
-function usp_celebrations(array $before, array $after, string $type, ?string $skill, ?int $declaration_id, array $days_before, array $days_after): array
+function usp_celebrations(int $user_id, array $before, array $after, string $type, ?string $skill, ?int $declaration_id, array $days_before, array $days_after): array
 {
     $out     = [];
     $crossed = fn (array $b, array $a, $key) =>
         ($a[$key] ?? 0) > ($b[$key] ?? 0) && usp_is_milestone($a[$key] ?? 0);
 
-    $info = $skill ? usp_skills_by_key()[$skill] : null;
+    $info = $skill ? (usp_user_skills_by_key($user_id)[$skill] ?? null) : null;
     if ($info && ($info['milestones'] ?? true) && $crossed($before['skills'], $after['skills'], $skill)) {
         $out[] = usp_ui('celebrations.skill', ['n' => $after['skills'][$skill], 'name' => $info['title']]);
     }

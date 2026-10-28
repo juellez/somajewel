@@ -36,7 +36,10 @@ return [
         ['key' => 'mindful-minute', 'title' => 'Mindful Minute', 'description' => 'One minute of full attention.'],
         ['key' => 'breath',         'title' => 'Breathwork',         'description' => 'Coherence Breath. Any breathwork.'],
         ['key' => 'meditation',     'title' => 'Meditation',     'description' => 'Any style, any length.'],
-        ['key' => 'jo',             'title' => 'Jo',             'description' => 'Kata, partner practice, or any jo work.'],
+        ['key' => 'yoga',           'title' => 'Yoga',           'description' => 'Any style, any length. Let each pose be a rep of your declaration.'],
+        ['key' => 'movement',       'title' => 'Movement',       'description' => 'Walking, running, dancing: any movement, with intention. Notice what it feels like to move as your declaration.'],
+        // Key stays 'jo' so earlier Jo reps carry over.
+        ['key' => 'jo',             'title' => 'Martial Arts',   'description' => 'Jo, aikido, tai chi, or any martial practice.'],
         ['key' => 'mutual-connection',             'title' => 'Hand on Heart',             'description' => 'Mutual Connection with Self, Spirit, or another person.'],
         ['key' => 'relational',             'title' => 'Relational',             'description' => 'Centered request or yes/no/maybe. Any practice for the sake of building your capacity to be in Right Relation with self and others.'],
         ['key' => 'prayer',             'title' => 'Prayer',             'description' => 'Daily prayer, devotions, intentions.'],
@@ -54,7 +57,7 @@ return [
     ],
 
     'gratitude' => [
-        'title' => 'Generative Gratitude',
+        'title' => 'Generative Gratitude & Reflection',
         'intro' => 'We can practice gratitude through physical extension, creating space to explore what naturally wells up (or doesn\'t).',
         'steps' => [
             ['title' => 'Ground', 'text' => 'Extend down into the ground.'],
@@ -107,12 +110,14 @@ return [
             'reflect'      => 'Reflect',
             'history'      => 'History',
             'declarations' => 'Declarations',
+            'community'    => 'Community',
             'settings'     => 'Settings',
             'feedback_form' => 'Share Feedback',
             'signed_in_as' => 'Signed in as',
             'log_out'      => 'Log Out',
             'terms'        => 'Terms of Use & Privacy',
-            'feedback'     => 'Roadmap & Feature Requests',
+            'feedback'     => 'Roadmap',
+            'welcome'       => 'Welcome',
         ],
 
         // Beta: two icon styles to compare. Each person gets one; the
@@ -174,8 +179,8 @@ return [
         ],
 
         'practice' => [
-            'eyebrow'           => 'Practice',
-            'title'             => 'Log a practice',
+            'eyebrow'           => 'Log a Practice',
+            'title'             => 'Somatic Practice',
             'first_declaration' => 'Start with a declaration, in your own words. Every practice builds toward it, and you can refine it anytime.',
             'declaration'       => 'Declaration',
             'new_declaration'   => 'New',
@@ -297,6 +302,115 @@ return [
             'privacy'      => 'Sent with your name, this screen, your device type, and the app version ({version}), so I can follow up.',
         ],
 
+        // Practices screen (practice card → Edit practices): show/hide,
+        // rename, and add your own.
+        'practices' => [
+            'edit'          => 'Edit practices',
+            'title'         => 'Practices',
+            'lede'          => 'Choose what\'s on your practice card. Tap a practice to read about it or rename it. Hidden practices keep their reps and history.',
+            'intro_title'   => 'What makes it a practice?',
+            'intro'         => 'Almost anything can be a somatic practice when you bring an intention to it and pay attention to your body while you do it.',
+            'intro_points'  => [
+                'Intention: connect it to your declaration before you begin. You\'re Why',
+                'Attention: notice your sensations as you go, especially as you wrap',
+                'Repetition: what you repeat, you embody',
+                "Reflection: what do you notice in your body now and how does that differ from when you began? There's no wrong or right and nothing may be perceptible for a while. There's only your truth."
+            ],
+            'list_title'    => 'Your practices',
+            'on_card'       => '{n} on your card',
+            'reps'          => '{n} reps',
+            'one_rep'       => '1 rep',
+            'renamed'       => 'Renamed from {name}',
+            'yours'         => 'Yours',
+            'show'          => 'Show {name}',
+            'hide'          => 'Hide {name}',
+            'name_label'    => 'Name on your card',
+            'save'          => 'Save',
+            'reset'         => 'Reset to "{name}"',
+            'delete'        => 'Delete',
+            'delete_confirm' => 'Delete this practice? It leaves your list; reps you\'ve logged stay in History.',
+            'add_title'     => 'Add your own',
+            'add_body'      => "Turn something you already do into a practice: a walk, morning pages, washing dishes. It's yours alone, and it counts like any other when you do it with intention and awareness. E.g. if your declaration requires you to be able to commit, focusing your attention on every step being you inside the action of commiting to another step, you'll build muscle memory and eventually embody your capability to commit",
+            'add_name'      => 'Name, e.g. Commitment run',
+            'add_how'       => 'How you\'ll practice or examples',
+            'add'           => 'Add practice',
+            'added'         => 'Practice added to your card.',
+            'saved'         => 'Saved.',
+            'deleted'       => 'Practice deleted.',
+        ],
+
+        // Community (people icon, top bar): highlights from people who share.
+        // Each person chooses what to share; nothing is shared until they do.
+        'community' => [
+            'title'          => 'Community',
+            'lede'           => 'Practicing together. Highlights from people who share theirs.',
+            'you'            => 'you',
+            'today'          => 'Today',
+            'yesterday'      => 'Yesterday',
+            'last'           => 'Last practiced {date}',
+            'not_yet'        => 'No practice yet',
+            'no_decls'       => 'No active declarations yet.',
+            'days'           => 'Days',
+            'streak'         => 'Streak',
+            'longest'        => 'Longest',
+            'reps'           => 'Reps',
+            'only_sharers'   => 'Only people who share can see this.',
+            'change'         => 'Change what you share',
+            'alone'          => 'No one else is sharing yet. When they do, they\'ll show up here.',
+            'join_title'     => 'Join in',
+            'join_body'      => 'Choose a display name, then share to see others who share.',
+            'settings_title' => 'What you share',
+            'private'        => 'You can change your name or turn off sharing anytime.',
+            'share_progress'      => 'Share my progress',
+            'share_progress_hint' => 'Days, streak, longest, reps, and when you last practiced',
+            'share_decls'         => 'Share my declarations',
+            'share_decls_hint'    => 'Active ones only',
+            'name_label'     => 'Display name',
+            'name_hint'      => 'What others see. It doesn\'t have to be unique.',
+            'name_first'     => 'What others see. It doesn\'t have to be unique. Sharing unlocks once it\'s saved.',
+            'name_placeholder' => 'e.g. {name}',
+            'save'           => 'Save',
+            'saved'          => 'Saved.',
+            'loading'        => 'Loading…',
+            'load_error'     => 'Couldn\'t load Community. Please refresh.',
+            // The link in Settings.
+            'settings_link'  => 'Community sharing',
+            'settings_body'  => 'Choose what others see, if anything.',
+        ],
+
+        // The public welcome page (/app/welcome) to share with friends and
+        // clients. No login needed. "Join" goes to WordPress registration;
+        // if registration is turned off, 'closed' shows instead.
+        // For a line break in the tagline, use double quotes and \n:
+        //   'tagline' => "A daily somatic practice,\none rep at a time.",
+        'welcome' => [
+            'tagline'      => "Welcome to embodiment. \nOne rep at a time.",
+            'sub'          => 'Small rituals, honest reflection, and a North Star that\'s yours.',
+            'badge'        => 'Beta',
+            'why'          => 'Practice is how we become who we say we are. This is a simple place to do it daily, notice what shifts, and keep going.',
+            'what_title'   => 'What you\'ll do',
+            'what'         => [
+                ['icon' => 'sun-horizon', 'title' => 'Daily Rituals', 'text' => 'Morning clearing and intention setting, somatic practices, evening gratitude and reflection. Any one keeps your streak. Even one awareness-breath counts.'],
+                ['icon' => 'compass',     'title' => 'Declarations', 'text' => 'A commitment to the future you\'re bringing into being. Every practice is a rep toward it: 300 to muscle memory, 3,000 to embodiment (give or take a few).'],
+                ['icon' => 'notebook',    'title' => 'Weekly Reflections', 'text' => 'Wins, truth, release, progress. A few quiet minutes to honor each week.'],
+                ['icon' => 'footprints',  'title' => 'Progress', 'text' => 'Watch your declaration grow as you practice and notice your felt experience shift. Days, streaks, and reps. Intentional rest counts, too.'],
+            ],
+            'quote'        => 'Be a human BEing over a human DOing.',
+            'join_title'   => 'Join the beta',
+            'join_body'    => 'Testing takes a few minutes a day, for a week or more. Make an account, then share what you notice from inside the app.',
+            'join'         => 'Join the beta',
+            'login'        => 'I have an account · Log in',
+            'open'         => 'Open the app',
+            'closed'       => 'The beta is invitation-only right now.',
+            'private'      => 'Private by design: your entries are yours. No ads, no selling data. Works in your phone\'s browser. Add to your homescreen for an app-like experience.',
+            'share_title'  => 'Invite a friend',
+            'share_body'   => 'Know someone who\'d like a daily practice? Send them the welcome page.',
+            'share'        => 'Share',
+            'copied'       => 'Link copied.',
+            'share_text'   => 'A daily somatic practice I\'m trying. Want to join the beta?',
+            'preview'      => 'See the welcome page',
+        ],
+
         // Shown on Today when this device's time zone differs from yours
         // (traveling, or a new phone).
         'timezone_prompt' => [
@@ -320,14 +434,19 @@ return [
             'embodied'             => '{n} reps · embodied',
             'no_reps'              => 'No practices logged with this one yet.',
             'retired'              => 'Retired',
+            // Under the declarations on Progress; opens History.
+            'notes_link'           => 'Your notes are in History',
         ],
 
         'history' => [
             'daily'          => 'Daily practice',
             'weekly'         => 'Weekly reflections',
             'today'          => 'Today',
+            // Section headers in a day's summary.
+            'section_rituals'   => 'Rituals',
+            'section_practices' => 'Practices',
             'loading'        => 'Loading…',
-            'no_entries'     => 'No entries. Intional rest counts, too.',
+            'no_entries'     => 'No entries. Intentional rest counts, too.',
             'one_rep'        => '1 rep',
             'reps'           => '{n} reps',
             'legend_more'    => '4+',
@@ -372,13 +491,16 @@ return [
         ],
 
         'errors' => [
+            'name_required'        => 'Choose a display name first.',
             'declaration_required' => 'Choose a declaration first.',
             'skill_required'       => 'Choose what you practiced.',
             'mood_required'        => 'Tap how you feel now.',
             'empty'                => 'Write something in at least one box.',
             'limit'                => 'You can hold up to {max} declarations. Retire one to add another.',
             'grace_closed'         => 'It\'s past noon, so this can only be logged for today.',
+            'already_logged'       => 'Yesterday already has this one. Log it for today instead.',
             'feedback_empty'       => 'Write a note or pick a name first.',
+            'practice_name'        => 'Give your practice a name.',
         ],
 
         'mic' => [

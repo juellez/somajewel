@@ -20,6 +20,8 @@ $boot = [
     'loadError' => usp_ui('app.load_error'),
     'version'   => usp_build()['label'],
     'logout'    => wp_logout_url(home_url('/')),
+    // Null hides "Invite a Friend" (config: show_invite).
+    'welcome'   => $usp_config['show_invite'] ? set_url_scheme('//' . $_SERVER['HTTP_HOST'] . $base . '/welcome') : null,
     'nonce' => wp_create_nonce('usp_api'),
 ];
 $asset = fn (string $file) => $base . '/assets/' . $file . '?v=' . filemtime(__DIR__ . '/assets/' . $file);
@@ -73,6 +75,7 @@ header('Cache-Control: no-store');
                 <?php endif; ?>
                 <span class="brand__name"><?php echo esc_html($app_name); ?></span>
             </a>
+            <a class="masthead__icon" href="#community" data-view="community" aria-label="<?php echo esc_attr(usp_ui('nav.community')); ?>" title="<?php echo esc_attr(usp_ui('nav.community')); ?>"><?php echo $svg('users-three'); ?></a>
             <a class="masthead__icon" href="#declarations" data-view="declarations" aria-label="<?php echo esc_attr(usp_ui('nav.declarations')); ?>" title="<?php echo esc_attr(usp_ui('nav.declarations')); ?>"><?php echo $svg('compass'); ?></a>
             <a class="masthead__icon" href="#settings" data-view="settings" aria-label="<?php echo esc_attr(usp_ui('nav.settings')); ?>" title="<?php echo esc_attr(usp_ui('nav.settings')); ?>"><?php echo $svg('gear-six'); ?></a>
         </div>
@@ -83,6 +86,7 @@ header('Cache-Control: no-store');
     </main>
 
     <footer class="footer">
+        <a href="<?php echo esc_url($base . '/welcome'); ?>"><?php echo esc_html(usp_ui('nav.welcome')); ?><span aria-hidden="true">·</span>
         <a href="#feedback"><?php echo esc_html(usp_ui('nav.feedback_form')); ?></a>
         <span aria-hidden="true">·</span>
         <a href="<?php echo esc_url($legal); ?>"><?php echo esc_html(usp_ui('nav.terms')); ?></a>

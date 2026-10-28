@@ -1,7 +1,7 @@
 <?php
 /**
  * Plugin Name: SomaJewel Stats
- * Description: Usage stats for the SomaJewel practice app: streaks, counts, and activity. Never shows journal content, notes, answers, moods, or declaration text. Also: testers' feedback and the name poll, and sending non-admins to the app after login.
+ * Description: Usage stats for the SomaJewel practice app: streaks, counts, and activity. Never shows anyone else's journal content, notes, answers, moods, or declaration text. Also: My Activity (your own entries, as stored, for checking the app), testers' feedback and the name poll, and sending non-admins to the app after login.
  * Version:     0.3.0
  * Author:      Unstruck Somatics, LLC
  * License:     GPL-2.0-or-later
@@ -12,6 +12,7 @@ defined('ABSPATH') || exit;
 
 require_once __DIR__ . '/login-redirect.php';
 require_once __DIR__ . '/feedback.php';
+require_once __DIR__ . '/my-activity.php';
 
 const SJS_DAYS = 14; // width of the activity strip
 
@@ -28,7 +29,7 @@ add_action('admin_menu', function () {
 });
 
 add_action('admin_head', function () {
-    if (!in_array($_GET['page'] ?? '', ['somajewel-stats', 'somajewel-feedback'], true)) {
+    if (!in_array($_GET['page'] ?? '', ['somajewel-stats', 'somajewel-feedback', 'somajewel-my-activity'], true)) {
         return;
     }
     ?>
@@ -96,8 +97,11 @@ function sjs_render_page(): void
     $today = end($days);
     $since = $days[0];
 
+    // Community name: only once the app has added the column (it does on next open).
+    $community_name = $wpdb->get_var("SHOW COLUMNS FROM $profiles LIKE 'display_name'") ? 'p.display_name AS community_name,' : '';
+
     $users = $wpdb->get_results("
-        SELECT p.*, u.user_login, u.display_name,
+        SELECT p.*, $community_name u.user_login, u.display_name,
             (SELECT COUNT(*) FROM $entries e WHERE e.user_id = p.user_id) AS total,
             (SELECT COUNT(DISTINCT e.entry_date) FROM $entries e WHERE e.user_id = p.user_id) AS days,
             (SELECT COUNT(*) FROM $entries e WHERE e.user_id = p.user_id AND e.type = 'clearing')  AS clearing,
@@ -197,9 +201,20 @@ function sjs_render_page(): void
             }
 
             $name = $u['display_name'] ?: '(deleted user)';
+
+            // Community: what they share, and the name others see.
+            $shares = array_keys(array_filter([
+                'progress'     => !empty($u['share_progress']),
+                'declarations' => !empty($u['share_declarations']),
+            ]));
+            $sharing = $shares
+                ? sprintf('<br><span class="sjs-badge">Community: %s</span>%s', esc_html(implode(' + ', $shares)),
+                    !empty($u['community_name']) ? ' <span class="sjs-muted">as “' . esc_html($u['community_name']) . '”</span>' : '')
+                : '';
+
             printf(
                 '<tr>
-                    <td><strong>%s</strong><br><span class="sjs-muted">%s · ID %d · %s</span></td>
+                    <td><strong>%s</strong><br><span class="sjs-muted">%s · ID %d · %s</span>%s</td>
                     <td><div class="sjs-strip">%s</div></td>
                     <td class="sjs-num">%d</td>
                     <td class="sjs-num">%d</td>
@@ -217,6 +232,7 @@ function sjs_render_page(): void
                 esc_html($u['user_login'] ?? ''),
                 $uid,
                 esc_html($u['timezone']),
+                $sharing,
                 $strip,
                 (int) $u['days'],
                 (int) $u['current_streak'],

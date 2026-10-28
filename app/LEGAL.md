@@ -15,12 +15,13 @@ To work, the app saves the following on a private server I manage:
 - **Your account:** your name, email address, and login, through the website's account system (WordPress).
 - **Your practice:** your declarations (including earlier wordings as you refine one), the practices you log, the moods you choose, your morning clearings, gratitude entries, notes, and weekly reflection answers.
 - **Your progress:** days practiced, streaks, practice counts, and your timezone.
+- **Your practice list:** which practices you show, names you give them, and practices you add (with how you practice them).
 - **Feedback you send:** if you use Share Feedback, what you write and any name vote, along with the screen you were on, your device and browser type, and the app version.
 
 ### Who can see it
 
 - **You.** Your entries are visible only to you in the app.
-- **Me, in a limited way.** I can see usage counts (for example, how many days someone practiced) to keep the app working and improve it. I don’t read your entries. I do read feedback you send me; that's what it's for. Because I run the server, the database is technically accessible to me as its administrator. That’s true of most apps, whether or not their creators say so explicitly; I’m telling you so you can decide what to write.
+- **Me, in a limited way.** I can see usage counts (for example, how many days someone practiced) to keep the app working and improve it. I don’t read your entries. I do read feedback you send me; that's what it's for. I can also see the names of practices people add (not their notes), to learn which practices to include for everyone. Because I run the server, the database is technically accessible to me as its administrator. That’s true of most apps, whether or not their creators say so explicitly; I’m telling you so you can decide what to write.
 - **No one else.** I don't and won't sell, rent, share your information, or use it for advertising without your explicit consent.
 - **About AI:** I use AI tools to help write and review the app’s code. They work only with the code, which is public, and with made-up test data, never with your account or entries. Your entries live only in the app’s database on my server, which isn’t part of the public code and isn’t shared with AI tools or anyone reviewing the code.
 - [FUTURE: If friends or community sharing are added, only what you choose to share will be visible to others. If end-to-end encryption is added, then even the database administrator wouldn't be able to access your saved content. If an optional AI feature is added, it will be off unless you turn it on, and this page will explain exactly what it sends and where.]

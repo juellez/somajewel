@@ -348,10 +348,15 @@
 
   // ---------- grace window: log for yesterday until noon ----------
 
-  /** "Today | Yesterday" choice, shown only before noon. Returns { node, value }. */
-  function whenPicker() {
+  /**
+   * "Today | Yesterday" choice, shown only before noon. Rituals (clearing,
+   * gratitude) are once a day, so the choice is left out when that ritual is
+   * already logged for yesterday. Returns { node, value }.
+   */
+  function whenPicker(ritual) {
     let value = 'today';
-    if (!state.grace.open) return { node: null, get value() { return value; } };
+    const done = ritual && (state.grace.logged || []).includes(ritual);
+    if (!state.grace.open || done) return { node: null, get value() { return value; } };
 
     const buttons = [['today', t('when.today')], ['yesterday', t('when.yesterday')]].map(([key, label]) => {
       const b = el('button', { type: 'button', 'aria-pressed': String(key === value), text: label });
@@ -482,7 +487,7 @@
       return { key: q.key, ...f, label: el('label', { class: 'question__text', for: id, text: q.text }) };
     });
     const error = el('p', { class: 'form-error', 'aria-live': 'polite' });
-    const when = whenPicker();
+    const when = whenPicker('clearing');
     const save = el('button', { class: 'btn btn--primary', type: 'button', text: t('clearing.save') });
 
     save.addEventListener('click', () => withButton(save, error, () => {
@@ -535,7 +540,7 @@
 
     const decl = declarationChoices({ selected: defaultDeclaration(), onChange: update });
     const skill = choiceGroup(
-      state.skills.map((s) => ({ value: s.key, text: s.title, count: s.count, today: state.today_skills[s.key] || 0 })),
+      state.skills.filter((s) => !s.hidden).map((s) => ({ value: s.key, text: s.title, count: s.count, today: state.today_skills[s.key] || 0 })),
       { label: t('practice.skill'), onChange: update }
     );
     const mood = moodPad({ onChange: update });
@@ -566,7 +571,10 @@
       ...meta,
       body: [
         el('p', { class: 'step', text: t('practice.declaration') }), declSlot,
-        el('p', { class: 'step', text: t('practice.skill') }), skill.node, hint,
+        el('div', { class: 'step step--with-link' },
+          el('span', { text: t('practice.skill') }),
+          el('a', { class: 'step__link', href: '#practices' }, t('practices.edit'))),
+        skill.node, hint,
         el('p', { class: 'step', text: t('practice.mood') }), mood.node,
         note.node,
         when.node, save, error,
@@ -581,7 +589,7 @@
     const error = el('p', { class: 'form-error', 'aria-live': 'polite' });
     const mood = moodPad();
     const note = textField({ rows: 2, placeholder: g.note_placeholder, label: 'Gratitude note' });
-    const when = whenPicker();
+    const when = whenPicker('gratitude');
     const save = el('button', { class: 'btn btn--primary', type: 'button', text: t('gratitude.save') });
 
     save.addEventListener('click', () => withButton(save, error, () => saveEntry('gratitude', {
@@ -899,6 +907,32 @@
 
   // ---------- settings ----------
 
+  /**
+   * Invite a friend: the public welcome page. On phones, Share opens the
+   * share sheet (Messages, email…); elsewhere it copies the link.
+   */
+  function inviteCard() {
+    const url = USP.welcome;
+    if (!url) return null; // turned off in config (show_invite)
+    const share = el('button', { class: 'btn', type: 'button' }, icon('share-network'), ` ${t('welcome.share')}`);
+    share.addEventListener('click', async () => {
+      if (navigator.share) {
+        try { await navigator.share({ title: state.app_name, text: t('welcome.share_text'), url }); return; } catch (e) {
+          if (e && e.name === 'AbortError') return; // closed the share sheet
+        }
+      }
+      try { await navigator.clipboard.writeText(url); toast(t('welcome.copied')); } catch (e) { window.prompt('', url); }
+    });
+    return section({
+      eyebrow: t('welcome.share_title'),
+      body: [
+        el('p', { class: 'card__body', text: t('welcome.share_body') }),
+        el('div', { class: 'invite-row' }, el('code', { text: url.replace(/^https?:\/\//, '') }), share),
+        el('a', { class: 'more-link', href: url, target: '_blank', rel: 'noopener' }, t('welcome.preview')),
+      ],
+    });
+  }
+
   /** Beta choices live in cookies, so the page header follows them too. */
   function setBeta(name, value) {
     document.cookie = `${name}=${encodeURIComponent(value)}; path=/; max-age=31536000; SameSite=Lax`;
@@ -971,6 +1005,12 @@
           el('a', { class: 'account-row__out', href: USP.logout }, icon('sign-out'), ` ${t('nav.log_out')}`)),
       }),
       el('a', { class: 'btn btn--feedback', href: '#feedback' }, icon('chat-circle-dots'), ` ${t('nav.feedback_form')}`),
+      inviteCard(),
+      section({
+        eyebrow: t('community.settings_link'),
+        body: el('a', { class: 'settings-link', href: '#community' },
+          el('span', { class: 'card__body', text: t('community.settings_body') }), icon('arrow-right')),
+      }),
       section({
         eyebrow: t('settings.timezone_title'),
         body: [el('p', { class: 'card__body', text: t('settings.timezone_body') }), select, now, useDevice],
@@ -1043,6 +1083,216 @@
     ];
   }
 
+  // ---------- practices (show/hide, rename, add your own) ----------
+
+  let openPractice = null; // which practice row is expanded
+
+  async function practiceAction(action, body, message) {
+    const res = await api(action, { method: 'POST', body });
+    state = res.state;
+    render();
+    if (message) toast(message);
+  }
+
+  function practicesView() {
+    const p = state.ui.practices;
+
+    // "What makes it a practice?" starts open the first time, then remembers.
+    let introOpen = true;
+    try { const v = localStorage.getItem('sj_practice_intro'); if (v) introOpen = v === 'open'; } catch (e) { /* ignore */ }
+    const intro = el('details', { class: 'card intro', open: introOpen },
+      el('summary', { class: 'card__summary' },
+        el('span', { class: 'intro__icon' }, icon('compass')),
+        el('span', { class: 'card__title', text: p.intro_title })),
+      el('div', { class: 'card__content' },
+        el('p', { class: 'intro__text', text: p.intro }),
+        el('ul', { class: 'intro__points' }, (p.intro_points || []).map((x) => el('li', { text: x })))));
+    intro.addEventListener('toggle', () => {
+      try { localStorage.setItem('sj_practice_intro', intro.open ? 'open' : 'closed'); } catch (e) { /* ignore */ }
+    });
+
+    const shown = state.skills.filter((s) => !s.hidden).length;
+    const rows = state.skills.map((s) => {
+      const isOpen = openPractice === s.key;
+      const reps = s.count === 1 ? t('practices.one_rep') : t('practices.reps', { n: s.count });
+      const renamed = !s.custom && s.title !== s.base_title;
+
+      const toggle = el('button', {
+        class: `switch ${s.hidden ? '' : 'is-on'}`, type: 'button', role: 'switch',
+        'aria-checked': String(!s.hidden),
+        'aria-label': t(s.hidden ? 'practices.show' : 'practices.hide', { name: s.title }),
+      });
+      toggle.addEventListener('click', (e) => {
+        e.stopPropagation();
+        practiceAction('practice', { key: s.key, hidden: !s.hidden }).catch((err) => { if (err.message !== 'auth') toast(errorText(err.message)); });
+      });
+
+      const head = el('div', { class: 'prow__head', role: 'button', tabindex: 0, 'aria-expanded': String(isOpen) },
+        el('span', { class: 'prow__name' },
+          s.title,
+          s.custom ? el('span', { class: 'prow__tag', text: p.yours }) : null,
+          el('small', { text: renamed ? `${t('practices.renamed', { name: s.base_title })} · ${reps}` : reps })),
+        icon('caret-down'),
+        toggle);
+      const flip = () => { openPractice = isOpen ? null : s.key; render(); };
+      head.addEventListener('click', flip);
+      head.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); flip(); } });
+
+      let body = null;
+      if (isOpen) {
+        const input = el('input', { class: 'field field--line', type: 'text', maxlength: 60, value: s.title, 'aria-label': p.name_label });
+        const error = el('p', { class: 'form-error', 'aria-live': 'polite' });
+        const save = el('button', { class: 'btn btn--small', type: 'button', text: p.save });
+        save.addEventListener('click', () => withButton(save, error,
+          () => practiceAction('practice', { key: s.key, label: input.value }, p.saved)));
+        const reset = renamed ? el('button', { class: 'link', type: 'button', text: t('practices.reset', { name: s.base_title }) }) : null;
+        if (reset) reset.addEventListener('click', () => practiceAction('practice', { key: s.key, label: '' }, p.saved));
+        const del = s.custom ? el('button', { class: 'link link--danger', type: 'button', text: p.delete }) : null;
+        if (del) del.addEventListener('click', () => {
+          if (confirm(p.delete_confirm)) { openPractice = null; practiceAction('practice_delete', { key: s.key }, p.deleted); }
+        });
+        body = el('div', { class: 'prow__body' },
+          s.description ? el('p', { class: 'prow__desc', text: s.description }) : null,
+          el('label', { class: 'prow__label', text: p.name_label }),
+          input,
+          el('div', { class: 'prow__actions' }, save, reset, del),
+          error);
+      }
+      return el('li', { class: `prow ${s.hidden ? 'is-hidden' : ''} ${isOpen ? 'is-open' : ''}` }, head, body);
+    });
+
+    // Add your own
+    const name = el('input', { class: 'field field--line', type: 'text', maxlength: 60, placeholder: p.add_name, 'aria-label': p.add_name });
+    const how = el('textarea', { class: 'field', rows: 2, maxlength: 300, placeholder: p.add_how, 'aria-label': p.add_how });
+    const addError = el('p', { class: 'form-error', 'aria-live': 'polite' });
+    const add = el('button', { class: 'btn btn--primary', type: 'button', text: p.add });
+    add.addEventListener('click', () => withButton(add, addError,
+      () => practiceAction('practice_add', { title: name.value, description: how.value }, p.added)));
+
+    return [
+      el('a', { class: 'back-link', href: `#${backTo}` }, icon('arrow-left'), t('app.back')),
+      el('h1', { class: 'top__greeting', text: p.title }),
+      el('p', { class: 'lede', text: p.lede }),
+      intro,
+      section({
+        eyebrow: p.list_title,
+        aside: el('span', { class: 'muted', text: t('practices.on_card', { n: shown }) }),
+        body: el('ul', { class: 'prows' }, rows),
+      }),
+      section({
+        eyebrow: p.add_title,
+        body: [el('p', { class: 'card__body', text: p.add_body }), name, how, add, addError],
+      }),
+    ];
+  }
+
+  // ---------- community ----------
+
+  let board = null; // { sharing, people } from the server; null = not loaded yet
+  let boardLoading = false;
+
+  function loadBoard() {
+    if (boardLoading) return;
+    boardLoading = true;
+    api('community')
+      .then((data) => { board = data; })
+      .catch((err) => { if (err.message !== 'auth') board = { error: true }; })
+      .finally(() => { boardLoading = false; if (view === 'community') render(); });
+  }
+
+  async function saveCommunity(changes, message) {
+    const res = await api('community', { method: 'POST', body: changes });
+    state = res.state;
+    board = res.board;
+    if (message) toast(message);
+    render();
+  }
+
+  /** "What you share": two switches and a display name. */
+  function sharingCard(c, joining) {
+    const mine = state.community;
+    const named = mine.display_name.trim() !== '';
+    const sw = (key, label, hint) => {
+      const on = mine[key];
+      // Nothing shares until there's a display name.
+      const b = el('button', { class: `switch ${on ? 'is-on' : ''}`, type: 'button', role: 'switch', 'aria-checked': String(on), 'aria-label': label, disabled: !named });
+      b.addEventListener('click', () => saveCommunity({ [key]: !on }).catch((err) => { if (err.message !== 'auth') toast(errorText(err.message)); }));
+      return el('div', { class: 'share-row' },
+        el('span', { class: 'share-row__text' }, label, el('small', { text: hint })), b);
+    };
+
+    const name = el('input', { class: 'field field--line', type: 'text', maxlength: 40, value: mine.display_name, placeholder: mine.default_name ? t('community.name_placeholder', { name: mine.default_name }) : '', 'aria-label': c.name_label });
+    const error = el('p', { class: 'form-error', 'aria-live': 'polite' });
+    const save = el('button', { class: 'btn btn--small', type: 'button', text: c.save });
+    save.addEventListener('click', () => withButton(save, error, () => saveCommunity({ display_name: name.value }, c.saved)));
+
+    return section({
+      eyebrow: joining ? c.join_title : c.settings_title,
+      cls: 'sharing',
+      body: [
+        el('p', { class: 'card__body', text: joining ? c.join_body : c.private }),
+        el('label', { class: 'prow__label', text: c.name_label }),
+        el('div', { class: 'share-name' }, name, save),
+        el('p', { class: 'muted small', text: named ? c.name_hint : c.name_first }),
+        error,
+        sw('share_progress', c.share_progress, c.share_progress_hint),
+        sw('share_declarations', c.share_decls, c.share_decls_hint),
+        joining ? el('p', { class: 'muted small', text: c.private }) : null,
+      ],
+    });
+  }
+
+  function personCard(p, c) {
+    const s = p.stats;
+    let when = null;
+    if (s) {
+      const label = s.last === 'today' ? c.today
+        : s.last === 'yesterday' ? c.yesterday
+          : s.last_date ? t('community.last', { date: shortDate(s.last_date) }) : c.not_yet;
+      when = el('span', { class: `person__when ${s.last === 'today' ? 'is-today' : ''}` }, s.last === 'today' ? icon('check-circle') : null, label);
+    }
+    const num = (label, value) => el('div', {}, el('b', { text: Number(value).toLocaleString() }), el('span', { text: label }));
+    return el('section', { class: `card card--static person ${p.you ? 'person--you' : ''}` },
+      el('div', { class: 'person__head' },
+        el('span', { class: 'person__name' }, p.name, p.you ? el('small', { text: ` (${c.you})` }) : null),
+        when),
+      (p.declarations || []).map((d) => el('p', { class: 'person__decl', text: d })),
+      p.declarations && !p.declarations.length && !s ? el('p', { class: 'person__decl', text: c.no_decls }) : null,
+      s ? el('div', { class: 'person__nums' }, num(c.days, s.days), num(c.streak, s.streak), num(c.longest, s.longest), num(c.reps, s.reps)) : null);
+  }
+
+  function communityView() {
+    const c = state.ui.community;
+    const mine = state.community;
+    const sharing = mine.share_progress || mine.share_declarations;
+    const top = [
+      el('a', { class: 'back-link', href: `#${backTo}` }, icon('arrow-left'), t('app.back')),
+      el('h1', { class: 'top__greeting', text: c.title }),
+      el('p', { class: 'lede', text: c.lede }),
+    ];
+
+    // Not sharing: just the way in. The board is only for people who share.
+    if (!sharing) return [top, sharingCard(c, true)];
+
+    if (!board || board.sharing === false) {
+      loadBoard();
+      return [top, el('p', { class: 'muted', text: c.loading }), sharingCard(c, false)];
+    }
+    if (board.error) return [top, el('p', { class: 'muted', text: c.load_error }), sharingCard(c, false)];
+
+    const card = sharingCard(c, false);
+    const jump = el('button', { class: 'link', type: 'button', text: c.change });
+    jump.addEventListener('click', () => card.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+
+    return [
+      top,
+      board.people.map((p) => personCard(p, c)),
+      board.people.length <= 1 ? el('p', { class: 'muted community__note', text: c.alone }) : null,
+      el('p', { class: 'muted small community__note' }, `${c.only_sharers} `, jump),
+      card,
+    ];
+  }
+
   // ---------- progress ----------
 
   function progressView() {
@@ -1056,7 +1306,8 @@
 
     const rituals = Object.entries(state.rituals).map(([type, r]) =>
       tile({ label: t(`checklist.${type}`), time: t(`progress.time_${type}`), r: r.ring, today: state.today_counts[type] }));
-    const skills = state.skills.map((s) =>
+    // Practices on your card, plus hidden ones you've already practiced.
+    const skills = state.skills.filter((s) => !s.hidden || s.count > 0).map((s) =>
       tile({ label: s.title, r: s.ring, count: s.count, today: state.today_skills[s.key] }));
 
     // Each declaration with the practices done under it (this declaration only).
@@ -1085,12 +1336,18 @@
       return b;
     }
 
+    // Notes live in History; linked under the active declarations (or at the
+    // bottom of the page when there are none yet).
+    const notesLink = el('a', { class: 'more-link', href: '#history', onclick: () => { hist.mode = 'daily'; } },
+      icon('calendar-blank'), ` ${t('progress.notes_link')}`);
+
     const declSection = state.declarations.length || state.retired.length
       ? section({
         eyebrow: t('progress.declarations_eyebrow'),
         title: t('progress.declarations_title'),
         body: [
           state.declarations.map((d) => byDecl(d, false)),
+          notesLink,
           state.retired.length
             ? [el('p', { class: 'step bydecl__heading', text: t('progress.retired') }), state.retired.map((d) => byDecl(d, true))]
             : null,
@@ -1107,6 +1364,7 @@
         title: t('progress.skills_title'),
         body: [el('p', { class: 'card__body', text: t('progress.skills_body') }), el('div', { class: 'reps' }, skills)],
       }),
+      declSection ? null : notesLink,
     ];
   }
 
@@ -1220,10 +1478,50 @@
     );
   }
 
+  /** A mood chip: icon and label. */
+  function moodTag(mood) {
+    return mood ? el('span', { class: 'daylog__mood' }, icon(moodIcon(mood)), mood.label) : null;
+  }
+
+  /**
+   * A day in two parts. Rituals: clearing, then gratitude. Practices: grouped
+   * by declaration, each rep on its own line in the order it was logged, so
+   * the flow of the day shows. Empty parts are left out.
+   */
+  function daySections(items) {
+    const quote = (text) => (text ? el('p', { class: 'daylog__line', text: `“${text}”` }) : null);
+    const row = (name, item, ...lines) => el('div', { class: 'daylog__item' },
+      el('div', { class: 'daylog__name' }, el('span', { text: name }), moodTag(item.mood)),
+      lines);
+
+    const rituals = ['clearing', 'gratitude'].flatMap((type) => items.filter((i) => i.type === type))
+      .map((i) => row(i.title, i, i.summary ? el('p', { class: 'daylog__line', text: i.summary }) : null, quote(i.note)));
+
+    // Declarations in the order first practiced under; reps in logged order.
+    const groups = new Map();
+    for (const item of items.filter((i) => i.type === 'practice')) {
+      const key = item.decl_id || 0;
+      if (!groups.has(key)) groups.set(key, { text: item.decl_text, reps: [] });
+      groups.get(key).reps.push(item);
+    }
+    const practices = [...groups.values()].map((g) => el('div', { class: 'daylog__group' },
+      g.text ? el('p', { class: 'daylog__decl', text: g.text }) : null,
+      g.reps.map((r) => row(r.skill || r.title, r, quote(r.note)))));
+
+    const section = (label, body) => (body.length
+      ? el('div', { class: 'daylog__section' }, el('h3', { class: 'daylog__heading', text: label }), body)
+      : null);
+
+    return [
+      section(t('history.section_rituals'), rituals),
+      section(t('history.section_practices'), practices),
+    ].filter(Boolean);
+  }
+
   function dayLog() {
     const date = hist.selected;
     const box = el('section', { class: 'daylog', 'aria-live': 'polite' },
-      el('h2', { class: 'daylog__title', text: date === state.today ? 'Today' : longDate(date) }),
+      el('h2', { class: 'daylog__title', text: date === state.today ? t('history.today') : longDate(date) }),
       el('p', { class: 'daylog__empty', text: t('history.loading') })
     );
 
@@ -1233,17 +1531,7 @@
         box.replaceChildren(title, el('p', { class: 'daylog__empty', text: t('history.no_entries') }));
         return;
       }
-      box.replaceChildren(title, ...day.items.map((item) =>
-        el('div', { class: 'daylog__item' },
-          el('div', { class: 'daylog__name' },
-            el('span', { text: item.title }),
-            item.mood ? el('span', { class: 'daylog__mood' }, icon(moodIcon(item.mood)), item.mood.label) : null
-          ),
-          item.declaration ? el('p', { class: 'daylog__line', text: item.declaration }) : null,
-          item.summary ? el('p', { class: 'daylog__line', text: item.summary }) : null,
-          item.note ? el('p', { class: 'daylog__line', text: `“${item.note}”` }) : null
-        )
-      ));
+      box.replaceChildren(title, ...daySections(day.items));
     }).catch((err) => {
       if (err.message !== 'auth') box.replaceChildren(box.firstChild, el('p', { class: 'daylog__empty', text: t('history.day_error') }));
     });
@@ -1307,14 +1595,14 @@
   function render() {
     // Keep the scroll position steady across re-renders of the same view.
     const y = window.scrollY;
-    const views = { today: todayView, progress: progressView, reflect: reflectView, history: historyView, declarations: declarationsView, settings: settingsView, feedback: feedbackView };
+    const views = { today: todayView, progress: progressView, reflect: reflectView, history: historyView, declarations: declarationsView, settings: settingsView, feedback: feedbackView, practices: practicesView, community: communityView };
     // Skip empty slots (e.g. no time zone prompt today), which would otherwise show as "null".
     root.replaceChildren(...views[view]().flat(Infinity).filter(Boolean));
     window.scrollTo(0, y);
   }
 
-  const VIEWS = ['today', 'progress', 'reflect', 'history', 'declarations', 'settings', 'feedback'];
-  const SCREENS = ['declarations', 'settings', 'feedback']; // opened from the top bar, with Back
+  const VIEWS = ['today', 'progress', 'reflect', 'history', 'declarations', 'settings', 'feedback', 'practices', 'community'];
+  const SCREENS = ['declarations', 'settings', 'feedback', 'practices', 'community']; // opened from the top bar or a card, with Back
   let backTo = 'today'; // where Back goes from those screens
 
   function setView() {
@@ -1322,6 +1610,7 @@
     const next = VIEWS.includes(hash) ? hash : 'today';
     const changed = next !== view;
     if (SCREENS.includes(next) && !SCREENS.includes(view)) backTo = view;
+    if (next === 'community' && changed) board = null; // fresh numbers each visit
     view = next;
     document.querySelectorAll('.tabbar__tab, .masthead__icon').forEach((tab) => {
       if (tab.dataset.view === view) tab.setAttribute('aria-current', 'page');

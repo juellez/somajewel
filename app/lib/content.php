@@ -15,10 +15,6 @@ function usp_moods_by_key(): array
     return array_column(usp_content()['moods'], null, 'key');
 }
 
-function usp_skills_by_key(): array
-{
-    return array_column(usp_content()['skills'], null, 'key');
-}
 
 // ---------- screen text ----------
 
@@ -63,7 +59,7 @@ function usp_app_name(): string
     $ui      = usp_content()['ui'] ?? [];
     $options = (array) ($ui['name_test']['options'] ?? []);
     $chosen  = (string) ($_COOKIE['sj_name'] ?? '');
-    return in_array($chosen, $options, true) ? $chosen : (string) ($ui['app']['name'] ?? 'SomaRosa');
+    return in_array($chosen, $options, true) ? $chosen : (string) ($ui['app']['name'] ?? 'Soma Rosa');
 }
 
 /** Icons for this person's style: ['progress' => …, 'sacred' => …]. */
@@ -213,20 +209,21 @@ function usp_build_state(int $user_id): array
     $today   = usp_today($profile['timezone']);
     $reps    = usp_rep_counts($user_id);
 
-    // Skills without milestones get a plain count and no ring.
+    // This person's practices (their names, hidden ones flagged, their own
+    // added at the end). Skills without milestones get a plain count, no ring.
     $skills = array_map(function ($s) use ($reps) {
         $count = $reps['skills'][$s['key']] ?? 0;
         return $s + [
             'count' => $count,
             'ring'  => ($s['milestones'] ?? true) ? usp_ring($count) : null,
         ];
-    }, $content['skills']);
+    }, usp_user_skills($user_id));
 
     $today_reps = usp_today_skill_counts($user_id, $today->format('Y-m-d'));
 
     // Each declaration with its progress toward 300 / 3,000 and the skills
     // practiced under it (most reps first), counted for this declaration only.
-    $titles  = array_column($content['skills'], 'title', 'key');
+    $titles  = array_column(usp_user_skills($user_id, true), 'title', 'key');
     $declare = function (array $d) use ($reps, $today_reps, $titles) {
         $id     = (int) $d['id'];
         $skills = [];
@@ -272,12 +269,15 @@ function usp_build_state(int $user_id): array
         'app_name'         => usp_app_name(),
         'build'            => usp_build(),
         'my_vote'          => usp_my_vote($user_id),
+        'community'        => usp_community_settings($user_id),
         'stats'            => usp_streak_stats($user_id) + ['reps' => array_sum($reps['types'])],
         'today_counts'     => usp_today_counts($user_id, $today->format('Y-m-d')),
         'today_skills'     => (object) $today_reps['skills'],
         'grace'            => [
             'open'      => usp_can_log_yesterday($profile['timezone']),
             'yesterday' => $today->modify('-1 day')->format('Y-m-d'),
+            // Rituals already logged for yesterday: no second one for that day.
+            'logged'    => usp_rituals_logged($user_id, $today->modify('-1 day')->format('Y-m-d')),
             'until'     => USP_GRACE_HOUR === 12 ? 'noon' : sprintf('%d:00', USP_GRACE_HOUR),
         ],
         'moods'            => $moods,

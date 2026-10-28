@@ -7,6 +7,9 @@
  *   POST api.php?action=declaration          → { id?, text }  (create, or refine when id is given)
  *   POST api.php?action=declaration_retire   → { id }
  *   POST api.php?action=settings             → { timezone?, week_start? }
+ *   POST api.php?action=practice             → { key, hidden?, label? }  (label '' resets)
+ *   POST api.php?action=practice_add         → { title, description? }
+ *   POST api.php?action=practice_delete      → { key }  (your own practices only)
  *   POST api.php?action=feedback             → { kind, message?, vote?, other?, screen? }
  *   POST api.php?action=declaration_reactivate → { id }
  *   POST api.php?action=weekly               → { key, response }
@@ -75,6 +78,26 @@ switch ("$method $action") {
     case 'POST feedback':
         $error = usp_save_feedback($user_id, $input);
         $error ? usp_json(['error' => $error], 400) : usp_json(['saved' => true, 'my_vote' => usp_my_vote($user_id)]);
+
+    case 'POST practice':
+        $error = usp_save_practice_pref($user_id, $input);
+        $error ? usp_json(['error' => $error], 400) : usp_json(['state' => usp_build_state($user_id)]);
+
+    case 'POST practice_add':
+        $error = usp_add_practice($user_id, $input);
+        $error ? usp_json(['error' => $error], 400) : usp_json(['state' => usp_build_state($user_id)]);
+
+    case 'POST practice_delete':
+        $error = usp_delete_practice($user_id, (string) ($input['key'] ?? ''));
+        $error ? usp_json(['error' => $error], 400) : usp_json(['state' => usp_build_state($user_id)]);
+
+    case 'GET community':
+        usp_json(usp_community_board($user_id));
+
+    case 'POST community':
+        $error = usp_save_community($user_id, $input);
+        $error ? usp_json(['error' => $error], 400)
+            : usp_json(['state' => usp_build_state($user_id), 'board' => usp_community_board($user_id)]);
 
     case 'POST weekly':
         $ok = usp_save_weekly_response(
