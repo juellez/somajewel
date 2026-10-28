@@ -51,6 +51,9 @@ Database tables (`{prefix}usp_*`) are created automatically on first visit.
 - **Days, streak, longest, reps:** Days is every day you've practiced and only
   ever grows. Streak is consecutive days, and stays alive through today if you
   practiced yesterday. A missed day resets the streak but never Days or Reps.
+- **Day starts at 3am:** a practice day runs 3am to 3am in your time zone,
+  so 2:30am Wednesday is still Tuesday night (`USP_DAY_START_HOUR` in
+  `lib/streaks.php`; 0 = midnight).
 - **Grace window:** until noon, anything can be logged for yesterday, for late
   nights. Streaks are recalculated from the days you actually logged, so a
   late entry fills its gap. Clearing and gratitude are once a day: once today's is logged, its card
@@ -144,7 +147,7 @@ there yet, add it to that file (see the note at its top).
 Numbers that shape the practice live in code: milestones (`USP_MILESTONES`)
 and declaration goals (`USP_DECLARATION_GOALS`) in `lib/entries.php`, the
 limit of 3 declarations in `lib/declarations.php`, and the noon grace window
-in `lib/streaks.php`.
+and 3am day start in `lib/streaks.php`.
 
 ## Files
 
