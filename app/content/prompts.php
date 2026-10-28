@@ -113,7 +113,7 @@ return [
             'log_out'      => 'Log Out',
             'terms'        => 'Terms of Use & Privacy',
             'feedback'     => 'Roadmap',
-            'invite'       => 'Welcome',
+            'welcome'       => 'Welcome',
         ],
 
         // Beta: two icon styles to compare. Each person gets one; the

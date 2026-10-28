@@ -85,10 +85,7 @@ header('Cache-Control: no-store');
     </main>
 
     <footer class="footer">
-        <?php if ($usp_config['show_invite']) : ?>
-        <a href="<?php echo esc_url($base . '/welcome'); ?>"><?php echo esc_html(usp_ui('nav.invite')); ?></a>
-        <span aria-hidden="true">·</span>
-        <?php endif; ?>
+        <a href="<?php echo esc_url($base . '/welcome'); ?>"><?php echo esc_html(usp_ui('nav.welcome')); ?><span aria-hidden="true">·</span>
         <a href="#feedback"><?php echo esc_html(usp_ui('nav.feedback_form')); ?></a>
         <span aria-hidden="true">·</span>
         <a href="<?php echo esc_url($legal); ?>"><?php echo esc_html(usp_ui('nav.terms')); ?></a>
