@@ -53,7 +53,9 @@ Database tables (`{prefix}usp_*`) are created automatically on first visit.
   practiced yesterday. A missed day resets the streak but never Days or Reps.
 - **Grace window:** until noon, anything can be logged for yesterday, for late
   nights. Streaks are recalculated from the days you actually logged, so a
-  late entry fills its gap.
+  late entry fills its gap. Clearing and gratitude are once a day: Yesterday
+  only appears on their cards if yesterday doesn't have one yet. Practices can
+  always be logged for yesterday during the window.
 - **Reps:** every entry adds to its ritual, its skill, and its declaration.
   Ritual and skill counts each fill a ring toward their next milestone,
   celebrate, and start the next ring fresh. Days and streaks celebrate at the
@@ -74,6 +76,11 @@ Database tables (`{prefix}usp_*`) are created automatically on first visit.
 - **Weekly reflection timing:** each week's reflection opens Friday and stays
   editable until the next one opens; Today nudges Friday through Monday. Then
   it's read-only in History.
+- **Welcome page** (`/app/welcome`, public; served by `welcome.php` via `.htaccess`): what the app is and how to join,
+  to share with friends and clients. "Join the beta" goes to WordPress
+  registration while it's on (Settings → General → Membership); otherwise the
+  page says it's invitation-only. Testers share it from Settings → Invite a
+  friend, or the footer.
 - **Share Feedback** (Settings, or the footer): something that's off, an idea, or a vote in the
   name poll. Saved with the screen, device, and version; read it in WordPress
   admin under Practice stats → Feedback.
@@ -113,6 +120,7 @@ entries), and keep words in `{braces}`, which the app fills in.
 | Icon style test (A/B) | `'ui'` → `'icon_test'` |
 | Settings screen and the time zone prompt | `'ui'` → `'settings'`, `'timezone_prompt'` |
 | When the weekly reflection opens | `'ui'` → `'reflect'` → `'opens_on'` |
+| Welcome page and Invite a friend | `'ui'` → `'welcome'` |
 | Share Feedback (the poll uses the names in `'name_test'`) | `'ui'` → `'feedback'` |
 
 Icons are named from `assets/icons.svg` (Phosphor). To use one that isn't
@@ -128,6 +136,7 @@ in `lib/streaks.php`.
 | File | What it does |
 |---|---|
 | `index.php` | Login gate and page shell (header, compass, settings menu, tab bar) |
+| `welcome.php` | Public welcome page to share, with a link to join |
 | `api.php` | JSON endpoints: `state`, `entry`, `declaration`, `declaration_retire`, `declaration_reactivate`, `weekly`, `history_month`, `history_day`, `history_weekly` |
 | `bootstrap.php` | Loads config, WordPress, and the libraries |
 | `lib/db.php` | Tables, migrations, user profiles |

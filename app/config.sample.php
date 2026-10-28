@@ -23,7 +23,13 @@ return [
     // (legal.php, generated from LEGAL.md). Set this to link elsewhere instead.
     #'legal_url' => 'https://yoursite.com/terms',
 
+    'show_invite' => false,
+
     // The app icon comes from assets/icon-192.png. Without that file, set a
     // URL here (e.g. your WordPress site icon); without either, a drawn lotus.
     #'icon_url' => 'https://yoursite.com/wp-content/uploads/site-icon-192x192.png',
+
+    // "Invite a Friend" (the Settings card and the footer link). Set to false
+    // to hide both; the welcome page itself still works for anyone with its link.
+    #'show_invite' => false,
 ];

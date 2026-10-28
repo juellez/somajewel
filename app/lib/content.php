@@ -63,7 +63,7 @@ function usp_app_name(): string
     $ui      = usp_content()['ui'] ?? [];
     $options = (array) ($ui['name_test']['options'] ?? []);
     $chosen  = (string) ($_COOKIE['sj_name'] ?? '');
-    return in_array($chosen, $options, true) ? $chosen : (string) ($ui['app']['name'] ?? 'SomaRosa');
+    return in_array($chosen, $options, true) ? $chosen : (string) ($ui['app']['name'] ?? 'Soma Rosa');
 }
 
 /** Icons for this person's style: ['progress' => …, 'sacred' => …]. */
@@ -278,6 +278,8 @@ function usp_build_state(int $user_id): array
         'grace'            => [
             'open'      => usp_can_log_yesterday($profile['timezone']),
             'yesterday' => $today->modify('-1 day')->format('Y-m-d'),
+            // Rituals already logged for yesterday: no second one for that day.
+            'logged'    => usp_rituals_logged($user_id, $today->modify('-1 day')->format('Y-m-d')),
             'until'     => USP_GRACE_HOUR === 12 ? 'noon' : sprintf('%d:00', USP_GRACE_HOUR),
         ],
         'moods'            => $moods,

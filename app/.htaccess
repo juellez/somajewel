@@ -1,0 +1,7 @@
+# Clean address for the public welcome page: /app/welcome serves welcome.php.
+# (welcome.php still works too.) Needs Apache's mod_rewrite, which WordPress
+# permalinks already use.
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^welcome/?$ welcome.php [L]
+</IfModule>

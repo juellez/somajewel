@@ -348,10 +348,15 @@
 
   // ---------- grace window: log for yesterday until noon ----------
 
-  /** "Today | Yesterday" choice, shown only before noon. Returns { node, value }. */
-  function whenPicker() {
+  /**
+   * "Today | Yesterday" choice, shown only before noon. Rituals (clearing,
+   * gratitude) are once a day, so the choice is left out when that ritual is
+   * already logged for yesterday. Returns { node, value }.
+   */
+  function whenPicker(ritual) {
     let value = 'today';
-    if (!state.grace.open) return { node: null, get value() { return value; } };
+    const done = ritual && (state.grace.logged || []).includes(ritual);
+    if (!state.grace.open || done) return { node: null, get value() { return value; } };
 
     const buttons = [['today', t('when.today')], ['yesterday', t('when.yesterday')]].map(([key, label]) => {
       const b = el('button', { type: 'button', 'aria-pressed': String(key === value), text: label });
@@ -482,7 +487,7 @@
       return { key: q.key, ...f, label: el('label', { class: 'question__text', for: id, text: q.text }) };
     });
     const error = el('p', { class: 'form-error', 'aria-live': 'polite' });
-    const when = whenPicker();
+    const when = whenPicker('clearing');
     const save = el('button', { class: 'btn btn--primary', type: 'button', text: t('clearing.save') });
 
     save.addEventListener('click', () => withButton(save, error, () => {
@@ -581,7 +586,7 @@
     const error = el('p', { class: 'form-error', 'aria-live': 'polite' });
     const mood = moodPad();
     const note = textField({ rows: 2, placeholder: g.note_placeholder, label: 'Gratitude note' });
-    const when = whenPicker();
+    const when = whenPicker('gratitude');
     const save = el('button', { class: 'btn btn--primary', type: 'button', text: t('gratitude.save') });
 
     save.addEventListener('click', () => withButton(save, error, () => saveEntry('gratitude', {
@@ -899,6 +904,32 @@
 
   // ---------- settings ----------
 
+  /**
+   * Invite a friend: the public welcome page. On phones, Share opens the
+   * share sheet (Messages, email…); elsewhere it copies the link.
+   */
+  function inviteCard() {
+    const url = USP.welcome;
+    if (!url) return null; // turned off in config (show_invite)
+    const share = el('button', { class: 'btn', type: 'button' }, icon('share-network'), ` ${t('welcome.share')}`);
+    share.addEventListener('click', async () => {
+      if (navigator.share) {
+        try { await navigator.share({ title: state.app_name, text: t('welcome.share_text'), url }); return; } catch (e) {
+          if (e && e.name === 'AbortError') return; // closed the share sheet
+        }
+      }
+      try { await navigator.clipboard.writeText(url); toast(t('welcome.copied')); } catch (e) { window.prompt('', url); }
+    });
+    return section({
+      eyebrow: t('welcome.share_title'),
+      body: [
+        el('p', { class: 'card__body', text: t('welcome.share_body') }),
+        el('div', { class: 'invite-row' }, el('code', { text: url.replace(/^https?:\/\//, '') }), share),
+        el('a', { class: 'more-link', href: url, target: '_blank', rel: 'noopener' }, t('welcome.preview')),
+      ],
+    });
+  }
+
   /** Beta choices live in cookies, so the page header follows them too. */
   function setBeta(name, value) {
     document.cookie = `${name}=${encodeURIComponent(value)}; path=/; max-age=31536000; SameSite=Lax`;
@@ -971,6 +1002,7 @@
           el('a', { class: 'account-row__out', href: USP.logout }, icon('sign-out'), ` ${t('nav.log_out')}`)),
       }),
       el('a', { class: 'btn btn--feedback', href: '#feedback' }, icon('chat-circle-dots'), ` ${t('nav.feedback_form')}`),
+      inviteCard(),
       section({
         eyebrow: t('settings.timezone_title'),
         body: [el('p', { class: 'card__body', text: t('settings.timezone_body') }), select, now, useDevice],
