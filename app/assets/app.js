@@ -905,6 +905,7 @@
    */
   function inviteCard() {
     const url = USP.welcome;
+    if (!url) return null; // turned off in config (show_invite)
     const share = el('button', { class: 'btn', type: 'button' }, icon('share-network'), ` ${t('welcome.share')}`);
     share.addEventListener('click', async () => {
       if (navigator.share) {
