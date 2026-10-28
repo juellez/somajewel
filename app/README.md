@@ -38,7 +38,8 @@ Database tables (`{prefix}usp_*`) are created automatically on first visit.
   pairs with the optional note.
 - **Progress:** the counters, a ring per ritual, each declaration with the
   practices done under it (counted for that declaration only), retired
-  declarations with Reactivate, then a ring per skill.
+  declarations with Reactivate, then a ring per skill. Notes live in History
+  (linked at the bottom).
 - **Reflect:** this week's reflection, one row per question with a check once
   answered. On the days set in content (Friday–Sunday by default), Today shows
   a Weekly Reflection line until something is answered.
@@ -64,8 +65,10 @@ Database tables (`{prefix}usp_*`) are created automatically on first visit.
 - **Milestones:** 10, 20, 50, 100, 150, 300, 500, 750, 1,000, then every
   1,000. Set in `lib/entries.php` (`USP_MILESTONES`); a skill opts out with
   `'milestones' => false` in `content/prompts.php`.
-- **History:** a calendar of practice days (tap a day for a read-only summary)
-  and a list of past weekly reflections.
+- **History:** a calendar of practice days and a list of past weekly
+  reflections. Tap a day for a read-only summary: Rituals (clearing, then
+  gratitude), then Practices grouped by declaration, one line per rep in the
+  order logged, each with its mood and note.
 - **Settings** (cog → Settings): time zone (set from the device on first
   visit; Today offers to switch if the device later shows a different zone),
   week start (Sunday or Monday), and beta switches for the app name and icon

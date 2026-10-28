@@ -1117,12 +1117,18 @@
       return b;
     }
 
+    // Notes live in History; linked under the active declarations (or at the
+    // bottom of the page when there are none yet).
+    const notesLink = el('a', { class: 'more-link', href: '#history', onclick: () => { hist.mode = 'daily'; } },
+      icon('calendar-blank'), ` ${t('progress.notes_link')}`);
+
     const declSection = state.declarations.length || state.retired.length
       ? section({
         eyebrow: t('progress.declarations_eyebrow'),
         title: t('progress.declarations_title'),
         body: [
           state.declarations.map((d) => byDecl(d, false)),
+          notesLink,
           state.retired.length
             ? [el('p', { class: 'step bydecl__heading', text: t('progress.retired') }), state.retired.map((d) => byDecl(d, true))]
             : null,
@@ -1139,6 +1145,7 @@
         title: t('progress.skills_title'),
         body: [el('p', { class: 'card__body', text: t('progress.skills_body') }), el('div', { class: 'reps' }, skills)],
       }),
+      declSection ? null : notesLink,
     ];
   }
 
@@ -1252,10 +1259,50 @@
     );
   }
 
+  /** A mood chip: icon and label. */
+  function moodTag(mood) {
+    return mood ? el('span', { class: 'daylog__mood' }, icon(moodIcon(mood)), mood.label) : null;
+  }
+
+  /**
+   * A day in two parts. Rituals: clearing, then gratitude. Practices: grouped
+   * by declaration, each rep on its own line in the order it was logged, so
+   * the flow of the day shows. Empty parts are left out.
+   */
+  function daySections(items) {
+    const quote = (text) => (text ? el('p', { class: 'daylog__line', text: `“${text}”` }) : null);
+    const row = (name, item, ...lines) => el('div', { class: 'daylog__item' },
+      el('div', { class: 'daylog__name' }, el('span', { text: name }), moodTag(item.mood)),
+      lines);
+
+    const rituals = ['clearing', 'gratitude'].flatMap((type) => items.filter((i) => i.type === type))
+      .map((i) => row(i.title, i, i.summary ? el('p', { class: 'daylog__line', text: i.summary }) : null, quote(i.note)));
+
+    // Declarations in the order first practiced under; reps in logged order.
+    const groups = new Map();
+    for (const item of items.filter((i) => i.type === 'practice')) {
+      const key = item.decl_id || 0;
+      if (!groups.has(key)) groups.set(key, { text: item.decl_text, reps: [] });
+      groups.get(key).reps.push(item);
+    }
+    const practices = [...groups.values()].map((g) => el('div', { class: 'daylog__group' },
+      g.text ? el('p', { class: 'daylog__decl', text: g.text }) : null,
+      g.reps.map((r) => row(r.skill || r.title, r, quote(r.note)))));
+
+    const section = (label, body) => (body.length
+      ? el('div', { class: 'daylog__section' }, el('h3', { class: 'daylog__heading', text: label }), body)
+      : null);
+
+    return [
+      section(t('history.section_rituals'), rituals),
+      section(t('history.section_practices'), practices),
+    ].filter(Boolean);
+  }
+
   function dayLog() {
     const date = hist.selected;
     const box = el('section', { class: 'daylog', 'aria-live': 'polite' },
-      el('h2', { class: 'daylog__title', text: date === state.today ? 'Today' : longDate(date) }),
+      el('h2', { class: 'daylog__title', text: date === state.today ? t('history.today') : longDate(date) }),
       el('p', { class: 'daylog__empty', text: t('history.loading') })
     );
 
@@ -1265,17 +1312,7 @@
         box.replaceChildren(title, el('p', { class: 'daylog__empty', text: t('history.no_entries') }));
         return;
       }
-      box.replaceChildren(title, ...day.items.map((item) =>
-        el('div', { class: 'daylog__item' },
-          el('div', { class: 'daylog__name' },
-            el('span', { text: item.title }),
-            item.mood ? el('span', { class: 'daylog__mood' }, icon(moodIcon(item.mood)), item.mood.label) : null
-          ),
-          item.declaration ? el('p', { class: 'daylog__line', text: item.declaration }) : null,
-          item.summary ? el('p', { class: 'daylog__line', text: item.summary }) : null,
-          item.note ? el('p', { class: 'daylog__line', text: `“${item.note}”` }) : null
-        )
-      ));
+      box.replaceChildren(title, ...daySections(day.items));
     }).catch((err) => {
       if (err.message !== 'auth') box.replaceChildren(box.firstChild, el('p', { class: 'daylog__empty', text: t('history.day_error') }));
     });

@@ -54,7 +54,7 @@ return [
     ],
 
     'gratitude' => [
-        'title' => 'Generative Gratitude',
+        'title' => 'Generative Gratitude & Reflection',
         'intro' => 'We can practice gratitude through physical extension, creating space to explore what naturally wells up (or doesn\'t).',
         'steps' => [
             ['title' => 'Ground', 'text' => 'Extend down into the ground.'],
@@ -175,8 +175,8 @@ return [
         ],
 
         'practice' => [
-            'eyebrow'           => 'Practice',
-            'title'             => 'Log a practice',
+            'eyebrow'           => 'Log a Practice',
+            'title'             => 'Somatic Practice',
             'first_declaration' => 'Start with a declaration, in your own words. Every practice builds toward it, and you can refine it anytime.',
             'declaration'       => 'Declaration',
             'new_declaration'   => 'New',
@@ -354,14 +354,19 @@ return [
             'embodied'             => '{n} reps · embodied',
             'no_reps'              => 'No practices logged with this one yet.',
             'retired'              => 'Retired',
+            // Under the declarations on Progress; opens History.
+            'notes_link'           => 'Your notes are in History',
         ],
 
         'history' => [
             'daily'          => 'Daily practice',
             'weekly'         => 'Weekly reflections',
             'today'          => 'Today',
+            // Section headers in a day's summary.
+            'section_rituals'   => 'Rituals',
+            'section_practices' => 'Practices',
             'loading'        => 'Loading…',
-            'no_entries'     => 'No entries. Intional rest counts, too.',
+            'no_entries'     => 'No entries. Intentional rest counts, too.',
             'one_rep'        => '1 rep',
             'reps'           => '{n} reps',
             'legend_more'    => '4+',

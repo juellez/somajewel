@@ -7,7 +7,7 @@ The practice/tracking app which currently uses the WP auth/login and DB connecto
 ## app/modules/wordpress
 WordPress pieces that work alongside the app, kept inside `app/` so a deploy only ever touches the app folder:
 
-- `plugins/somajewel-stats`: an admin page showing usage stats for testing. On the server it's symlinked into WordPress's plugins folder (see [docs/deploy.md](docs/deploy.md)), then activated in WP admin like any plugin.
+- `plugins/somajewel-stats`: an admin page showing usage stats for testing, testers' feedback, and My Activity (your own entries as stored, for checking the app against the database). On the server it's symlinked into WordPress's plugins folder (see [docs/deploy.md](docs/deploy.md)), then activated in WP admin like any plugin.
 
 ## Deploying
 Pushing to the `live` branch deploys the app to the server automatically. Setup and everyday use: [docs/deploy.md](docs/deploy.md).
