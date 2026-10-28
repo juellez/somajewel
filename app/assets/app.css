@@ -70,7 +70,11 @@ body {
 .caps { text-transform: uppercase; letter-spacing: 0.16em; }
 
 /* ---------- masthead ---------- */
-.masthead { background: var(--head); color: var(--on-head); }
+/* Stays at the top while the page scrolls, like the tab bar at the bottom.
+   The safe-area padding keeps it clear of a notch when the app is on the home screen. */
+.masthead { background: var(--head); color: var(--on-head); position: sticky; top: 0; z-index: 10; padding-top: env(safe-area-inset-top); }
+/* Jumps within a page (e.g. "Change what you share") land below the bar. */
+html { scroll-padding-top: 72px; }
 .masthead__inner {
   max-width: 600px;
   margin: 0 auto;
