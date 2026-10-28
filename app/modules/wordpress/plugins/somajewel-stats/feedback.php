@@ -86,6 +86,23 @@ function sjs_render_feedback(): void
         }
     }
 
+    // Practices people added for themselves: names only, to see what's missing
+    // from the built-in list. (How they practice them stays private.)
+    $practices = sjs_table('user_practices');
+    if ($wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $practices)) === $practices) {
+        $added = $wpdb->get_results("
+            SELECT LOWER(TRIM(title)) AS name, MIN(title) AS title, COUNT(DISTINCT user_id) AS people
+            FROM $practices WHERE deleted = 0
+            GROUP BY LOWER(TRIM(title)) ORDER BY people DESC, title
+        ", ARRAY_A) ?: [];
+        echo '<h2 style="margin-top:28px">Practices people added</h2>';
+        if (!$added) {
+            echo '<p class="sjs-muted">None yet.</p>';
+        } else {
+            echo '<p>' . implode(' · ', array_map(fn ($r) => esc_html($r['title']) . ((int) $r['people'] > 1 ? ' <span class="sjs-muted">(' . (int) $r['people'] . ')</span>' : ''), $added)) . '</p>';
+        }
+    }
+
     $rows = $wpdb->get_results("
         SELECT f.*, u.display_name
         FROM $table f

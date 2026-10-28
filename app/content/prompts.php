@@ -36,7 +36,10 @@ return [
         ['key' => 'mindful-minute', 'title' => 'Mindful Minute', 'description' => 'One minute of full attention.'],
         ['key' => 'breath',         'title' => 'Breathwork',         'description' => 'Coherence Breath. Any breathwork.'],
         ['key' => 'meditation',     'title' => 'Meditation',     'description' => 'Any style, any length.'],
-        ['key' => 'jo',             'title' => 'Jo',             'description' => 'Kata, partner practice, or any jo work.'],
+        ['key' => 'yoga',           'title' => 'Yoga',           'description' => 'Any style, any length. Let each pose be a rep of your declaration.'],
+        ['key' => 'movement',       'title' => 'Movement',       'description' => 'Walking, running, dancing: any movement, with intention. Notice what it feels like to move as your declaration.'],
+        // Key stays 'jo' so earlier Jo reps carry over.
+        ['key' => 'jo',             'title' => 'Martial Arts',   'description' => 'Jo, aikido, tai chi, or any martial practice.'],
         ['key' => 'mutual-connection',             'title' => 'Hand on Heart',             'description' => 'Mutual Connection with Self, Spirit, or another person.'],
         ['key' => 'relational',             'title' => 'Relational',             'description' => 'Centered request or yes/no/maybe. Any practice for the sake of building your capacity to be in Right Relation with self and others.'],
         ['key' => 'prayer',             'title' => 'Prayer',             'description' => 'Daily prayer, devotions, intentions.'],
@@ -298,6 +301,43 @@ return [
             'privacy'      => 'Sent with your name, this screen, your device type, and the app version ({version}), so I can follow up.',
         ],
 
+        // Practices screen (practice card → Edit practices): show/hide,
+        // rename, and add your own.
+        'practices' => [
+            'edit'          => 'Edit practices',
+            'title'         => 'Practices',
+            'lede'          => 'Choose what\'s on your practice card. Tap a practice to read about it or rename it. Hidden practices keep their reps and history.',
+            'intro_title'   => 'What makes it a practice?',
+            'intro'         => 'Almost anything can be a somatic practice when you bring an intention to it and pay attention to your body while you do it.',
+            'intro_points'  => [
+                'Intention: connect it to your declaration before you begin. You\'re Why',
+                'Attention: notice your sensations as you go, especially as you wrap',
+                'Repetition: what you repeat, you embody',
+                "Reflection: what do you notice in your body now and how does that differ from when you began? There's no wrong or right and nothing may be perceptible for a while. There's only your truth."
+            ],
+            'list_title'    => 'Your practices',
+            'on_card'       => '{n} on your card',
+            'reps'          => '{n} reps',
+            'one_rep'       => '1 rep',
+            'renamed'       => 'Renamed from {name}',
+            'yours'         => 'Yours',
+            'show'          => 'Show {name}',
+            'hide'          => 'Hide {name}',
+            'name_label'    => 'Name on your card',
+            'save'          => 'Save',
+            'reset'         => 'Reset to "{name}"',
+            'delete'        => 'Delete',
+            'delete_confirm' => 'Delete this practice? It leaves your list; reps you\'ve logged stay in History.',
+            'add_title'     => 'Add your own',
+            'add_body'      => "Turn something you already do into a practice: a walk, morning pages, washing dishes. It's yours alone, and it counts like any other when you do it with intention and awareness. E.g. if your declaration requires you to be able to commit, focusing your attention on every step being you inside the action of commiting to another step, you'll build muscle memory and eventually embody your capability to commit",
+            'add_name'      => 'Name, e.g. Commitment run',
+            'add_how'       => 'How you\'ll practice or examples',
+            'add'           => 'Add practice',
+            'added'         => 'Practice added to your card.',
+            'saved'         => 'Saved.',
+            'deleted'       => 'Practice deleted.',
+        ],
+
         // The public welcome page (/app/welcome) to share with friends and
         // clients. No login needed. "Join" goes to WordPress registration;
         // if registration is turned off, 'closed' shows instead.
@@ -419,6 +459,7 @@ return [
             'grace_closed'         => 'It\'s past noon, so this can only be logged for today.',
             'already_logged'       => 'Yesterday already has this one. Log it for today instead.',
             'feedback_empty'       => 'Write a note or pick a name first.',
+            'practice_name'        => 'Give your practice a name.',
         ],
 
         'mic' => [

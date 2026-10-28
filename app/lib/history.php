@@ -83,7 +83,7 @@ function usp_history_day(int $user_id, string $date): ?array
     ), ARRAY_A) ?: [];
 
     $content = usp_content();
-    $skills  = usp_skills_by_key();
+    $skills  = usp_user_skills_by_key($user_id);
     $moods   = usp_moods_by_key();
     $titles  = [
         'clearing'  => $content['clearing']['title'],

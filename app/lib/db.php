@@ -158,6 +158,28 @@ function usp_maybe_migrate(): void
                 KEY user_id (user_id)
             ) $charset",
         ],
+
+        // Each person's practice list: what's on their card, their own names
+        // for practices, and practices they added for themselves.
+        8 => [
+            "CREATE TABLE IF NOT EXISTS " . usp_table('practice_prefs') . " (
+                user_id BIGINT UNSIGNED NOT NULL,
+                skill_key VARCHAR(64) NOT NULL,
+                hidden TINYINT UNSIGNED NOT NULL DEFAULT 0,
+                label VARCHAR(60) NULL,
+                PRIMARY KEY (user_id, skill_key)
+            ) $charset",
+            "CREATE TABLE IF NOT EXISTS " . usp_table('user_practices') . " (
+                id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+                user_id BIGINT UNSIGNED NOT NULL,
+                title VARCHAR(60) NOT NULL,
+                description VARCHAR(300) NULL,
+                deleted TINYINT UNSIGNED NOT NULL DEFAULT 0,
+                created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (id),
+                KEY user_id (user_id)
+            ) $charset",
+        ],
     ];
 
     foreach ($migrations as $version => $queries) {
