@@ -1107,6 +1107,8 @@
         title: t('progress.skills_title'),
         body: [el('p', { class: 'card__body', text: t('progress.skills_body') }), el('div', { class: 'reps' }, skills)],
       }),
+      el('a', { class: 'more-link', href: '#history', onclick: () => { hist.mode = 'daily'; } },
+        icon('calendar-blank'), ` ${t('progress.notes_link')}`),
     ];
   }
 
@@ -1226,46 +1228,37 @@
   }
 
   /**
-   * A day in the order it was lived: Morning (clearing), Practice grouped by
-   * declaration and then by skill ("Centering ×2", each rep's mood and note),
-   * and Evening (gratitude). Empty sections are left out.
+   * A day in two parts. Rituals: clearing, then gratitude. Practices: grouped
+   * by declaration, each rep on its own line in the order it was logged, so
+   * the flow of the day shows. Empty parts are left out.
    */
   function daySections(items) {
-    const ritual = (item) => el('div', { class: 'daylog__item' },
-      el('div', { class: 'daylog__name' }, el('span', { text: item.title }), moodTag(item.mood)),
-      item.summary ? el('p', { class: 'daylog__line', text: item.summary }) : null,
-      item.note ? el('p', { class: 'daylog__line', text: `“${item.note}”` }) : null);
+    const quote = (text) => (text ? el('p', { class: 'daylog__line', text: `“${text}”` }) : null);
+    const row = (name, item, ...lines) => el('div', { class: 'daylog__item' },
+      el('div', { class: 'daylog__name' }, el('span', { text: name }), moodTag(item.mood)),
+      lines);
+
+    const rituals = ['clearing', 'gratitude'].flatMap((type) => items.filter((i) => i.type === type))
+      .map((i) => row(i.title, i, i.summary ? el('p', { class: 'daylog__line', text: i.summary }) : null, quote(i.note)));
+
+    // Declarations in the order first practiced under; reps in logged order.
+    const groups = new Map();
+    for (const item of items.filter((i) => i.type === 'practice')) {
+      const key = item.decl_id || 0;
+      if (!groups.has(key)) groups.set(key, { text: item.decl_text, reps: [] });
+      groups.get(key).reps.push(item);
+    }
+    const practices = [...groups.values()].map((g) => el('div', { class: 'daylog__group' },
+      g.text ? el('p', { class: 'daylog__decl', text: g.text }) : null,
+      g.reps.map((r) => row(r.skill || r.title, r, quote(r.note)))));
 
     const section = (label, body) => (body.length
       ? el('div', { class: 'daylog__section' }, el('h3', { class: 'daylog__heading', text: label }), body)
       : null);
 
-    // Practices: declaration → skill → reps, keeping first-logged order.
-    const groups = new Map();
-    for (const item of items.filter((i) => i.type === 'practice')) {
-      const dKey = item.decl_id || 0;
-      if (!groups.has(dKey)) groups.set(dKey, { text: item.decl_text, skills: new Map() });
-      const skills = groups.get(dKey).skills;
-      const sKey = item.skill || item.title;
-      if (!skills.has(sKey)) skills.set(sKey, []);
-      skills.get(sKey).push(item);
-    }
-    const practice = [...groups.values()].map((g) => el('div', { class: 'daylog__group' },
-      g.text ? el('p', { class: 'daylog__decl', text: g.text }) : null,
-      [...g.skills.entries()].map(([name, reps]) => el('div', { class: 'daylog__item' },
-        el('div', { class: 'daylog__name' },
-          el('span', { text: reps.length > 1 ? `${name} ×${reps.length}` : name }),
-          reps.length === 1 ? moodTag(reps[0].mood) : null),
-        reps.length === 1
-          ? (reps[0].note ? el('p', { class: 'daylog__line', text: `“${reps[0].note}”` }) : null)
-          : reps.map((r) => (r.mood || r.note
-            ? el('p', { class: 'daylog__line daylog__rep' }, moodTag(r.mood), r.note ? ` “${r.note}”` : null)
-            : null))))));
-
     return [
-      section(t('history.section_morning'), items.filter((i) => i.type === 'clearing').map(ritual)),
-      section(t('history.section_practice'), practice),
-      section(t('history.section_evening'), items.filter((i) => i.type === 'gratitude').map(ritual)),
+      section(t('history.section_rituals'), rituals),
+      section(t('history.section_practices'), practices),
     ].filter(Boolean);
   }
 

@@ -320,18 +320,19 @@ return [
             'embodied'             => '{n} reps · embodied',
             'no_reps'              => 'No practices logged with this one yet.',
             'retired'              => 'Retired',
+            // At the bottom of Progress; opens History.
+            'notes_link'           => 'Your notes are in History',
         ],
 
         'history' => [
             'daily'          => 'Daily practice',
             'weekly'         => 'Weekly reflections',
             'today'          => 'Today',
-            // Section headers in a day's summary, in the order of the day.
-            'section_morning'  => 'Morning',
-            'section_practice' => 'Practice',
-            'section_evening'  => 'Evening',
+            // Section headers in a day's summary.
+            'section_rituals'   => 'Rituals',
+            'section_practices' => 'Practices',
             'loading'        => 'Loading…',
-            'no_entries'     => 'No entries. Intional rest counts, too.',
+            'no_entries'     => 'No entries. Intentional rest counts, too.',
             'one_rep'        => '1 rep',
             'reps'           => '{n} reps',
             'legend_more'    => '4+',
